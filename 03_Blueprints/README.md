@@ -1,0 +1,26 @@
+﻿# Blueprints
+
+## Purpose
+
+This directory stores project blueprints, not isolated document Blueprints.
+
+A blueprint is a reusable project starting point that may include documentation, governance context, Docker files, Git defaults, prompts, and project structure.
+
+## Rule
+
+Do not copy DeveloperOS global policy documents into projects.
+
+Blueprints should reference DeveloperOS through `PROJECT_CONTEXT.md` and use `PROJECT_RULES.md` only for explicit local exceptions.
+
+## Available Blueprints
+
+- `Project`: generic project blueprint
+- `GoWeb`: planned Go web service blueprint
+- `PythonCLI`: planned Python command-line tool blueprint
+- `AIProject`: planned AI-integrated project blueprint
+- `WebApp`: planned web application blueprint
+
+## Naming Rule
+
+Use blueprint names that describe the project shape, not just a single file type.
+

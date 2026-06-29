@@ -1,0 +1,25 @@
+﻿# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temp / logs
+*.log
+tmp/
+temp/
+
+# AI snapshots
+04_Tools/snapshots/
+05_Snapshots/*
+!05_Snapshots/README.md
+**/.snapshots/
+.snapshots/
+
+# Secrets
+.env
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
