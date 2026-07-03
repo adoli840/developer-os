@@ -14,6 +14,10 @@ Each project may define a short **Project Constitution** through `PROJECT_CONTEX
 
 Global rules live in one place. Project-specific exceptions live inside the project.
 
+DeveloperOS is a decision engine, not a project dashboard.
+
+It defines how development decisions are made across the workspace. It should not collect project information simply because it can.
+
 ## Single Source Of Truth
 
 Do not copy these documents into individual projects.
@@ -29,6 +33,35 @@ Do not copy these documents into individual projects.
 Copying global rules creates drift over time.
 
 DeveloperOS should remain the single source of truth for global engineering policy.
+
+## Project State Ownership
+
+Projects own their own current state.
+
+Each project repository is responsible for its own:
+
+- README
+- TODO
+- Current implementation
+- Current architecture
+- Current roadmap
+- Project-specific decisions
+
+DeveloperOS should not duplicate this information. If a project's status changes, update the project repository instead of copying that state into DeveloperOS.
+
+DeveloperOS may keep only lightweight references or inspection criteria when those references help apply global governance.
+
+## Maintenance Boundary
+
+Every DeveloperOS document should pass this test:
+
+```text
+Will this still be valuable in three years?
+```
+
+If the answer is probably not, the content likely belongs inside a project repository.
+
+DeveloperOS should become quieter as it matures. A mature DeveloperOS changes rarely because constitutional principles are more stable than project execution details.
 
 ## Recommended Project Files
 
@@ -84,5 +117,5 @@ Before making changes in any project, Codex should read documents in this order.
 
 The goal is stable governance without duplicated rules.
 
-DeveloperOS defines global defaults. Projects define only their purpose, current status, and explicit exceptions.
+DeveloperOS defines global defaults. Projects define their own purpose, current status, roadmap, implementation state, and explicit exceptions.
 

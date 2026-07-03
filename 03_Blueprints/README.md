@@ -15,6 +15,7 @@ Blueprints should reference DeveloperOS through `PROJECT_CONTEXT.md` and use `PR
 ## Available Blueprints
 
 - `Project`: generic project blueprint
+- `ProjectBootstrapPrompt.md`: project-level prompt for invoking DeveloperOS through `BOOT.md`
 - `GoWeb`: planned Go web service blueprint
 - `PythonCLI`: planned Python command-line tool blueprint
 - `AIProject`: planned AI-integrated project blueprint

@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This dashboard provides a workspace-level overview of DeveloperOS, active project governance, and the current AI Project Manager state.
+This dashboard provides a workspace-level overview of DeveloperOS operating mode and current governance focus.
+
+It is not a project management database. Project repositories own their own current status, roadmap, TODO, and implementation state.
 
 ## Current Operating Mode
 
@@ -14,7 +16,7 @@ The priority is not new feature development. The priority is to make the active 
 
 DeveloperOS should act as an AI Project Manager when invoked.
 
-It should review Dashboard, WeeklyPlan, Roadmap, ProjectStatus, Metrics, and Backlog before recommending what to work on next.
+It should review DeveloperOS governance documents and project-owned context before recommending what to work on next.
 
 DeveloperOS should not pressure the developer. It should provide objective evidence, soft challenges, and clear recommendations. The developer always makes the final decision.
 
@@ -25,7 +27,7 @@ DeveloperOS should not pressure the developer. It should provide objective evide
 - Clarify README files, setup steps, configuration, and verification methods.
 - Reduce duplicated features and unnecessary complexity.
 - Defer new feature work until inspection results and priorities are clear.
-- Build PM-style visibility into goals, progress, priorities, and stale work.
+- Build PM-style visibility into governance alignment without duplicating project-owned state.
 
 ## Workspace State
 
@@ -33,13 +35,13 @@ Discarded projects have been removed. `X:\Projects` is now organized around main
 
 `DeveloperOS` is the dedicated Git repository for development operations. Application projects remain outside DeveloperOS and keep their own independence.
 
-## Project Inventory
+## Project Index
 
-The inventory must be filled after inspecting the current workspace.
+The project index should stay lightweight. It may point to active project repositories, but detailed status belongs inside each project.
 
-| Project | Purpose | Stack | Status | Inspection Priority | Notes |
-|---|---|---|---|---|---|
-| TBD | TBD | TBD | Pending inspection | TBD | Fill after project review |
+| Project | Repository | Governance Notes |
+|---|---|---|
+| TBD | TBD | Fill only when the reference helps workspace-level decisions |
 
 ## Active Priorities
 
@@ -47,7 +49,7 @@ The inventory must be filled after inspecting the current workspace.
 2. Inspect active projects.
 3. Identify convenience and efficiency improvements.
 4. Verify setup, execution, test, and documentation quality.
-5. Use inspection results to define the next development priorities.
+5. Use inspection results to refine governance and project-local priorities.
 6. Establish Roadmap, ProjectStatus, Metrics, and DailyReview as PM inputs.
 
 ## PM Documents
