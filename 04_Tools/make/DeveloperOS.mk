@@ -22,10 +22,16 @@ DEVELOPEROS_COMPOSE_FILE := $(firstword $(wildcard docker-compose.yml compose.ym
 DEVELOPEROS_COMPOSE_ENV := $(if $(wildcard docker-config),--env-file docker-config) $(if $(wildcard .env),--env-file .env)
 DEVELOPEROS_COMPOSE := $(strip docker compose $(DEVELOPEROS_COMPOSE_ENV) $(if $(DEVELOPEROS_COMPOSE_FILE),-f $(DEVELOPEROS_COMPOSE_FILE)))
 DEVELOPEROS_LOCAL_MAKEFILE := $(firstword $(wildcard GNUmakefile makefile Makefile))
+DEVELOPEROS_GIT_DASHBOARD ?= X:/Projects/DeveloperOS/04_Tools/git/Invoke-GitDashboard.ps1
 
 define DEVELOPEROS_REQUIRE_COMPOSE
 $(if $(DEVELOPEROS_COMPOSE_FILE),,$(error No Docker Compose file found in $(CURDIR). Expected docker-compose.yml, compose.yml, docker-compose.yaml, or compose.yaml))
 endef
+
+.PHONY: git-check
+
+git-check:
+	@powershell -NoProfile -ExecutionPolicy Bypass -File "$(DEVELOPEROS_GIT_DASHBOARD)"
 
 ifeq ($(DEVELOPEROS_LOCAL_MAKEFILE),)
 
@@ -33,6 +39,7 @@ ifeq ($(DEVELOPEROS_LOCAL_MAKEFILE),)
 
 developeros-help:
 	@echo "DeveloperOS shared Docker targets"
+	@echo "  make git-check      Show end-of-day Git dashboard"
 	@echo "  make run            Start Docker Compose"
 	@echo "  make b-run          Start Docker Compose with build"
 	@echo "  make run-b          Alias for b-run"

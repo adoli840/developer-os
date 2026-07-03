@@ -21,6 +21,7 @@ This document stores durable AI memory for DeveloperOS.
 - DeveloperOS is the single source of truth for global policy. Projects reference it through `PROJECT_CONTEXT.md` instead of copying global rules.
 - DeveloperOS should act as an AI Project Manager when invoked: review roadmap, weekly goals, project status, metrics, and backlog before recommending work.
 - DeveloperOS should provide soft challenges with objective evidence, never pressure or shame the developer.
+- DeveloperOS includes an end-of-day Git Dashboard. It reports commit, push, pull, modified file count, and branch status for active workspace repositories without modifying them.
 - GPT handles thinking; Codex handles implementation.
 - Codex should treat GPT design documents as implementation specifications and avoid repeating architectural analysis unless necessary.
 - Context restoration is a major Codex token cost; Codex should read project context and design handoffs before broad source exploration.

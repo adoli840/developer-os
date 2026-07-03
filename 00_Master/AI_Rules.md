@@ -75,6 +75,22 @@ Small edits do not require snapshots.
 
 Git commits should be made only at meaningful boundaries such as feature completion, meaningful refactoring completion, or end-of-day checkpoint.
 
+## Rebuild Notice Rule
+
+Codex should not tell the developer to rebuild by default after every code change.
+
+If the project structure applies changes without a rebuild, or if the change does not require a rebuild, the completion message does not need a rebuild notice.
+
+If the project requires a rebuild for the change to take effect, Codex must clearly say:
+
+```text
+A rebuild is required.
+```
+
+Use this notice only when the developer must actually rebuild to apply the completed change.
+
+The goal is to prevent unnecessary rebuild habits while making required rebuilds explicit.
+
 ## Language Rule
 
 Codex should communicate with the developer in Korean by default.

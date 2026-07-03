@@ -37,7 +37,7 @@ DeveloperOS
 +-- 01_Knowledge    # Lessons, troubleshooting, research, domain notes
 +-- 02_AI           # AI collaboration, safety, language, review policy
 +-- 03_Blueprints   # Project blueprints for future repositories
-+-- 04_Tools        # Future automation tools
++-- 04_Tools        # Automation tools
 +-- 05_Snapshots    # Snapshot location; runtime contents ignored by Git
 ```
 
@@ -53,10 +53,9 @@ DeveloperOS
 - DeveloperOS governance documents are written in English.
 - The developer may communicate with GPT and Codex in Korean.
 
-
 ## Shared Developer Commands
 
-DeveloperOS provides shared Make targets for Docker-based projects through `04_Tools/make/DeveloperOS.mk`.
+DeveloperOS provides shared Make targets through `04_Tools/make/DeveloperOS.mk`.
 
 Enable the shared targets once from PowerShell:
 
@@ -64,7 +63,13 @@ Enable the shared targets once from PowerShell:
 X:\Projects\DeveloperOS\04_Tools\make\Enable-DeveloperOSMake.ps1
 ```
 
-After enabling, any project directory with a Docker Compose file can use:
+After enabling, any project directory can use:
+
+```bash
+make git-check
+```
+
+Docker projects can also use:
 
 ```bash
 make run
@@ -74,7 +79,25 @@ make dh-b-push
 make dh-pull
 ```
 
-The Make targets auto-detect `docker-compose.yml`, `compose.yml`, `docker-compose.yaml`, or `compose.yaml` in the current project directory.
+The Docker targets auto-detect `docker-compose.yml`, `compose.yml`, `docker-compose.yaml`, or `compose.yaml` in the current project directory.
+
+## Git Dashboard
+
+DeveloperOS provides an end-of-day Git Dashboard for active repositories.
+
+Run from any project directory when DeveloperOS Make targets are enabled:
+
+```powershell
+make git-check
+```
+
+Fallback direct command:
+
+```powershell
+X:\Projects\DeveloperOS\04_Tools\bin\devos.cmd git-check
+```
+
+The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, Gaia Project, bTest, and OA.
 
 ## Project Agent Entry Point
 
@@ -99,4 +122,3 @@ The Make targets auto-detect `docker-compose.yml`, `compose.yml`, `docker-compos
 Current foundation version: `v0.1`
 
 See `ROADMAP.md` for planned DeveloperOS evolution.
-

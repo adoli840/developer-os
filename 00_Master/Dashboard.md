@@ -55,9 +55,14 @@ The project index should stay lightweight. It may point to active project reposi
 ## PM Documents
 
 - `PM_Role.md`
+- `GitDashboard.md`
 - `Roadmap.md`
 - `ProjectStatus.md`
 - `Metrics.md`
 - `DailyReview.md`
 - `WeeklyPlan.md`
+
+## Operational Dashboards
+
+- `GitDashboard.md`: end-of-day Git status dashboard for DeveloperOS, Gaia Project, bTest, and OA
 

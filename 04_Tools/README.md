@@ -4,10 +4,25 @@
 
 DeveloperOS automation tools live here.
 
-
 ## Shared Make Targets
 
-`04_Tools/make/DeveloperOS.mk` defines standard Docker project commands for workspace projects:
+`04_Tools/make/DeveloperOS.mk` defines standard workspace commands.
+
+Enable the shared make file once:
+
+```powershell
+X:\Projects\DeveloperOS\04_Tools\make\Enable-DeveloperOSMake.ps1
+```
+
+Once enabled, projects do not need duplicate local Makefiles just to expose common DeveloperOS commands.
+
+Available workspace command:
+
+```bash
+make git-check
+```
+
+Docker projects can use these standard commands:
 
 ```bash
 make run
@@ -17,7 +32,23 @@ make dh-b-push
 make dh-pull
 ```
 
-Use `04_Tools/make/Enable-DeveloperOSMake.ps1` to register the shared make file in the user `MAKEFILES` environment variable. Once enabled, projects do not need to keep duplicate local Makefiles just to expose the standard Docker commands.
+## Git Dashboard
+
+The Git Dashboard shows the end-of-day Git status for active workspace repositories.
+
+Run from any project directory when DeveloperOS Make targets are enabled:
+
+```powershell
+make git-check
+```
+
+Fallback direct command:
+
+```powershell
+X:\Projects\DeveloperOS\04_Tools\bin\devos.cmd git-check
+```
+
+The tool fetches `origin` when available and reports modified files, commit need, push need, pull need, and current branch.
 
 ## Codex Task Generator
 
@@ -26,7 +57,7 @@ Use `04_Tools/make/Enable-DeveloperOSMake.ps1` to register the shared make file 
 Example:
 
 ```powershell
-X:\Projects\DeveloperOS\04_Tools\codex-task\New-CodexTask.ps1 X:\Projects\oa -Shortcut "깃푸시" -Task "Perform a minimum-safety commit and push for the current project."
+X:\Projects\DeveloperOS\04_Tools\codex-task\New-CodexTask.ps1 X:\Projects\oa -Shortcut "git-push" -Task "Perform a minimum-safety commit and push for the current project."
 ```
 
 After generation, use this in Codex Desktop from the project:
@@ -37,6 +68,7 @@ Read .codex/TASK.md
 
 ## Planned Tools
 
+- Git Dashboard / end-of-day Git check
 - Snapshot Manager
 - Workspace inspection helpers
 - Project bootstrap helpers
@@ -59,5 +91,3 @@ Planned PM helpers:
 - Detect stale active projects.
 - Recommend the next project based on priority, deadline, dependency, and weekly goals.
 - Estimate Developer Score for weekly reflection.
-
-
