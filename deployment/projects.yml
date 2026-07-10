@@ -1,0 +1,40 @@
+projects:
+  bTest:
+    repo_path: "X:/Projects/bTest"
+    github_branch: "main"
+    dockerhub_image: "adoli840/btest"
+    dockerfile: "Dockerfile"
+    compose_file: "docker-compose.prod.yml"
+    server_path_secret: "PROD_PATH_BTEST"
+    deploy_command: "docker compose -f docker-compose.prod.yml up -d"
+
+  oa:
+    repo_path: "X:/Projects/oa"
+    github_branch: "main"
+    dockerhub_image: "adoli840/oa"
+    dockerfile: "Dockerfile"
+    compose_file: "docker-compose.prod.yml"
+    server_path_secret: "PROD_PATH_OA"
+    deploy_command: "docker compose -f docker-compose.prod.yml up -d"
+
+  gaia:
+    repo_path: "X:/Projects/gaia"
+    github_branch: "main"
+    dockerhub_image: "adoli840/gaia"
+    dockerfile: "Dockerfile"
+    compose_file: "docker-compose.prod.yml"
+    server_path_secret: "PROD_PATH_GAIA"
+    deploy_command: "docker compose -f docker-compose.prod.yml up -d"
+
+required_secrets:
+  common:
+    - "DOCKERHUB_USERNAME"
+    - "DOCKERHUB_TOKEN"
+    - "PROD_HOST"
+    - "PROD_USER"
+    - "PROD_PORT"
+    - "PROD_SSH_KEY"
+  project_path:
+    - "PROD_PATH_BTEST"
+    - "PROD_PATH_OA"
+    - "PROD_PATH_GAIA"

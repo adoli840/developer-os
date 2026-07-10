@@ -1,0 +1,8 @@
+services:
+  app:
+    image: {{DOCKERHUB_IMAGE}}:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PORT_APP:-8080}:8080"

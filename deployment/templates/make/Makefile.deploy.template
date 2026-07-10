@@ -1,0 +1,15 @@
+.PHONY: prod-pull prod-run prod-down prod-logs
+
+PROD_COMPOSE_FILE ?= docker-compose.prod.yml
+
+prod-pull:
+	docker compose -f $(PROD_COMPOSE_FILE) pull
+
+prod-run:
+	docker compose -f $(PROD_COMPOSE_FILE) up -d
+
+prod-down:
+	docker compose -f $(PROD_COMPOSE_FILE) down --remove-orphans
+
+prod-logs:
+	docker compose -f $(PROD_COMPOSE_FILE) logs -f

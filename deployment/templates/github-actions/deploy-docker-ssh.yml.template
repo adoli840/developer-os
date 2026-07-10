@@ -1,0 +1,42 @@
+name: Deploy production
+
+on:
+  push:
+    branches:
+      - {{GITHUB_BRANCH}}
+
+jobs:
+  deploy:
+    name: Build Docker image and deploy over SSH
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: {{DOCKERFILE}}
+          push: true
+          tags: {{DOCKERHUB_IMAGE}}:latest
+
+      - name: Deploy on production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_HOST }}
+          username: ${{ secrets.PROD_USER }}
+          port: ${{ secrets.PROD_PORT }}
+          key: ${{ secrets.PROD_SSH_KEY }}
+          script: |
+            cd "${{ secrets.{{SERVER_PATH_SECRET}} }}"
+            git pull origin {{GITHUB_BRANCH}}
+            docker compose -f {{COMPOSE_FILE}} pull
+            {{DEPLOY_COMMAND}}

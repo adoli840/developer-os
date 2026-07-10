@@ -39,6 +39,7 @@ DeveloperOS
 +-- 03_Blueprints   # Project blueprints for future repositories
 +-- 04_Tools        # Automation tools
 +-- 05_Snapshots    # Snapshot location; runtime contents ignored by Git
++-- deployment      # Deployment standards, templates, and readiness checks
 ```
 
 ## Core Policies
@@ -98,6 +99,30 @@ X:\Projects\DeveloperOS\04_Tools\bin\devos.cmd git-check
 ```
 
 The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, Gaia Project, bTest, and OA.
+
+## Deployment Standard Manager
+
+DeveloperOS provides deployment templates and readiness checks through `deployment/`.
+
+Check every configured project:
+
+```powershell
+.\deployment\scripts\check-project-deploy-ready.ps1
+```
+
+Generate one GitHub Actions workflow:
+
+```powershell
+.\deployment\scripts\generate-deploy-workflow.ps1 -Project bTest
+```
+
+Generate every configured workflow:
+
+```powershell
+.\deployment\scripts\generate-deploy-workflow.ps1 -All
+```
+
+Secret values are not stored in DeveloperOS. The scripts print required GitHub Secret names only.
 
 ## Project Agent Entry Point
 
