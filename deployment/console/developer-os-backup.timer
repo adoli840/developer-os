@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily DeveloperOS PostgreSQL backups
+
+[Timer]
+OnCalendar=*-*-* 18:30:00 UTC
+Persistent=true
+RandomizedDelaySec=10m
+Unit=developer-os-backup.service
+
+[Install]
+WantedBy=timers.target

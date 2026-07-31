@@ -8,6 +8,8 @@ Thumbs.db
 *.log
 tmp/
 temp/
+__pycache__/
+*.py[cod]
 
 # AI snapshots
 04_Tools/snapshots/
@@ -23,3 +25,7 @@ temp/
 *.p12
 *.pfx
 secrets/
+
+# DeveloperOS browser console runtime
+.console/
+.console.env

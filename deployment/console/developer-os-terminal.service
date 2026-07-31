@@ -1,0 +1,32 @@
+[Unit]
+Description=DeveloperOS private browser terminal
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=opc
+Group=opc
+SupplementaryGroups=docker
+WorkingDirectory=/opt/developer-os-console/current
+EnvironmentFile=/etc/developer-os-terminal/terminal.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -m console.devos_terminal
+StateDirectory=developer-os-terminal
+StateDirectoryMode=0700
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+UMask=0077
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

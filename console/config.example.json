@@ -1,0 +1,41 @@
+{
+  "projects": [
+    {
+      "slug": "developer-os",
+      "name": "DeveloperOS",
+      "path": "{workspace}/DeveloperOS",
+      "compose_project": "developer-os-console",
+      "port": 8080
+    },
+    {
+      "slug": "btest",
+      "name": "bTest",
+      "path": "{workspace}/bTest",
+      "compose_project": "btest",
+      "port": 8080
+    },
+    {
+      "slug": "oa",
+      "name": "OA",
+      "path": "{workspace}/oa",
+      "compose_project": "oa",
+      "port": 8082,
+      "backup_expected": true
+    },
+    {
+      "slug": "gaia",
+      "name": "Gaia",
+      "path": "{workspace}/gaia",
+      "compose_project": "gaia",
+      "port": 8083,
+      "backup_expected": true
+    }
+  ],
+  "workstations": [
+    {
+      "id": "home",
+      "name": "Home",
+      "offline_after_seconds": 900
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=Weekly DeveloperOS PostgreSQL restore verification
+
+[Timer]
+OnCalendar=Sun *-*-* 19:30:00 UTC
+Persistent=true
+RandomizedDelaySec=15m
+Unit=developer-os-backup-verify.service
+
+[Install]
+WantedBy=timers.target

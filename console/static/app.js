@@ -1,0 +1,544 @@
+const state = {
+  authenticated: false,
+  publicReadOnly: false,
+  csrfToken: "",
+  overview: null,
+  pendingAction: null,
+  refreshTimer: null,
+};
+
+const elements = {
+  loginShell: document.querySelector("#login-shell"),
+  loginForm: document.querySelector("#login-form"),
+  loginError: document.querySelector("#login-error"),
+  accessToken: document.querySelector("#access-token"),
+  appShell: document.querySelector("#app-shell"),
+  modeBadge: document.querySelector("#mode-badge"),
+  syncState: document.querySelector("#sync-state"),
+  refreshButton: document.querySelector("#refresh-button"),
+  logoutButton: document.querySelector("#logout-button"),
+  serverMetrics: document.querySelector("#server-metrics"),
+  overviewProjects: document.querySelector("#overview-projects"),
+  overviewTime: document.querySelector("#overview-time"),
+  alertSummary: document.querySelector("#alert-summary"),
+  workstationSummary: document.querySelector("#workstation-summary"),
+  dockerSummary: document.querySelector("#docker-summary"),
+  activitySummary: document.querySelector("#activity-summary"),
+  projectList: document.querySelector("#project-list"),
+  workstationDetail: document.querySelector("#workstation-detail"),
+  backupSummary: document.querySelector("#backup-summary"),
+  timerSummary: document.querySelector("#timer-summary"),
+  deploymentList: document.querySelector("#deployment-list"),
+  closeoutList: document.querySelector("#closeout-list"),
+  commandList: document.querySelector("#command-list"),
+  commandNotice: document.querySelector("#command-notice"),
+  usagePanel: document.querySelector("#usage-panel"),
+  actionDialog: document.querySelector("#action-dialog"),
+  dialogTitle: document.querySelector("#dialog-title"),
+  dialogDescription: document.querySelector("#dialog-description"),
+  dialogCommand: document.querySelector("#dialog-command"),
+  dialogConfirm: document.querySelector("#dialog-confirm"),
+  outputDialog: document.querySelector("#output-dialog"),
+  outputTitle: document.querySelector("#output-title"),
+  outputContent: document.querySelector("#output-content"),
+  toast: document.querySelector("#toast"),
+};
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatBytes(value) {
+  if (!Number.isFinite(value)) return "Unavailable";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let amount = value;
+  let index = 0;
+  while (amount >= 1024 && index < units.length - 1) {
+    amount /= 1024;
+    index += 1;
+  }
+  return `${amount.toFixed(index > 2 ? 1 : 0)} ${units[index]}`;
+}
+
+function formatUptime(seconds) {
+  if (!Number.isFinite(seconds)) return "Unavailable";
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  return days ? `${days}d ${hours}h` : `${hours}h`;
+}
+
+function formatMoney(value) {
+  return Number.isFinite(value) ? `$${Number(value).toFixed(2)}` : "Unavailable";
+}
+
+function formatDate(value) {
+  if (!value) return "Unavailable";
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString();
+}
+
+function statusBadge(label, kind) {
+  return `<span class="status ${kind}">${escapeHtml(label)}</span>`;
+}
+
+function showToast(message) {
+  elements.toast.textContent = message;
+  elements.toast.classList.add("visible");
+  window.setTimeout(() => elements.toast.classList.remove("visible"), 2800);
+}
+
+async function request(path, options = {}) {
+  const headers = {"Content-Type": "application/json", ...(options.headers || {})};
+  if (state.csrfToken && options.method && options.method !== "GET") {
+    headers["X-CSRF-Token"] = state.csrfToken;
+  }
+  const response = await fetch(path, {...options, headers});
+  let body = {};
+  try {
+    body = await response.json();
+  } catch {
+    body = {error: `Unexpected response (${response.status})`};
+  }
+  if (!response.ok) {
+    throw new Error(body.error || `Request failed (${response.status})`);
+  }
+  return body;
+}
+
+async function initialize() {
+  try {
+    const session = await request("/api/session");
+    state.authenticated = Boolean(session.authenticated);
+    state.publicReadOnly = Boolean(session.public_read_only);
+    state.csrfToken = session.csrf_token || "";
+    showApplication();
+    await refreshOverview();
+  } catch {
+    showLogin();
+  }
+}
+
+function showLogin() {
+  elements.loginShell.hidden = false;
+  elements.appShell.hidden = true;
+  elements.accessToken.focus();
+}
+
+function showApplication() {
+  elements.loginShell.hidden = true;
+  elements.appShell.hidden = false;
+  elements.logoutButton.hidden = !state.authenticated;
+  if (state.publicReadOnly) {
+    elements.modeBadge.textContent = "Public read-only";
+    elements.modeBadge.classList.add("read-only");
+  } else {
+    elements.modeBadge.textContent = "Secure session";
+    elements.modeBadge.classList.remove("read-only");
+  }
+}
+
+async function refreshOverview() {
+  elements.syncState.textContent = "Refreshing";
+  elements.refreshButton.disabled = true;
+  try {
+    state.overview = await request("/api/overview");
+    render();
+    elements.syncState.textContent = "Live";
+  } catch (error) {
+    elements.syncState.textContent = "Refresh failed";
+    showToast(error.message);
+  } finally {
+    elements.refreshButton.disabled = false;
+  }
+}
+
+function render() {
+  if (!state.overview) return;
+  renderMetrics(state.overview.system);
+  renderAlerts(state.overview.alerts || []);
+  renderWorkstations(state.overview.workstations || []);
+  renderOverviewProjects(state.overview.projects);
+  renderDocker(state.overview.system.docker);
+  renderActivity(state.overview.audit);
+  renderProjects(state.overview.projects);
+  renderOperations(state.overview.projects, state.overview.backups);
+  renderCommands(state.overview.projects);
+  renderUsage(state.overview.usage);
+  const collectedAt = state.overview.system.collected_at;
+  elements.overviewTime.textContent = collectedAt
+    ? `Collected ${new Date(collectedAt * 1000).toLocaleString()}`
+    : "Collection time unavailable";
+}
+
+function renderMetrics(system) {
+  const metrics = [
+    {label: "CPU", value: Number.isFinite(system.cpu_percent) ? `${system.cpu_percent}%` : `${system.cpu_count || "-"} cores`, percent: system.cpu_percent || 0},
+    {label: "Memory", value: formatBytes(system.memory.used), detail: `of ${formatBytes(system.memory.total)}`, percent: system.memory.percent || 0},
+    {label: "Root disk", value: formatBytes(system.disk.used), detail: `${formatBytes(system.disk.free)} free`, percent: system.disk.percent || 0},
+    {label: "Uptime", value: formatUptime(system.uptime_seconds), detail: system.hostname, percent: 100},
+  ];
+  elements.serverMetrics.innerHTML = metrics.map((metric) => `
+    <div class="metric">
+      <span class="metric-label">${escapeHtml(metric.label)}</span>
+      <strong class="metric-value">${escapeHtml(metric.value)}</strong>
+      <span class="cell-detail">${escapeHtml(metric.detail || "")}</span>
+      <progress class="meter" max="100" value="${Math.max(0, Math.min(100, metric.percent))}">${metric.percent}%</progress>
+    </div>
+  `).join("");
+}
+
+function repositoryStatus(project) {
+  if (!project.available) return statusBadge("Missing", "bad");
+  if (!project.repository) return statusBadge("Not Git", "neutral");
+  const repo = project.repository;
+  if (repo.modified > 0) return statusBadge(`${repo.modified} modified`, "warn");
+  if (repo.behind > 0) return statusBadge(`${repo.behind} behind`, "warn");
+  if (repo.ahead > 0) return statusBadge(`${repo.ahead} ahead`, "neutral");
+  return statusBadge("Clean", "good");
+}
+
+function containerStatus(project) {
+  if (!project.containers.length) return statusBadge("None", "neutral");
+  const unhealthy = project.containers.filter((container) => String(container.status).toLowerCase().includes("unhealthy"));
+  const running = project.containers.filter((container) => String(container.state).toLowerCase() === "running");
+  if (unhealthy.length) return statusBadge(`${unhealthy.length} unhealthy`, "bad");
+  if (running.length === project.containers.length) return statusBadge(`${running.length} running`, "good");
+  return statusBadge(`${running.length}/${project.containers.length} running`, "warn");
+}
+
+function deploymentStatus(project) {
+  const status = project.deployment?.status;
+  if (status === "current") return statusBadge("Current", "good");
+  if (status === "out_of_sync") return statusBadge("Out of sync", "warn");
+  if (status === "running") return statusBadge("Running", "neutral");
+  if (status === "not_deployed") return statusBadge("Not deployed", "neutral");
+  return statusBadge("Unknown", "neutral");
+}
+
+function renderAlerts(alerts) {
+  const critical = alerts.filter((item) => item.severity === "critical").length;
+  const warning = alerts.filter((item) => item.severity === "warning").length;
+  const headingBadge = critical
+    ? statusBadge(`${critical} critical`, "bad")
+    : warning
+      ? statusBadge(`${warning} warnings`, "warn")
+      : statusBadge("No action required", "good");
+  elements.alertSummary.innerHTML = `
+    <div class="surface-heading"><div><h2>Actionable alerts</h2><p>Only conditions that affect delivery or recovery.</p></div>${headingBadge}</div>
+    <div class="alert-list">
+      ${alerts.length ? alerts.map((item) => `
+        <div class="alert-item ${escapeHtml(item.severity)}">
+          <span>${escapeHtml(item.source)}</span>
+          <strong>${escapeHtml(item.message)}</strong>
+        </div>
+      `).join("") : `<p class="muted">No operational alerts.</p>`}
+    </div>
+  `;
+}
+
+function workstationStatus(workstation) {
+  if (workstation.status === "online") return statusBadge("Online", "good");
+  if (workstation.status === "offline") return statusBadge("Offline", "neutral");
+  if (workstation.status === "never_reported") return statusBadge("Not connected", "warn");
+  return statusBadge("Invalid report", "bad");
+}
+
+function renderWorkstations(workstations) {
+  const home = workstations.find((item) => item.id === "home");
+  if (!home) {
+    elements.workstationSummary.innerHTML = `
+      <div class="surface-heading"><div><h2>Home computer</h2><p>No Home workstation is configured.</p></div>${statusBadge("Not configured", "neutral")}</div>
+    `;
+    elements.workstationDetail.innerHTML = "";
+    return;
+  }
+  const lastReport = formatDate(home.last_report_at);
+  elements.workstationSummary.innerHTML = `
+    <div class="surface-heading">
+      <div><h2>Home computer</h2><p>Local Git state reported while the computer is powered on.</p></div>
+      ${workstationStatus(home)}
+    </div>
+    <div class="workstation-stats">
+      <div><span>Last report</span><strong>${escapeHtml(lastReport)}</strong></div>
+      <div><span>Repositories</span><strong>${escapeHtml(home.summary.available)}</strong></div>
+      <div><span>Dirty</span><strong>${escapeHtml(home.summary.dirty)}</strong></div>
+      <div><span>Not pushed</span><strong>${escapeHtml(home.summary.ahead)}</strong></div>
+      <div><span>Mismatches</span><strong>${escapeHtml(home.summary.mismatches || 0)}</strong></div>
+    </div>
+  `;
+
+  elements.workstationDetail.innerHTML = `
+    <div class="surface-heading">
+      <div><h2>Home repositories</h2><p>${home.online ? "Live local state." : `Last known state from ${lastReport}.`}</p></div>
+      ${workstationStatus(home)}
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Project</th><th>Local Git</th><th>Branch</th><th>Local revision</th><th>Server</th><th>Deployment</th></tr></thead>
+        <tbody>
+          ${home.projects.length ? home.projects.map((project) => `
+            <tr>
+              <td><strong>${escapeHtml(project.name)}</strong></td>
+              <td>${repositoryStatus(project)}</td>
+              <td>${escapeHtml(project.repository?.branch || "-")}</td>
+              <td>${escapeHtml(project.repository?.revision || "-")}</td>
+              <td>${comparisonStatus(project.comparison?.server_status)}<div class="cell-detail">${escapeHtml(project.comparison?.server_revision || "-")}</div></td>
+              <td>${comparisonStatus(project.comparison?.deployment_status)}<div class="cell-detail">${escapeHtml(project.comparison?.deployed_revisions?.join(", ") || "-")}</div></td>
+            </tr>
+          `).join("") : `<tr><td colspan="6" class="muted">No Home report has been received yet.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function comparisonStatus(status) {
+  if (status === "match") return statusBadge("Match", "good");
+  if (status === "mismatch") return statusBadge("Mismatch", "bad");
+  return statusBadge("Unavailable", "neutral");
+}
+
+function renderOverviewProjects(projects) {
+  elements.overviewProjects.innerHTML = projects.map((project) => `
+    <tr>
+      <td><span class="project-name"><strong>${escapeHtml(project.name)}</strong><small>${project.available ? "Available" : "Not present on this server"}</small></span></td>
+      <td>${repositoryStatus(project)}</td>
+      <td><strong>${escapeHtml(project.repository?.revision || "-")}</strong><div class="cell-detail">${escapeHtml(project.repository?.branch || "-")}</div></td>
+      <td>${deploymentStatus(project)}</td>
+      <td>${containerStatus(project)}</td>
+      <td>${project.port ? `<strong>${escapeHtml(project.port)}</strong>` : "-"}</td>
+    </tr>
+  `).join("");
+}
+
+function renderDocker(docker) {
+  elements.dockerSummary.innerHTML = `
+    <div class="surface-heading"><div><h2>Docker engine</h2><p>Host container runtime.</p></div>${docker.available ? statusBadge("Available", "good") : statusBadge("Unavailable", "bad")}</div>
+    <div class="summary-body">
+      <dl class="summary-list">
+        <dt>Version</dt><dd>${escapeHtml(docker.version || "-")}</dd>
+        <dt>Containers</dt><dd>${escapeHtml(docker.containers ?? "-")}</dd>
+        <dt>Running</dt><dd>${escapeHtml(docker.running ?? "-")}</dd>
+        <dt>Unhealthy</dt><dd>${escapeHtml(docker.unhealthy ?? "-")}</dd>
+      </dl>
+    </div>
+  `;
+}
+
+function renderActivity(audit) {
+  const recent = audit.slice(0, 5);
+  elements.activitySummary.innerHTML = `
+    <div class="surface-heading"><div><h2>Recent activity</h2><p>Allowlisted console operations.</p></div></div>
+    <div class="summary-body">
+      ${recent.length ? `<dl class="summary-list">${recent.map((item) => `<dt>${escapeHtml(item.event)}</dt><dd>${escapeHtml(item.project || new Date(item.at).toLocaleTimeString())}</dd>`).join("")}</dl>` : `<p class="muted">${state.publicReadOnly ? "Hidden on the public endpoint." : "No recorded operations."}</p>`}
+    </div>
+  `;
+}
+
+function renderProjects(projects) {
+  const terminalProjects = new Set(["developer-os", "oa", "gaia"]);
+  elements.projectList.innerHTML = projects.map((project) => {
+    const containers = project.containers.length
+      ? project.containers.map((container) => `<span class="container-pill">${escapeHtml(container.name)} / ${escapeHtml(container.state)}</span>`).join("")
+      : `<span class="muted">No Compose containers detected.</span>`;
+    const repository = project.repository;
+    const details = repository
+      ? `${repository.untracked || 0} untracked / ${repository.staged || 0} staged / ${repository.unstaged || 0} unstaged`
+      : "Repository unavailable";
+    const terminalLink = project.available && terminalProjects.has(project.slug)
+      ? `<a class="terminal-link" href="http://127.0.0.1:8092/?project=${encodeURIComponent(project.slug)}" target="_blank" rel="noopener">Terminal</a>`
+      : `<span class="terminal-unavailable">Unavailable</span>`;
+    return `
+      <article class="project-row">
+        <div><h2>${escapeHtml(project.name)}</h2><p>Port ${escapeHtml(project.port || "-")}</p></div>
+        <div>${repositoryStatus(project)}<p>${escapeHtml(details)}</p></div>
+        <div class="container-list">${containers}</div>
+        <div>${deploymentStatus(project)}<p>${escapeHtml(project.deployment?.deployed_revisions?.join(", ") || "No image revision")}</p></div>
+        <div class="project-terminal">${terminalLink}</div>
+      </article>
+    `;
+  }).join("");
+}
+
+function backupStatus(backup) {
+  if (backup.status === "healthy" && backup.verification_status === "passed") return statusBadge("Protected", "good");
+  if (backup.status === "failed") return statusBadge("Backup failed", "bad");
+  if (backup.status === "stale") return statusBadge("Backup stale", "warn");
+  return statusBadge("Needs verification", "warn");
+}
+
+function renderOperations(projects, backups) {
+  const backupItems = backups?.items || [];
+  elements.backupSummary.innerHTML = `
+    <div class="surface-heading"><div><h2>Database protection</h2><p>Daily dumps with isolated restore verification.</p></div></div>
+    <div class="backup-list">
+      ${backupItems.length ? backupItems.map((backup) => `
+        <div class="backup-row">
+          <div><strong>${escapeHtml(backup.name)}</strong><span>${escapeHtml(backup.message)}</span></div>
+          <div>${backupStatus(backup)}<span>${formatBytes(backup.size_bytes)}</span></div>
+          <dl>
+            <dt>Backup</dt><dd>${escapeHtml(formatDate(backup.last_success_at))}</dd>
+            <dt>Restore test</dt><dd>${escapeHtml(formatDate(backup.last_verification_at))}</dd>
+          </dl>
+        </div>
+      `).join("") : `<p class="muted">No databases are configured for managed backups.</p>`}
+    </div>
+  `;
+
+  const backupTimer = backups?.backup_timer || {};
+  const verifyTimer = backups?.verification_timer || {};
+  elements.timerSummary.innerHTML = `
+    <div class="surface-heading"><div><h2>Automation schedule</h2><p>Persistent systemd timers on the Oracle host.</p></div></div>
+    <div class="summary-body">
+      <dl class="summary-list">
+        <dt>Daily backup</dt><dd>${backupTimer.active ? "Active" : "Unavailable"}</dd>
+        <dt>Next backup</dt><dd>${escapeHtml(backupTimer.next || "-")}</dd>
+        <dt>Weekly restore test</dt><dd>${verifyTimer.active ? "Active" : "Unavailable"}</dd>
+        <dt>Next restore test</dt><dd>${escapeHtml(verifyTimer.next || "-")}</dd>
+      </dl>
+    </div>
+  `;
+
+  elements.deploymentList.innerHTML = projects.map((project) => {
+    const deployment = project.deployment || {};
+    const image = deployment.images?.[0];
+    return `
+      <tr>
+        <td><strong>${escapeHtml(project.name)}</strong><div>${deploymentStatus(project)}</div></td>
+        <td>${escapeHtml(project.repository?.revision || "-")}</td>
+        <td>${escapeHtml(deployment.deployed_revisions?.join(", ") || "-")}</td>
+        <td><strong>${escapeHtml(image?.name || deployment.mode || "-")}</strong><div class="cell-detail">${escapeHtml(image?.id || "")}</div></td>
+        <td>${escapeHtml(formatDate(deployment.deployed_at))}</td>
+      </tr>
+    `;
+  }).join("");
+
+  elements.closeoutList.innerHTML = projects.map((project) => `
+    <article class="closeout-row">
+      <div><h3>${escapeHtml(project.name)}</h3>${project.work_end?.ready ? statusBadge("Ready", "good") : statusBadge(`${project.work_end?.blocking || 0} items`, "warn")}</div>
+      <div class="check-list">
+        ${(project.work_end?.checks || []).map((check) => `<span class="check ${escapeHtml(check.status)}">${escapeHtml(check.label)}</span>`).join("")}
+      </div>
+    </article>
+  `).join("");
+}
+
+function renderCommands(projects) {
+  elements.commandNotice.textContent = state.publicReadOnly
+    ? "This public HTTP endpoint is read-only. Server shell access uses the private SSH-tunneled Terminal link on each project."
+    : "Fixed project commands are available here. The private Terminal is isolated behind an SSH tunnel.";
+  elements.commandList.innerHTML = projects.map((project) => {
+    const buttons = project.actions.length
+      ? project.actions.map((action) => `<button class="button" data-project="${escapeHtml(project.slug)}" data-action="${escapeHtml(action.id)}" data-label="${escapeHtml(action.label)}" type="button">${escapeHtml(action.label)}</button>`).join("")
+      : `<span class="muted">${state.publicReadOnly ? "Disabled on public HTTP" : "No commands available"}</span>`;
+    return `<tr><td><strong>${escapeHtml(project.name)}</strong></td><td><div class="command-buttons">${buttons}</div></td></tr>`;
+  }).join("");
+  elements.commandList.querySelectorAll("button[data-action]").forEach((button) => {
+    button.addEventListener("click", () => openActionDialog(button.dataset.project, button.dataset.action, button.dataset.label));
+  });
+}
+
+function renderUsage(usage) {
+  elements.usagePanel.innerHTML = `
+    <p class="eyebrow">${escapeHtml(usage.provider || "API")}</p>
+    <h2>${usage.status === "snapshot" ? "Local cost snapshot" : "Usage data is not configured"}</h2>
+    <p class="muted">${escapeHtml(usage.message)}</p>
+    <div class="usage-grid">
+      <div class="usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost_usd)}</strong></div>
+      <div class="usage-value"><span>Budget</span><strong>${formatMoney(usage.budget_usd)}</strong></div>
+      <div class="usage-value"><span>Remaining</span><strong>${formatMoney(usage.remaining_usd)}</strong></div>
+    </div>
+    <p class="cell-detail">Last update: ${escapeHtml(usage.updated_at || "Unavailable")}</p>
+  `;
+}
+
+function openActionDialog(project, action, label) {
+  state.pendingAction = {project, action, label};
+  elements.dialogTitle.textContent = label;
+  elements.dialogDescription.textContent = "The server will run this fixed command for the selected project.";
+  elements.dialogCommand.textContent = `${project}:${action}`;
+  elements.actionDialog.showModal();
+}
+
+async function runPendingAction() {
+  const action = state.pendingAction;
+  if (!action) return;
+  elements.dialogConfirm.disabled = true;
+  try {
+    const result = await request("/api/actions", {
+      method: "POST",
+      body: JSON.stringify({
+        project: action.project,
+        action: action.action,
+        confirmation: `${action.project}:${action.action}`,
+      }),
+    });
+    elements.outputTitle.textContent = `${action.label} result`;
+    elements.outputContent.textContent = [result.stdout, result.stderr].filter(Boolean).join("\n") || "Command completed without output.";
+    elements.outputDialog.showModal();
+    showToast("Command completed.");
+    await refreshOverview();
+  } catch (error) {
+    showToast(error.message);
+  } finally {
+    elements.dialogConfirm.disabled = false;
+    state.pendingAction = null;
+  }
+}
+
+elements.loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  elements.loginError.textContent = "";
+  try {
+    const result = await request("/api/login", {
+      method: "POST",
+      body: JSON.stringify({token: elements.accessToken.value}),
+    });
+    state.authenticated = true;
+    state.csrfToken = result.csrf_token;
+    elements.accessToken.value = "";
+    showApplication();
+    await refreshOverview();
+  } catch (error) {
+    elements.loginError.textContent = error.message;
+  }
+});
+
+elements.refreshButton.addEventListener("click", refreshOverview);
+elements.logoutButton.addEventListener("click", async () => {
+  try {
+    await request("/api/logout", {method: "POST", body: "{}"});
+  } finally {
+    state.authenticated = false;
+    state.csrfToken = "";
+    showLogin();
+  }
+});
+
+elements.dialogConfirm.addEventListener("click", (event) => {
+  event.preventDefault();
+  elements.actionDialog.close();
+  runPendingAction();
+});
+
+document.querySelectorAll(".nav-item").forEach((button) => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
+    document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${button.dataset.tab}`));
+  });
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && elements.appShell.hidden === false) refreshOverview();
+});
+
+state.refreshTimer = window.setInterval(() => {
+  if (!document.hidden && elements.appShell.hidden === false) refreshOverview();
+}, 20000);
+
+initialize();

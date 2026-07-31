@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>DeveloperOS Server Terminal</title>
+  <link rel="stylesheet" href="/terminal.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">&gt;_</span>
+      <div>
+        <strong>Server Terminal</strong>
+        <span>DeveloperOS</span>
+      </div>
+    </div>
+    <div class="connection">
+      <span class="connection-dot" aria-hidden="true"></span>
+      SSH tunnel
+    </div>
+  </header>
+
+  <main class="terminal-shell">
+    <section class="context-bar" aria-label="Terminal context">
+      <div class="project-tabs" id="project-tabs"></div>
+      <div class="context-path" id="context-path">Connecting</div>
+      <button class="clear-button" id="clear-button" type="button">Clear</button>
+    </section>
+
+    <section class="transcript" id="transcript" aria-live="polite" aria-label="Command output"></section>
+
+    <form class="command-form" id="command-form">
+      <span class="prompt" id="prompt">server:$</span>
+      <input
+        id="command-input"
+        name="command"
+        type="text"
+        autocomplete="off"
+        autocapitalize="none"
+        spellcheck="false"
+        aria-label="Shell command"
+      >
+      <button id="run-button" type="submit">Run</button>
+    </form>
+  </main>
+
+  <template id="command-template">
+    <article class="command-entry">
+      <div class="command-line"><span class="entry-prompt"></span><code class="entry-command"></code></div>
+      <pre class="entry-output"></pre>
+      <div class="entry-result"></div>
+    </article>
+  </template>
+
+  <script src="/terminal.js"></script>
+</body>
+</html>

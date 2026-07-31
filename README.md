@@ -124,6 +124,78 @@ Generate every configured workflow:
 
 Secret values are not stored in DeveloperOS. The scripts print required GitHub Secret names only.
 
+## Browser Console
+
+DeveloperOS includes a live browser console under `console/`. It derives status
+from project repositories and the Oracle server without duplicating
+project-owned state.
+
+Run locally:
+
+```powershell
+make console-run
+```
+
+Deploy the public read-only console to the Oracle server:
+
+```powershell
+git add <files>
+git commit -m "<message>"
+git push origin main
+make console-deploy
+```
+
+Deployment is accepted only from a clean `main` branch that exactly matches
+`origin/main`. The release is built from the committed Git revision, never
+from uncommitted local files.
+
+The deployed service listens on port `8080`. See `console/README.md` for its
+security boundary, management command allowlist, and OpenAI usage snapshot
+behavior.
+
+The Oracle deployment also installs:
+
+- Daily OA and Gaia PostgreSQL backups with 14-day retention.
+- Weekly isolated restore verification in temporary PostgreSQL containers.
+- Deployment revision and container image comparison.
+- Git end-of-work checks and local operational alerts.
+
+Inspect or run the backup controls from the DeveloperOS terminal:
+
+```powershell
+make console-backup-status
+make console-backup
+make console-backup-verify
+```
+
+The Home computer reports its local Git status to the server while powered on.
+The report contains repository state only and is transferred through SSH:
+
+```powershell
+make workstation-home-install
+make workstation-home-report
+```
+
+The scheduled reporter runs every five minutes while the current Windows user
+session is available. When the Home computer is off, the console preserves the
+last report and marks it offline. Office reporting is intentionally not
+configured from the Home computer.
+
+The server terminal is deliberately separate from the public console. It
+listens only on server loopback and is reached from the Home computer through
+the existing SSH key:
+
+```powershell
+make terminal-tunnel-install
+make terminal-developer-os
+make terminal-oa
+make terminal-gaia
+```
+
+The project `Terminal` links in the browser console open the same private
+endpoint at `http://127.0.0.1:8092`. No terminal port is opened in Oracle
+firewall or OCI networking.
+
 ## Project Agent Entry Point
 
 - `BOOT.md`: single entry point for AI agents working inside individual projects.

@@ -1,0 +1,11 @@
+[Unit]
+Description=DeveloperOS isolated PostgreSQL restore verification
+After=docker.service developer-os-backup.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/developer-os-verify-postgres-backup --all
+Nice=15
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

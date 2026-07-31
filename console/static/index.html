@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeveloperOS Console</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <section class="login-shell" id="login-shell" hidden>
+    <form class="login-panel" id="login-form">
+      <div class="brand-mark">D</div>
+      <p class="eyebrow">WORKSPACE CONTROL</p>
+      <h1>DeveloperOS</h1>
+      <p class="muted">Enter the console access token.</p>
+      <label for="access-token">Access token</label>
+      <input id="access-token" name="token" type="password" autocomplete="current-password" required>
+      <button class="button primary" type="submit">Sign in</button>
+      <p class="form-error" id="login-error" role="alert"></p>
+    </form>
+  </section>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark small">D</span>
+        <div>
+          <strong>DeveloperOS</strong>
+          <span>Operations Console</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <span class="mode-badge" id="mode-badge">Secure session</span>
+        <span class="sync-state" id="sync-state">Waiting</span>
+        <button class="button quiet" id="refresh-button" type="button">Refresh</button>
+        <button class="button quiet" id="logout-button" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Console sections">
+      <button class="nav-item active" data-tab="overview" type="button">Overview</button>
+      <button class="nav-item" data-tab="projects" type="button">Projects</button>
+      <button class="nav-item" data-tab="operations" type="button">Operations</button>
+      <button class="nav-item" data-tab="commands" type="button">Commands</button>
+      <button class="nav-item" data-tab="usage" type="button">API usage</button>
+    </aside>
+
+    <main class="workspace">
+      <section class="tab-view active" id="tab-overview">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">LIVE WORKSPACE</p>
+            <h1>Overview</h1>
+          </div>
+          <p class="timestamp" id="overview-time">Not collected</p>
+        </div>
+        <div class="metrics-grid" id="server-metrics"></div>
+        <section class="surface" id="alert-summary"></section>
+        <section class="surface" id="workstation-summary"></section>
+        <section class="surface">
+          <div class="surface-heading">
+            <div>
+              <h2>Project health</h2>
+              <p>Repository and container state from the current server.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Git</th>
+                  <th>Revision</th>
+                  <th>Deployment</th>
+                  <th>Containers</th>
+                  <th>Port</th>
+                </tr>
+              </thead>
+              <tbody id="overview-projects"></tbody>
+            </table>
+          </div>
+        </section>
+        <div class="two-column">
+          <section class="surface" id="docker-summary"></section>
+          <section class="surface" id="activity-summary"></section>
+        </div>
+      </section>
+
+      <section class="tab-view" id="tab-projects">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">APPLICATION REPOSITORIES</p>
+            <h1>Projects</h1>
+          </div>
+        </div>
+        <section class="surface" id="workstation-detail"></section>
+        <div class="project-list" id="project-list"></div>
+      </section>
+
+      <section class="tab-view" id="tab-operations">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">RECOVERY AND DELIVERY</p>
+            <h1>Operations</h1>
+          </div>
+        </div>
+        <div class="two-column">
+          <section class="surface" id="backup-summary"></section>
+          <section class="surface" id="timer-summary"></section>
+        </div>
+        <section class="surface">
+          <div class="surface-heading">
+            <div>
+              <h2>Deployment state</h2>
+              <p>Repository revisions compared with running images.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Repository</th>
+                  <th>Deployed</th>
+                  <th>Image</th>
+                  <th>Started</th>
+                </tr>
+              </thead>
+              <tbody id="deployment-list"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="surface">
+          <div class="surface-heading">
+            <div>
+              <h2>End-of-work checks</h2>
+              <p>Live checks derived from Git, containers, and deployment state.</p>
+            </div>
+          </div>
+          <div id="closeout-list"></div>
+        </section>
+      </section>
+
+      <section class="tab-view" id="tab-commands">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ALLOWLISTED OPERATIONS</p>
+            <h1>Commands</h1>
+          </div>
+        </div>
+        <section class="notice" id="command-notice"></section>
+        <section class="surface">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Project</th>
+                  <th>Available commands</th>
+                </tr>
+              </thead>
+              <tbody id="command-list"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="tab-view" id="tab-usage">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">COST VISIBILITY</p>
+            <h1>API usage</h1>
+          </div>
+        </div>
+        <section class="surface usage-surface" id="usage-panel"></section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="action-dialog">
+    <form method="dialog" class="dialog-panel">
+      <p class="eyebrow">CONFIRM COMMAND</p>
+      <h2 id="dialog-title">Run command</h2>
+      <p id="dialog-description"></p>
+      <pre id="dialog-command"></pre>
+      <div class="dialog-actions">
+        <button class="button quiet" value="cancel">Cancel</button>
+        <button class="button danger" id="dialog-confirm" value="confirm">Run command</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="output-dialog">
+    <form method="dialog" class="dialog-panel output-panel">
+      <div class="surface-heading">
+        <div>
+          <p class="eyebrow">COMMAND OUTPUT</p>
+          <h2 id="output-title">Result</h2>
+        </div>
+        <button class="button quiet" value="close">Close</button>
+      </div>
+      <pre id="output-content"></pre>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>

@@ -218,3 +218,122 @@ Blueprint better represents a complete project design rather than a single reusa
 Impact:
 
 DeveloperOS has one root `.gitignore` for itself. Blueprint-specific `.gitignore` files live inside individual blueprints and are copied only when creating new projects.
+
+## 2026-07-28 - Add A Derived Browser Operations Console
+
+Status: Accepted
+
+Context:
+
+The developer needs one browser view for active repository status, common
+operations, Oracle server resources, and optional API cost visibility.
+
+Decision:
+
+Add a small browser console as a DeveloperOS tool. The console derives live
+state from project repositories, Docker, and the host operating system. It does
+not store project roadmaps or become the owner of project state. Browser
+commands are limited to an explicit allowlist and audited. Direct public HTTP
+access is read-only; management requires a secure authenticated endpoint.
+
+Reason:
+
+A derived operational view reduces repeated terminal inspection without
+turning DeveloperOS into a project dashboard or duplicating repository-owned
+documents.
+
+Impact:
+
+The console runs independently from governance documents, binds to port 8080,
+and may display a local OpenAI usage snapshot. OpenAI credentials and live
+billing integration are outside the default console scope.
+
+## 2026-07-28 - Automate Recoverability Evidence
+
+Status: Accepted
+
+Context:
+
+The existence of a database volume does not prove that application data can be
+recovered. Manual backups also become unreliable when they depend on memory or
+end-of-day discipline.
+
+Decision:
+
+The DeveloperOS operations tool may install project-aware database backup and
+restore-verification automation on a managed host. Backup data remains outside
+DeveloperOS governance documents. The console records only derived evidence:
+last success, integrity, age, and isolated restore result.
+
+Reason:
+
+Recoverability is an engineering property that should be continuously tested,
+not a project status field maintained by hand.
+
+Impact:
+
+OA and Gaia PostgreSQL containers receive daily compressed logical backups,
+14-day retention, and weekly restores into temporary network-isolated
+containers. Production databases are never restore targets. Failures appear as
+local console alerts without requiring an external notification credential.
+
+## 2026-07-28 - Let Workstations Report Their Own Git State
+
+Status: Accepted
+
+Context:
+
+The Oracle host cannot observe uncommitted or unpushed work stored only on a
+Home or Office computer. Treating the server repository as the state of every
+computer would hide local work and create false confidence.
+
+Decision:
+
+Each workstation reports its own derived Git summary while powered on.
+Reports use outbound SSH, contain no source files or credentials, and expire
+into an offline state. A workstation must not be configured from assumptions
+about another computer.
+
+Reason:
+
+Repository state belongs to the machine that holds the working tree. A
+self-reporting model preserves that boundary and works without opening a
+public write API.
+
+Impact:
+
+Home reporting is installed only from the Home computer. Office remains
+unconfigured until work is performed from the Office computer. The browser
+console displays online state, last report time, branch, dirty count, and
+ahead/behind counts without exposing local paths or hostnames publicly.
+
+## 2026-07-28 - Keep Arbitrary Server Commands Behind SSH
+
+Status: Accepted
+
+Context:
+
+Project operations sometimes require real shell commands from a browser.
+Exposing an arbitrary command endpoint on the public console would turn one
+HTTP service compromise into host-level control.
+
+Decision:
+
+The public DeveloperOS console remains read-only. A separate terminal service
+may execute commands only for explicitly configured project directories, must
+bind to server loopback, and must be reached through an authenticated SSH
+local-forward from a trusted workstation. No terminal port is opened in host
+or cloud firewalls.
+
+Reason:
+
+SSH already owns host authentication, key rotation, and network encryption.
+Reusing that boundary avoids inventing a weaker public terminal
+authentication system.
+
+Impact:
+
+Home can open project command consoles through a maintained local tunnel.
+Commands execute as the unprivileged server account, receive time and output
+limits, and write audit metadata without storing command text. Other
+workstations require their own explicit tunnel setup.
