@@ -1,9 +1,10 @@
 [CmdletBinding()]
 param(
-  [ValidateSet("Deploy", "Status", "Logs", "Restart", "Stop", "Backup", "VerifyBackup", "BackupStatus", "TerminalStatus", "TerminalLogs")]
+  [ValidateSet("Deploy", "Status", "Logs", "Restart", "Stop", "Backup", "VerifyBackup", "BackupStatus", "UsageStatus", "TerminalStatus", "TerminalLogs")]
   [string]$Action = "Deploy",
   [string]$Server = "opc@168.107.18.16",
-  [string]$SshKey = "X:/Settings/ssh/ssh-key-ops.key"
+  [string]$SshKey = "X:/Settings/ssh/ssh-key-ops.key",
+  [string]$OpenAiEnv = "X:/Settings/env/developer-os.env"
 )
 
 $ErrorActionPreference = "Stop"
@@ -72,18 +73,46 @@ $scp = Resolve-OpenSshTool -Name "scp"
 
 if ($Action -ne "Deploy") {
   $command = switch ($Action) {
-    "Status" { "sudo systemctl --no-pager --full status developer-os-console developer-os-terminal; systemctl list-timers developer-os-backup.timer developer-os-backup-verify.timer --no-pager; curl --fail --silent http://127.0.0.1:8080/healthz; echo; curl --fail --silent http://127.0.0.1:8022/healthz" }
+    "Status" { "sudo systemctl --no-pager --full status developer-os-console developer-os-terminal; systemctl list-timers developer-os-backup.timer developer-os-backup-verify.timer developer-os-openai-usage.timer --no-pager; curl --fail --silent http://127.0.0.1:8080/healthz; echo; curl --fail --silent http://127.0.0.1:8022/healthz" }
     "Logs" { "sudo journalctl -u developer-os-console --no-pager -n 120" }
     "Restart" { "sudo systemctl restart developer-os-console; sudo systemctl is-active developer-os-console" }
     "Stop" { "sudo systemctl stop developer-os-console; sudo systemctl is-active developer-os-console || true" }
     "Backup" { "sudo systemctl start developer-os-backup.service; sudo systemctl --no-pager --full status developer-os-backup.service" }
     "VerifyBackup" { "sudo systemctl start developer-os-backup-verify.service; sudo systemctl --no-pager --full status developer-os-backup-verify.service" }
     "BackupStatus" { "systemctl list-timers developer-os-backup.timer developer-os-backup-verify.timer --no-pager; sudo journalctl -u developer-os-backup.service -u developer-os-backup-verify.service --no-pager -n 80" }
+    "UsageStatus" { "systemctl list-timers developer-os-openai-usage.timer --no-pager; sudo systemctl --no-pager --full status developer-os-openai-usage.service || true; sudo journalctl -u developer-os-openai-usage.service --no-pager -n 40; test -s /var/lib/developer-os-console/openai-usage.json && echo OPENAI_USAGE_SNAPSHOT=present || echo OPENAI_USAGE_SNAPSHOT=missing" }
     "TerminalStatus" { "sudo systemctl --no-pager --full status developer-os-terminal; curl --fail --silent http://127.0.0.1:8022/healthz" }
     "TerminalLogs" { "sudo journalctl -u developer-os-terminal --no-pager -n 120" }
   }
   Invoke-RemoteScript -Script $command -FailureMessage "Console action $Action failed"
   return
+}
+
+$adminKeyConfigured = $false
+$budgetConfigured = $false
+if (-not (Test-Path -LiteralPath $OpenAiEnv -PathType Leaf)) {
+  throw "OpenAI environment file not found: $OpenAiEnv"
+}
+foreach ($line in [System.IO.File]::ReadLines($OpenAiEnv)) {
+  if ($line -match '^\s*OPENAI_ADMIN_API_KEY\s*=\s*(.+?)\s*$') {
+    $value = $matches[1].Trim().Trim('"').Trim("'")
+    $adminKeyConfigured = $value.StartsWith("sk-admin-") -and $value.Length -gt 20
+  }
+  if ($line -match '^\s*OPENAI_MONTHLY_BUDGET_USD\s*=\s*(.+?)\s*$') {
+    try {
+      $budget = [decimal]::Parse($matches[1].Trim().Trim('"').Trim("'"), [Globalization.CultureInfo]::InvariantCulture)
+      $budgetConfigured = $budget -ge 0
+    }
+    catch {
+      $budgetConfigured = $false
+    }
+  }
+}
+if (-not $adminKeyConfigured) {
+  throw "OPENAI_ADMIN_API_KEY is missing or invalid in $OpenAiEnv."
+}
+if (-not $budgetConfigured) {
+  throw "OPENAI_MONTHLY_BUDGET_USD is missing or invalid in $OpenAiEnv."
 }
 
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
@@ -136,6 +165,7 @@ if ($LASTEXITCODE -ne 0) {
 $revisionLabel = $revision
 $archive = Join-Path ([System.IO.Path]::GetTempPath()) "developer-os-console-$timestamp.tar.gz"
 $remoteArchive = "/home/opc/.developer-os-console/transfer/$timestamp.tar.gz"
+$remoteOpenAiEnv = "/home/opc/.developer-os-console/transfer/$timestamp-openai.env"
 
 try {
   Invoke-Checked -Command "git" -Arguments @(
@@ -151,6 +181,13 @@ try {
     $archive,
     "${Server}:$remoteArchive"
   ) -FailureMessage "Could not upload DeveloperOS"
+  Invoke-Checked -Command $scp -Arguments @(
+    "-o", "BatchMode=yes",
+    "-o", "ConnectTimeout=15",
+    "-i", $SshKey,
+    $OpenAiEnv,
+    "${Server}:$remoteOpenAiEnv"
+  ) -FailureMessage "Could not upload the OpenAI environment file"
 
   $projectConfig = @"
 {
@@ -231,6 +268,7 @@ chmod 600 "`$shared/terminal.env"
 sudo install -d -m 0750 -o root -g opc /etc/developer-os-console
 sudo install -m 0640 -o root -g opc "`$shared/console.env" /etc/developer-os-console/console.env
 sudo install -m 0640 -o root -g opc "`$shared/config.json" /etc/developer-os-console/config.json
+sudo install -m 0640 -o root -g opc $remoteOpenAiEnv /etc/developer-os-console/openai.env
 sudo install -d -m 0750 -o root -g opc /etc/developer-os-terminal
 sudo install -m 0640 -o root -g opc "`$shared/terminal.env" /etc/developer-os-terminal/terminal.env
 sudo install -m 0640 -o root -g opc "`$shared/terminal-projects.json" /etc/developer-os-terminal/projects.json
@@ -241,6 +279,8 @@ fi
 sudo usermod -aG docker opc
 sudo install -m 0644 "`$release/deployment/console/developer-os-console.service" /etc/systemd/system/developer-os-console.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-terminal.service" /etc/systemd/system/developer-os-terminal.service
+sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.service" /etc/systemd/system/developer-os-openai-usage.service
+sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.timer" /etc/systemd/system/developer-os-openai-usage.timer
 sudo install -m 0755 "`$release/deployment/console/backup-postgres.sh" /usr/local/sbin/developer-os-backup-postgres
 sudo install -m 0755 "`$release/deployment/console/verify-postgres-backup.sh" /usr/local/sbin/developer-os-verify-postgres-backup
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup.service" /etc/systemd/system/developer-os-backup.service
@@ -249,10 +289,11 @@ sudo install -m 0644 "`$release/deployment/console/developer-os-backup-verify.se
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup-verify.timer" /etc/systemd/system/developer-os-backup-verify.timer
 sudo systemctl daemon-reload
 sudo systemctl enable developer-os-console developer-os-terminal
-sudo systemctl enable --now developer-os-backup.timer developer-os-backup-verify.timer
+sudo systemctl enable --now developer-os-backup.timer developer-os-backup-verify.timer developer-os-openai-usage.timer
 sudo systemctl reset-failed developer-os-console || true
 sudo systemctl reset-failed developer-os-terminal || true
 sudo systemctl restart developer-os-console developer-os-terminal
+sudo systemctl start developer-os-openai-usage.service
 sudo install -d -m 0750 -o opc -g opc /var/lib/developer-os-console/workstations
 if [ ! -s /var/lib/developer-os-console/backup-status/oa.json ] || [ ! -s /var/lib/developer-os-console/backup-status/gaia.json ]; then
   sudo systemctl start developer-os-backup.service
@@ -276,7 +317,7 @@ for attempt in `$(seq 1 30); do
   sleep 1
 done
 curl --fail --silent http://127.0.0.1:8022/healthz
-rm -f $remoteArchive
+rm -f $remoteArchive $remoteOpenAiEnv
 echo
 echo "DeveloperOS console deployed: $revisionLabel"
 echo "Public read-only URL: http://168.107.18.16:8080"

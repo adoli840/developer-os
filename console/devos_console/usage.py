@@ -13,7 +13,7 @@ def read_usage_snapshot(path: Path) -> dict[str, Any]:
         "budget_usd": None,
         "remaining_usd": None,
         "updated_at": None,
-        "message": "No local usage snapshot is configured. No API key is requested by this console.",
+        "message": "The OpenAI cost collector has not produced a usage snapshot yet.",
     }
     if not path.is_file():
         return unavailable
@@ -38,5 +38,5 @@ def read_usage_snapshot(path: Path) -> dict[str, Any]:
         "updated_at": value.get("updated_at"),
         "period_start": value.get("period_start"),
         "period_end": value.get("period_end"),
-        "message": "Values are read from a local snapshot; this console does not call the OpenAI API.",
+        "message": "Values come from the server-side OpenAI cost collector; the public console never receives the Admin key.",
     }

@@ -1,0 +1,12 @@
+[Unit]
+Description=Refresh DeveloperOS OpenAI cost snapshot hourly
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1h
+RandomizedDelaySec=5min
+Persistent=true
+Unit=developer-os-openai-usage.service
+
+[Install]
+WantedBy=timers.target

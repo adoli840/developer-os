@@ -1,0 +1,29 @@
+[Unit]
+Description=DeveloperOS OpenAI cost snapshot refresh
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=opc
+Group=opc
+WorkingDirectory=/opt/developer-os-console/current
+EnvironmentFile=/etc/developer-os-console/openai.env
+Environment=PYTHONUNBUFFERED=1
+Environment=DEVOS_OPENAI_USAGE_SNAPSHOT=/var/lib/developer-os-console/openai-usage.json
+ExecStart=/usr/bin/python3 -m console.devos_usage
+StateDirectory=developer-os-console
+StateDirectoryMode=0700
+UMask=0077
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/developer-os-console
+NoNewPrivileges=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictRealtime=true
+SystemCallArchitectures=native

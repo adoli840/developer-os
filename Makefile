@@ -1,8 +1,9 @@
 PYTHON ?= python
 CONSOLE_SERVER ?= opc@168.107.18.16
 CONSOLE_SSH_KEY ?= X:/Settings/ssh/ssh-key-ops.key
+DEVOS_OPENAI_ENV ?= X:/Settings/env/developer-os.env
 
-.PHONY: console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status terminal-status terminal-logs terminal-tunnel-install terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-install workstation-home-report
+.PHONY: console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel-install terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-install workstation-home-report
 
 console-run:
 	$(PYTHON) -m console.devos_console --dev --bind 127.0.0.1 --port 8080
@@ -11,7 +12,7 @@ console-test:
 	$(PYTHON) -m unittest discover -s console/tests -v
 
 console-deploy:
-	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action Deploy -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
+	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action Deploy -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)" -OpenAiEnv "$(DEVOS_OPENAI_ENV)"
 
 console-status:
 	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action Status -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
@@ -33,6 +34,9 @@ console-backup-verify:
 
 console-backup-status:
 	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action BackupStatus -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
+
+console-usage-status:
+	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action UsageStatus -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
 
 terminal-status:
 	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action TerminalStatus -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"

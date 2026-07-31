@@ -337,3 +337,34 @@ Home can open project command consoles through a maintained local tunnel.
 Commands execute as the unprivileged server account, receive time and output
 limits, and write audit metadata without storing command text. Other
 workstations require their own explicit tunnel setup.
+
+## 2026-07-31 - Isolate OpenAI Cost Collection From The Public Console
+
+Status: Accepted
+
+Context:
+
+The operations console should display current OpenAI API cost and remaining
+monthly budget. Organization cost access requires a privileged Admin key that
+must not enter Git, a browser response, or the long-running public console
+process.
+
+Decision:
+
+Run OpenAI cost collection as a separate hardened oneshot service. Keep its
+environment file outside all repositories, transfer it independently from the
+Git release, and expose only a credential-free JSON snapshot to the console.
+Refresh the snapshot during deployment and hourly afterward.
+
+Reason:
+
+Separating collection from presentation limits credential exposure while
+still providing timely operational visibility.
+
+Impact:
+
+DeveloperOS deployments require the local
+`X:/Settings/env/developer-os.env` file with `OPENAI_ADMIN_API_KEY` and
+`OPENAI_MONTHLY_BUDGET_USD`. The server installs it with restricted
+permissions, and the public console reads only aggregate cost, budget,
+remaining amount, period, and update time.

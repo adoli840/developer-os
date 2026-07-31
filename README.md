@@ -153,6 +153,10 @@ The deployed service listens on port `8080`. See `console/README.md` for its
 security boundary, management command allowlist, and OpenAI usage snapshot
 behavior.
 
+OpenAI organization costs are collected by a separate hourly server service.
+Its Admin key remains outside Git in
+`X:/Settings/env/developer-os.env` and is never exposed to the public console.
+
 The Oracle deployment also installs:
 
 - Daily OA and Gaia PostgreSQL backups with 14-day retention.

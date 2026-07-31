@@ -55,6 +55,7 @@ make console-deploy
 make console-status
 make console-logs
 make console-backup-status
+make console-usage-status
 ```
 
 The deployment script:
@@ -71,7 +72,9 @@ The deployment script:
 8. Verifies `http://127.0.0.1:8080/healthz`.
 9. Installs daily PostgreSQL backup and weekly restore-verification timers.
 10. Runs an initial OA and Gaia backup and isolated restore test.
-11. Installs `developer-os-terminal.service` on `127.0.0.1:8022` without
+11. Installs an hourly OpenAI cost collector using the protected local
+    `X:/Settings/env/developer-os.env` file.
+12. Installs `developer-os-terminal.service` on `127.0.0.1:8022` without
     opening a firewall port.
 
 OCI Network Security List or NSG rules must also permit the desired source
@@ -112,13 +115,26 @@ report older than 15 minutes is displayed as offline. Office is not registered
 by the Home installation. Local revisions are compared directly with the
 server checkout and the running deployment image.
 
-## OpenAI Usage Snapshot
+## OpenAI Usage Collection
 
-The console does not request or store an OpenAI API key. If another trusted
-process later writes a JSON snapshot to
-`.console/openai-usage.json`, the console displays it.
+The public console never receives an OpenAI credential. A separate hardened
+oneshot service reads `OPENAI_ADMIN_API_KEY` and
+`OPENAI_MONTHLY_BUDGET_USD` from
+`/etc/developer-os-console/openai.env`, calls the organization Costs API, and
+writes a credential-free snapshot to
+`/var/lib/developer-os-console/openai-usage.json`.
 
-Use `console/openai-usage.example.json` as the schema.
+The source environment file remains outside every repository at
+`X:/Settings/env/developer-os.env`. Deployment transfers it separately from
+the Git release and installs it with restricted permissions. The refresh runs
+once during deployment and then hourly through
+`developer-os-openai-usage.timer`.
+
+Inspect the collector without displaying its key:
+
+```powershell
+make console-usage-status
+```
 
 ## Private Server Terminal
 
