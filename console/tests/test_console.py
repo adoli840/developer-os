@@ -8,6 +8,7 @@ import unittest
 from http.cookiejar import CookieJar
 from datetime import datetime, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 from urllib.request import HTTPCookieProcessor, build_opener
 
@@ -17,7 +18,7 @@ from console.devos_console.backups import collect_backup_status
 from console.devos_console.projects import ProjectService
 from console.devos_console.resources import _cpu_percent_between, _parse_size, collect_resource_breakdown
 from console.devos_console.runner import CommandResult
-from console.devos_console.server import create_server
+from console.devos_console.server import ConsoleApplication, create_server
 from console.devos_console.settings import ProjectSpec, WorkstationSpec, load_settings
 from console.devos_console.usage import read_oracle_usage_snapshot, read_usage_snapshot, read_usage_snapshots
 from console.devos_console.workstations import attach_server_comparisons, collect_workstations
@@ -39,6 +40,29 @@ class SessionStoreTests(unittest.TestCase):
         store = SessionStore("", secure_cookie=False)
         session = store.create_trusted()
         self.assertEqual(store.from_cookie(store.cookie_header(session)), session)
+
+
+class OverviewCacheTests(unittest.TestCase):
+    def test_repeated_overview_reads_reuse_an_isolated_cached_value(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            settings = SimpleNamespace(
+                runtime_dir=Path(directory),
+                access_token="",
+                secure_cookie=False,
+                projects=(),
+            )
+            application = ConsoleApplication(settings)
+            with patch.object(
+                application,
+                "_collect_overview",
+                return_value={"system": {"collected_at": 1}},
+            ) as collect:
+                first = application.overview(public=True)
+                first["system"]["collected_at"] = 999
+                second = application.overview(public=True)
+
+        self.assertEqual(second["system"]["collected_at"], 1)
+        self.assertEqual(collect.call_count, 1)
 
 
 class UsageSnapshotTests(unittest.TestCase):

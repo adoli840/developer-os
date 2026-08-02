@@ -140,6 +140,12 @@ The public console never receives a provider credential. A separate hardened
 oneshot service collects provider data and writes credential-free snapshots
 under `/var/lib/developer-os-console`.
 
+The browser overview keeps the latest complete server inspection in memory for
+60 seconds. Expired data is returned immediately while Git, Docker stats,
+container image, disk, and backup inspection refresh in the background. The
+roadmap payload is loaded only when its view is opened. This keeps page reloads
+responsive without presenting partial project state.
+
 OpenAI collection reads `OPENAI_ADMIN_API_KEY` and
 `OPENAI_MONTHLY_BUDGET_USD`, calls the organization Costs API, and writes
 `openai-usage.json`.

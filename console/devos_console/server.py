@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import ipaddress
 import json
 import mimetypes
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from threading import Lock, Thread
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
@@ -26,6 +29,7 @@ from .workstations import attach_server_comparisons, collect_workstations
 
 
 MAX_REQUEST_BODY = 16_384
+OVERVIEW_CACHE_SECONDS = 60
 
 
 class ConsoleApplication:
@@ -34,8 +38,11 @@ class ConsoleApplication:
         self.audit = AuditLog(settings.runtime_dir / "audit.jsonl")
         self.sessions = SessionStore(settings.access_token, secure_cookie=settings.secure_cookie)
         self.projects = ProjectService(settings.projects, self.audit)
+        self._overview_cache: dict[bool, tuple[float, dict[str, Any]]] = {}
+        self._overview_refreshing: set[bool] = set()
+        self._overview_lock = Lock()
 
-    def overview(self, *, public: bool = False) -> dict[str, Any]:
+    def _collect_overview(self, *, public: bool) -> dict[str, Any]:
         with ThreadPoolExecutor(max_workers=4) as executor:
             system_future = executor.submit(collect_system_info, self.settings.workspace_root)
             projects_future = executor.submit(self.projects.collect_all)
@@ -85,6 +92,50 @@ class ConsoleApplication:
             "audit": [] if public else self.audit.recent(20),
             "read_only": public,
         }
+
+    def _refresh_overview_cache(self, public: bool) -> None:
+        try:
+            value = self._collect_overview(public=public)
+            with self._overview_lock:
+                self._overview_cache[public] = (time.monotonic(), value)
+        except Exception as error:
+            self.audit.write(
+                "overview_refresh_failed",
+                public=public,
+                error=type(error).__name__,
+            )
+        finally:
+            with self._overview_lock:
+                self._overview_refreshing.discard(public)
+
+    def _start_overview_refresh(self, public: bool) -> None:
+        with self._overview_lock:
+            if public in self._overview_refreshing:
+                return
+            self._overview_refreshing.add(public)
+        Thread(
+            target=self._refresh_overview_cache,
+            args=(public,),
+            name=f"overview-refresh-{'public' if public else 'private'}",
+            daemon=True,
+        ).start()
+
+    def warm_overview(self, *, public: bool) -> None:
+        self._start_overview_refresh(public)
+
+    def overview(self, *, public: bool = False) -> dict[str, Any]:
+        with self._overview_lock:
+            cached = self._overview_cache.get(public)
+        if cached is None:
+            value = self._collect_overview(public=public)
+            with self._overview_lock:
+                self._overview_cache[public] = (time.monotonic(), value)
+            return copy.deepcopy(value)
+
+        collected_at, value = cached
+        if time.monotonic() - collected_at >= OVERVIEW_CACHE_SECONDS:
+            self._start_overview_refresh(public)
+        return copy.deepcopy(value)
 
     def roadmaps(self) -> dict[str, Any]:
         return collect_roadmaps(self.settings.projects)
@@ -306,8 +357,10 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         self.wfile.write(payload)
 
 
-def create_server(settings: Settings) -> ThreadingHTTPServer:
+def create_server(settings: Settings, *, prewarm: bool = False) -> ThreadingHTTPServer:
     application = ConsoleApplication(settings)
+    if prewarm:
+        application.warm_overview(public=settings.public_read_only)
 
     class BoundHandler(ConsoleHandler):
         pass
@@ -323,7 +376,7 @@ def main() -> None:
     parser.add_argument("--port", type=int)
     args = parser.parse_args()
     settings = load_settings(dev_mode=args.dev, bind=args.bind, port=args.port)
-    server = create_server(settings)
+    server = create_server(settings, prewarm=True)
     print(f"DeveloperOS console listening on http://{settings.bind}:{settings.port}", flush=True)
     try:
         server.serve_forever()

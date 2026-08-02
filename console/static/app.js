@@ -175,11 +175,9 @@ async function refreshOverview() {
   elements.syncState.textContent = "Refreshing";
   elements.refreshButton.disabled = true;
   try {
-    [state.overview, state.roadmaps] = await Promise.all([
-      request("/api/overview"),
-      request("/api/roadmaps"),
-    ]);
+    state.overview = await request("/api/overview");
     render();
+    if (tabFromPath() === "roadmap") await refreshRoadmaps();
     elements.syncState.textContent = "Live";
   } catch (error) {
     elements.syncState.textContent = "Refresh failed";
@@ -211,6 +209,11 @@ function roadmapStatusKind(status) {
   if (status === "Blocked" || status === "Cancelled") return "bad";
   if (status === "Paused") return "warn";
   return "neutral";
+}
+
+async function refreshRoadmaps() {
+  state.roadmaps = await request("/api/roadmaps");
+  renderRoadmaps(state.roadmaps);
 }
 
 function roadmapStatusClass(status) {
@@ -865,7 +868,12 @@ elements.dialogConfirm.addEventListener("click", (event) => {
 });
 
 document.querySelectorAll(".nav-item").forEach((button) => {
-  button.addEventListener("click", () => selectPrimaryTab(button.dataset.tab));
+  button.addEventListener("click", () => {
+    selectPrimaryTab(button.dataset.tab);
+    if (button.dataset.tab === "roadmap" && !state.roadmaps) {
+      refreshRoadmaps().catch((error) => showToast(error.message));
+    }
+  });
 });
 
 window.addEventListener("popstate", () => selectPrimaryTab(tabFromPath(), false));
@@ -876,6 +884,6 @@ document.addEventListener("visibilitychange", () => {
 
 state.refreshTimer = window.setInterval(() => {
   if (!document.hidden && elements.appShell.hidden === false) refreshOverview();
-}, 20000);
+}, 60000);
 
 initialize();
