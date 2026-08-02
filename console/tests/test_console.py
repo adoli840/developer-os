@@ -178,6 +178,7 @@ class WorkstationStatusTests(unittest.TestCase):
                                 "repository": {
                                     "branch": "main",
                                     "revision": "abc1234",
+                                    "remote_revision": "abc123456789",
                                     "modified": 1,
                                     "ahead": 2,
                                     "behind": 0,
@@ -197,6 +198,10 @@ class WorkstationStatusTests(unittest.TestCase):
         self.assertTrue(result["online"])
         self.assertEqual(result["summary"]["dirty"], 1)
         self.assertEqual(result["summary"]["ahead"], 2)
+        self.assertEqual(
+            result["projects"][0]["repository"]["remote_revision"],
+            "abc123456789",
+        )
 
     def test_missing_home_report_is_not_connected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -231,7 +236,10 @@ class WorkstationStatusTests(unittest.TestCase):
                 "projects": [
                     {
                         "slug": "gaia",
-                        "repository": {"revision": "abc1234"},
+                        "repository": {
+                            "revision": "abc1234",
+                            "remote_revision": "abc123456789",
+                        },
                     }
                 ],
                 "summary": {},
@@ -243,13 +251,48 @@ class WorkstationStatusTests(unittest.TestCase):
                 "available": True,
                 "repository": {"revision": "abc1234"},
                 "deployment": {"deployed_revisions": ["abc123456789"]},
+                "containers": [
+                    {"state": "running", "status": "Up 1 hour (healthy)"}
+                ],
             }
         ]
         attach_server_comparisons(workstations, server_projects)
         comparison = workstations[0]["projects"][0]["comparison"]
         self.assertEqual(comparison["server_status"], "match")
         self.assertEqual(comparison["deployment_status"], "match")
+        self.assertEqual(comparison["runtime_status"], "match")
+        self.assertEqual(comparison["service_status"], "healthy")
         self.assertEqual(workstations[0]["summary"]["mismatches"], 0)
+
+    def test_runtime_is_compared_with_the_tracked_github_revision(self) -> None:
+        workstations = [
+            {
+                "projects": [
+                    {
+                        "slug": "oa",
+                        "repository": {
+                            "revision": "local111",
+                            "remote_revision": "remote222",
+                        },
+                    }
+                ],
+                "summary": {},
+            }
+        ]
+        server_projects = [
+            {
+                "slug": "oa",
+                "available": True,
+                "repository": {"revision": "remote222"},
+                "deployment": {"deployed_revisions": ["remote222-full"]},
+                "containers": [{"state": "running", "status": "Up 1 hour"}],
+            }
+        ]
+        attach_server_comparisons(workstations, server_projects)
+
+        comparison = workstations[0]["projects"][0]["comparison"]
+        self.assertEqual(comparison["deployment_status"], "mismatch")
+        self.assertEqual(comparison["runtime_status"], "match")
 
 
 if __name__ == "__main__":

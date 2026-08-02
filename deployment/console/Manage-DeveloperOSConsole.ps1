@@ -208,6 +208,7 @@ try {
 {
   "projects": [
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current"},
+    {"slug":"btest","name":"bTest","path":"/home/opc/bTest"},
     {"slug":"oa","name":"OA","path":"/home/opc/oa"},
     {"slug":"gaia","name":"Gaia","path":"/home/opc/gaia"}
   ]

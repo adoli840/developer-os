@@ -27,7 +27,6 @@ const elements = {
   workstationSummary: document.querySelector("#workstation-summary"),
   dockerSummary: document.querySelector("#docker-summary"),
   activitySummary: document.querySelector("#activity-summary"),
-  projectList: document.querySelector("#project-list"),
   workstationDetail: document.querySelector("#workstation-detail"),
   roadmapTime: document.querySelector("#roadmap-time"),
   roadmapSummary: document.querySelector("#roadmap-summary"),
@@ -88,6 +87,17 @@ function formatDate(value) {
   if (!value) return "Unavailable";
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString();
+}
+
+function shortRevision(value) {
+  const revision = String(value || "");
+  return revision ? revision.slice(0, 7) : "-";
+}
+
+function shortRevisions(values) {
+  return Array.isArray(values) && values.length
+    ? values.map((value) => shortRevision(value)).join(", ")
+    : "-";
 }
 
 function statusBadge(label, kind) {
@@ -177,7 +187,6 @@ function render() {
   renderOverviewProjects(state.overview.projects);
   renderDocker(state.overview.system.docker);
   renderActivity(state.overview.audit);
-  renderProjects(state.overview.projects);
   renderRoadmaps(state.roadmaps);
   renderOperations(state.overview.projects, state.overview.backups);
   renderCommands(state.overview.projects);
@@ -476,23 +485,46 @@ function renderWorkstations(workstations) {
       ${workstationStatus(home)}
     </div>
     <div class="table-wrap">
-      <table>
-        <thead><tr><th>Project</th><th>Local Git</th><th>Branch</th><th>Local revision</th><th>Server</th><th>Deployment</th></tr></thead>
+      <table class="project-comparison-table">
+        <thead><tr><th>Project</th><th>Local</th><th>GitHub</th><th>Server</th><th>Service</th><th>Terminal</th></tr></thead>
         <tbody>
           ${home.projects.length ? home.projects.map((project) => `
             <tr>
-              <td><strong>${escapeHtml(project.name)}</strong></td>
-              <td>${repositoryStatus(project)}</td>
-              <td>${escapeHtml(project.repository?.branch || "-")}</td>
-              <td>${escapeHtml(project.repository?.revision || "-")}</td>
-              <td>${comparisonStatus(project.comparison?.server_status)}<div class="cell-detail">${escapeHtml(project.comparison?.server_revision || "-")}</div></td>
-              <td>${comparisonStatus(project.comparison?.deployment_status)}<div class="cell-detail">${escapeHtml(project.comparison?.deployed_revisions?.join(", ") || "-")}</div></td>
+              <td><strong>${escapeHtml(project.name)}</strong><div class="mobile-terminal">${terminalLink(project)}</div></td>
+              <td>${repositoryStatus(project)}<div class="cell-detail">${escapeHtml(shortRevision(project.repository?.revision))}</div></td>
+              <td>${githubStatus(project.repository)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div></td>
+              <td>${comparisonStatus(project.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(project.comparison?.deployed_revisions))}</div></td>
+              <td>${serviceStatus(project.comparison?.service_status)}</td>
+              <td class="terminal-cell">${terminalLink(project)}</td>
             </tr>
           `).join("") : `<tr><td colspan="6" class="muted">No Home report has been received yet.</td></tr>`}
         </tbody>
       </table>
     </div>
   `;
+}
+
+function githubStatus(repository) {
+  if (!repository?.upstream) return statusBadge("Unavailable", "neutral");
+  if (repository.ahead > 0 && repository.behind > 0) return statusBadge("Diverged", "bad");
+  if (repository.ahead > 0) return statusBadge("Push needed", "warn");
+  if (repository.behind > 0) return statusBadge("Pull needed", "warn");
+  return statusBadge("Match", "good");
+}
+
+function serviceStatus(status) {
+  if (status === "healthy") return statusBadge("Healthy", "good");
+  if (status === "degraded") return statusBadge("Degraded", "warn");
+  if (status === "stopped") return statusBadge("Stopped", "bad");
+  return statusBadge("Unavailable", "neutral");
+}
+
+function terminalLink(project) {
+  const terminalProjects = new Set(["developer-os", "oa", "gaia", "btest"]);
+  if (!project.available || !terminalProjects.has(project.slug)) {
+    return `<span class="terminal-unavailable">Unavailable</span>`;
+  }
+  return `<a class="terminal-link" href="http://127.0.0.1:8092/?project=${encodeURIComponent(project.slug)}" target="_blank" rel="noopener">Terminal</a>`;
 }
 
 function comparisonStatus(status) {
@@ -536,31 +568,6 @@ function renderActivity(audit) {
       ${recent.length ? `<dl class="summary-list">${recent.map((item) => `<dt>${escapeHtml(item.event)}</dt><dd>${escapeHtml(item.project || new Date(item.at).toLocaleTimeString())}</dd>`).join("")}</dl>` : `<p class="muted">${state.publicReadOnly ? "Hidden on the public endpoint." : "No recorded operations."}</p>`}
     </div>
   `;
-}
-
-function renderProjects(projects) {
-  const terminalProjects = new Set(["developer-os", "oa", "gaia"]);
-  elements.projectList.innerHTML = projects.map((project) => {
-    const containers = project.containers.length
-      ? project.containers.map((container) => `<span class="container-pill">${escapeHtml(container.name)} / ${escapeHtml(container.state)}</span>`).join("")
-      : `<span class="muted">No Compose containers detected.</span>`;
-    const repository = project.repository;
-    const details = repository
-      ? `${repository.untracked || 0} untracked / ${repository.staged || 0} staged / ${repository.unstaged || 0} unstaged`
-      : "Repository unavailable";
-    const terminalLink = project.available && terminalProjects.has(project.slug)
-      ? `<a class="terminal-link" href="http://127.0.0.1:8092/?project=${encodeURIComponent(project.slug)}" target="_blank" rel="noopener">Terminal</a>`
-      : `<span class="terminal-unavailable">Unavailable</span>`;
-    return `
-      <article class="project-row">
-        <div><h2>${escapeHtml(project.name)}</h2><p>Port ${escapeHtml(project.port || "-")}</p></div>
-        <div>${repositoryStatus(project)}<p>${escapeHtml(details)}</p></div>
-        <div class="container-list">${containers}</div>
-        <div>${deploymentStatus(project)}<p>${escapeHtml(project.deployment?.deployed_revisions?.join(", ") || "No image revision")}</p></div>
-        <div class="project-terminal">${terminalLink}</div>
-      </article>
-    `;
-  }).join("");
 }
 
 function backupStatus(backup) {

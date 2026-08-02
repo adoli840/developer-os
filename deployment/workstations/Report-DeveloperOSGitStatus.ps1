@@ -71,6 +71,11 @@ function Get-RepositoryStatus {
   $revision = Invoke-Git -Repository $Path -Arguments @("rev-parse", "--short", "HEAD")
   $status = Invoke-Git -Repository $Path -Arguments @("status", "--porcelain")
   $upstream = Invoke-Git -Repository $Path -Arguments @("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+  $remoteRevision = if ($upstream.Ok) {
+    Invoke-Git -Repository $Path -Arguments @("rev-parse", "@{u}")
+  } else {
+    $null
+  }
   $lastCommit = Invoke-Git -Repository $Path -Arguments @("log", "-1", "--format=%cI")
   $statusLines = @($status.Lines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
   $ahead = 0
@@ -96,6 +101,7 @@ function Get-RepositoryStatus {
       unstaged = @($statusLines | Where-Object { $_.Length -ge 2 -and $_[1] -notin @(" ", "?") }).Count
       untracked = @($statusLines | Where-Object { $_.StartsWith("??") }).Count
       upstream = if ($upstream.Ok) { $upstream.Text } else { $null }
+      remote_revision = if ($null -ne $remoteRevision -and $remoteRevision.Ok) { $remoteRevision.Text } else { $null }
       ahead = $ahead
       behind = $behind
       last_commit_at = if ($lastCommit.Ok) { $lastCommit.Text } else { $null }

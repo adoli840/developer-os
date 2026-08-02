@@ -31,6 +31,7 @@ def _safe_repository(value: object) -> dict[str, Any] | None:
         "unstaged": max(0, int(value.get("unstaged") or 0)),
         "untracked": max(0, int(value.get("untracked") or 0)),
         "upstream": str(value.get("upstream") or "") or None,
+        "remote_revision": str(value.get("remote_revision") or "") or None,
         "ahead": max(0, int(value.get("ahead") or 0)),
         "behind": max(0, int(value.get("behind") or 0)),
         "last_commit_at": str(value.get("last_commit_at") or "") or None,
@@ -117,6 +118,23 @@ def _revisions_match(first: object, second: object) -> bool:
     return bool(left and right and (left.startswith(right) or right.startswith(left)))
 
 
+def _service_status(server_project: dict[str, Any] | None) -> str:
+    if not server_project or not server_project.get("available"):
+        return "unavailable"
+    containers = server_project.get("containers") or []
+    if not containers:
+        return "healthy" if server_project.get("slug") == "developer-os" else "unavailable"
+    running = sum(
+        1 for container in containers if str(container.get("state")).lower() == "running"
+    )
+    unhealthy = any(
+        "unhealthy" in str(container.get("status")).lower() for container in containers
+    )
+    if running == len(containers) and not unhealthy:
+        return "healthy"
+    return "stopped" if running == 0 else "degraded"
+
+
 def attach_server_comparisons(
     workstations: list[dict[str, Any]],
     server_projects: list[dict[str, Any]],
@@ -126,6 +144,7 @@ def attach_server_comparisons(
         mismatches = 0
         for project in workstation["projects"]:
             local_revision = (project.get("repository") or {}).get("revision")
+            remote_revision = (project.get("repository") or {}).get("remote_revision")
             server_project = server_by_slug.get(project["slug"])
             server_revision = (
                 (server_project.get("repository") or {}).get("revision")
@@ -149,6 +168,15 @@ def attach_server_comparisons(
                     if any(_revisions_match(local_revision, revision) for revision in deployed_revisions)
                     else "mismatch"
                 )
+            runtime_target = remote_revision or local_revision
+            if not runtime_target or not deployed_revisions:
+                runtime_status = "unavailable"
+            else:
+                runtime_status = (
+                    "match"
+                    if any(_revisions_match(runtime_target, revision) for revision in deployed_revisions)
+                    else "mismatch"
+                )
             if server_status == "mismatch" or deployment_status == "mismatch":
                 mismatches += 1
             project["comparison"] = {
@@ -156,5 +184,7 @@ def attach_server_comparisons(
                 "server_revision": server_revision,
                 "deployment_status": deployment_status,
                 "deployed_revisions": deployed_revisions,
+                "runtime_status": runtime_status,
+                "service_status": _service_status(server_project),
             }
         workstation["summary"]["mismatches"] = mismatches
