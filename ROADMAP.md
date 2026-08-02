@@ -27,7 +27,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Docker image build minimization | Done | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Monitor lifecycle and deployment commands for regressions |
 | Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
 | Workspace release commands | Done | Shared deploy and local-to-server sync facades delegate only to explicit project-owned hooks and preserve Git revision identity | Add project hooks only after their deployment or data contracts are verified |
-| Provider usage visibility | Done | OpenAI and Oracle Cloud costs plus explicit A1 free-resource allowances are published through credential-free snapshots | Monitor collector freshness and add providers only when they preserve the same isolation boundary |
+| Provider usage visibility | Done | OpenAI and Oracle Cloud costs plus OCI-reported A1 account usage, limits, and availability are published through credential-free snapshots | Monitor collector freshness and add providers only when they preserve the same isolation boundary |
 | Snapshot Manager | Planned | Create and restore tooling protects risky AI work without Git noise | Move to In Progress after workspace foundation stabilizes |
 
 ## Current Priority
@@ -36,17 +36,18 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 2. Keep overall roadmaps limited to cross-track priority and release state.
 3. Apply data synchronization first as read-only manifest comparison when a
    project explicitly adopts a contract.
-4. Keep bTest deployment unavailable until its current runtime migration owns a
-   verified production deployment target.
+4. Observe bTest's newly enabled project deployment hook for regressions while
+   its database and kline synchronization remain explicitly disabled.
 5. Define Snapshot Manager scope before moving its topic to `In Progress`.
 
 ## Latest Status Change
 
-- Topic: Provider usage visibility
-- Change: Added as Done
-- Evidence or reason: The provider-neutral Usage view and isolated OpenAI and
-  OCI collectors expose only credential-free snapshots; OCI remains inactive
-  until its read-only instance-principal policy is configured.
+- Topic: Workspace release commands
+- Change: bTest project deployment hook enabled under the shared facade
+- Evidence or reason: bTest's local, development, and production two-container
+  contracts, app-only release helper, rollback path, runtime health, and
+  default-disabled data synchronization passed local validation without a
+  production deployment.
 
 ## Next Status Transitions
 

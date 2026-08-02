@@ -5,9 +5,9 @@ $workspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 $developerOSPath = Join-Path $workspaceRoot "DeveloperOS"
 
 $projects = @(
-    @{ Name = "OA"; Path = (Join-Path $workspaceRoot "oa"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = "project-deploy" },
-    @{ Name = "Gaia"; Path = (Join-Path $workspaceRoot "gaia"); Compose = "docker-compose.dev.yml"; BuildCompose = "docker-compose.dev.yml"; DeployTarget = "project-deploy" },
-    @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = $null }
+    @{ Name = "OA"; Path = (Join-Path $workspaceRoot "oa"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = "project-deploy"; SyncTarget = $null },
+    @{ Name = "Gaia"; Path = (Join-Path $workspaceRoot "gaia"); Compose = "docker-compose.dev.yml"; BuildCompose = "docker-compose.dev.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" },
+    @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" }
 )
 
 $reservedTargets = @(
@@ -136,8 +136,19 @@ try {
 
         if (-not $projectFailed) {
             $syncOutput = @(& make --no-print-directory -n sync -C $project.Path 2>&1)
-            if ($LASTEXITCODE -ne 0 -or ($syncOutput -join "`n") -notmatch "not configured") {
-                Write-Host "FAIL $($project.Name): unconfigured make sync must be an explicit no-op."
+            $syncText = $syncOutput -join "`n"
+            $syncIsValid = if ($null -ne $project.SyncTarget) {
+                $LASTEXITCODE -eq 0 -and $syncText -match [regex]::Escape($project.SyncTarget)
+            } else {
+                $LASTEXITCODE -eq 0 -and $syncText -match "not configured"
+            }
+            if (-not $syncIsValid) {
+                $expectation = if ($null -ne $project.SyncTarget) {
+                    "delegate to $($project.SyncTarget)"
+                } else {
+                    "be an explicit no-op"
+                }
+                Write-Host "FAIL $($project.Name): make sync must $expectation."
                 $failed = $true
                 $projectFailed = $true
             }
