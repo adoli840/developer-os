@@ -169,6 +169,7 @@ $remoteOpenAiEnv = "/home/opc/.developer-os-console/transfer/$timestamp-openai.e
 
 try {
   Invoke-Checked -Command "git" -Arguments @(
+    "-c", "core.autocrlf=false",
     "-C", $repositoryRoot,
     "archive", "--format=tar.gz", "--output=$archive", "HEAD"
   ) -FailureMessage "Could not package the committed DeveloperOS revision"
@@ -281,8 +282,9 @@ sudo install -m 0644 "`$release/deployment/console/developer-os-console.service"
 sudo install -m 0644 "`$release/deployment/console/developer-os-terminal.service" /etc/systemd/system/developer-os-terminal.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.service" /etc/systemd/system/developer-os-openai-usage.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.timer" /etc/systemd/system/developer-os-openai-usage.timer
-sudo install -m 0755 "`$release/deployment/console/backup-postgres.sh" /usr/local/sbin/developer-os-backup-postgres
-sudo install -m 0755 "`$release/deployment/console/verify-postgres-backup.sh" /usr/local/sbin/developer-os-verify-postgres-backup
+sed 's/\r`$//' "`$release/deployment/console/backup-postgres.sh" | sudo tee /usr/local/sbin/developer-os-backup-postgres >/dev/null
+sed 's/\r`$//' "`$release/deployment/console/verify-postgres-backup.sh" | sudo tee /usr/local/sbin/developer-os-verify-postgres-backup >/dev/null
+sudo chmod 0755 /usr/local/sbin/developer-os-backup-postgres /usr/local/sbin/developer-os-verify-postgres-backup
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup.service" /etc/systemd/system/developer-os-backup.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup.timer" /etc/systemd/system/developer-os-backup.timer
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup-verify.service" /etc/systemd/system/developer-os-backup-verify.service
