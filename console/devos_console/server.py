@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import mimetypes
 import sys
@@ -134,6 +135,16 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     def _session(self) -> Session | None:
         return self.application.sessions.from_cookie(self.headers.get("Cookie"))
 
+    def _trusted_local_session(self) -> Session | None:
+        if not self.application.settings.trusted_local:
+            return None
+        try:
+            if not ipaddress.ip_address(self.client_address[0]).is_loopback:
+                return None
+        except ValueError:
+            return None
+        return self.application.sessions.create_trusted()
+
     def _require_session(self) -> Session | None:
         session = self._session()
         if session is None:
@@ -155,12 +166,34 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         if parsed.path == "/api/session":
             session = self._session()
             if session is None:
+                session = self._trusted_local_session()
+                if session is not None:
+                    self._json(
+                        HTTPStatus.OK,
+                        {
+                            "authenticated": True,
+                            "public_read_only": False,
+                            "trusted_local": True,
+                            "csrf_token": session.csrf_token,
+                        },
+                        cookie=self.application.sessions.cookie_header(session),
+                    )
+                    return
+            if session is None:
                 if self.application.settings.public_read_only:
                     self._json(HTTPStatus.OK, {"authenticated": False, "public_read_only": True})
                 else:
                     self._json(HTTPStatus.UNAUTHORIZED, {"authenticated": False, "public_read_only": False})
             else:
-                self._json(HTTPStatus.OK, {"authenticated": True, "public_read_only": False, "csrf_token": session.csrf_token})
+                self._json(
+                    HTTPStatus.OK,
+                    {
+                        "authenticated": True,
+                        "public_read_only": False,
+                        "trusted_local": self.application.settings.trusted_local,
+                        "csrf_token": session.csrf_token,
+                    },
+                )
             return
 
         if parsed.path.startswith("/api/"):

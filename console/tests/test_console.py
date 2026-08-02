@@ -3,17 +3,21 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+import threading
 import unittest
+from http.cookiejar import CookieJar
 from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
+from urllib.request import HTTPCookieProcessor, build_opener
 
 from console.devos_console.alerts import build_alerts
 from console.devos_console.auth import SessionStore
 from console.devos_console.backups import collect_backup_status
 from console.devos_console.projects import ProjectService
-from console.devos_console.resources import _parse_size, collect_resource_breakdown
+from console.devos_console.resources import _cpu_percent_between, _parse_size, collect_resource_breakdown
 from console.devos_console.runner import CommandResult
+from console.devos_console.server import create_server
 from console.devos_console.settings import ProjectSpec, WorkstationSpec, load_settings
 from console.devos_console.usage import read_usage_snapshot
 from console.devos_console.workstations import attach_server_comparisons, collect_workstations
@@ -30,6 +34,11 @@ class SessionStoreTests(unittest.TestCase):
     def test_invalid_token_is_rejected(self) -> None:
         store = SessionStore("expected-token", secure_cookie=False)
         self.assertIsNone(store.login("wrong-token", "127.0.0.1"))
+
+    def test_trusted_session_is_created_without_access_token(self) -> None:
+        store = SessionStore("", secure_cookie=False)
+        session = store.create_trusted()
+        self.assertEqual(store.from_cookie(store.cookie_header(session)), session)
 
 
 class UsageSnapshotTests(unittest.TestCase):
@@ -83,6 +92,55 @@ class SettingsTests(unittest.TestCase):
         self.assertTrue(btest.backup_expected)
         self.assertEqual(btest.port, 8081)
 
+    def test_loopback_development_mode_enables_trusted_local_session(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings(dev_mode=True, bind="127.0.0.1")
+        self.assertTrue(settings.trusted_local)
+
+    def test_public_read_only_disables_trusted_local_session(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+                "DEVOS_PUBLIC_READ_ONLY": "1",
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings(dev_mode=True, bind="127.0.0.1")
+        self.assertTrue(settings.public_read_only)
+        self.assertFalse(settings.trusted_local)
+
+
+class LocalSessionTests(unittest.TestCase):
+    def test_loopback_development_session_skips_login(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings(dev_mode=True, bind="127.0.0.1", port=0)
+            server = create_server(settings)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            opener = build_opener(HTTPCookieProcessor(CookieJar()))
+            try:
+                url = f"http://127.0.0.1:{server.server_address[1]}/api/session"
+                with opener.open(url, timeout=5) as response:
+                    payload = json.load(response)
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=5)
+
+        self.assertTrue(payload["authenticated"])
+        self.assertTrue(payload["trusted_local"])
+        self.assertTrue(payload["csrf_token"])
+
 
 class ProjectStatusTests(unittest.TestCase):
     def test_status_counts_distinguish_worktree_states(self) -> None:
@@ -108,6 +166,9 @@ class ProjectStatusTests(unittest.TestCase):
 
 
 class ResourceBreakdownTests(unittest.TestCase):
+    def test_cpu_percent_uses_the_same_sampling_window(self) -> None:
+        self.assertEqual(_cpu_percent_between((1_000, 600), (1_400, 800)), 50.0)
+
     def test_size_parser_accepts_docker_decimal_and_binary_units(self) -> None:
         self.assertEqual(_parse_size("1.5GB"), 1_500_000_000)
         self.assertEqual(_parse_size("2MiB"), 2_097_152)
@@ -125,13 +186,20 @@ class ResourceBreakdownTests(unittest.TestCase):
         projects = [
             {
                 "slug": "oa",
-                "containers": [{"name": "oa", "service": "app"}],
+                "containers": [{"id": "container-id", "name": "oa", "service": "app"}],
             }
         ]
         stats = CommandResult(
             ("docker", "stats"),
             0,
-            json.dumps({"Name": "oa", "CPUPerc": "40%", "MemUsage": "200MiB / 8GiB"}),
+            json.dumps(
+                {
+                    "Container": "container-id",
+                    "Name": "renamed-oa",
+                    "CPUPerc": "40%",
+                    "MemUsage": "200MiB / 8GiB",
+                }
+            ),
             "",
         )
         disk = CommandResult(
@@ -158,6 +226,8 @@ class ResourceBreakdownTests(unittest.TestCase):
         with (
             patch("console.devos_console.resources.run_docker", side_effect=[stats, disk]),
             patch("console.devos_console.resources._directory_size", return_value=100_000_000),
+            patch("console.devos_console.resources._cpu_ticks", return_value=None),
+            patch("console.devos_console.resources._child_cpu_seconds", return_value=None),
         ):
             result = collect_resource_breakdown((spec,), projects, system)
 

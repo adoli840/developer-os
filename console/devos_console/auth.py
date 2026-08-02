@@ -40,6 +40,15 @@ class SessionStore:
 
         if not self._access_token or not hmac.compare_digest(token, self._access_token):
             return None
+        session = self._create_session(now)
+        with self._lock:
+            self._attempts.pop(remote_address, None)
+        return session
+
+    def create_trusted(self) -> Session:
+        return self._create_session(time.time())
+
+    def _create_session(self, now: float) -> Session:
         session = Session(
             session_id=secrets.token_urlsafe(32),
             csrf_token=secrets.token_urlsafe(24),
@@ -47,7 +56,6 @@ class SessionStore:
         )
         with self._lock:
             self._sessions[session.session_id] = session
-            self._attempts.pop(remote_address, None)
         return session
 
     def from_cookie(self, cookie_header: str | None) -> Session | None:

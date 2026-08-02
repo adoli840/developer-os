@@ -22,7 +22,8 @@ PrivateTmp=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
-RestrictSUIDSGID=true
+# Docker CLI needs its SELinux domain transition; this service already runs as opc.
+RestrictSUIDSGID=false
 LockPersonality=true
 RestrictRealtime=true
 SystemCallArchitectures=native

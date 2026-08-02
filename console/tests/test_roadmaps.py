@@ -225,6 +225,7 @@ class RoadmapRouteTests(unittest.TestCase):
                 access_token="test-token",
                 secure_cookie=False,
                 public_read_only=True,
+                trusted_local=False,
                 projects=(project_spec(project_path),),
                 usage_snapshot=runtime_path / "usage.json",
                 backup_status_dir=runtime_path / "backups",

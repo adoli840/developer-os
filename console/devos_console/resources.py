@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 import re
+import time
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +37,43 @@ def _parse_percent(value: object) -> float | None:
         return float(str(value or "").strip().removesuffix("%"))
     except ValueError:
         return None
+
+
+def _cpu_ticks() -> tuple[int, int] | None:
+    if os.name == "nt":
+        return None
+    try:
+        fields = Path("/proc/stat").read_text(encoding="ascii").splitlines()[0].split()[1:]
+        values = [int(value) for value in fields]
+    except (OSError, ValueError, IndexError):
+        return None
+    idle = values[3] + (values[4] if len(values) > 4 else 0)
+    return sum(values), idle
+
+
+def _cpu_percent_between(
+    first: tuple[int, int] | None,
+    second: tuple[int, int] | None,
+) -> float | None:
+    if first is None or second is None:
+        return None
+    total_delta = second[0] - first[0]
+    idle_delta = second[1] - first[1]
+    if total_delta <= 0:
+        return None
+    return round((1 - idle_delta / total_delta) * 100, 1)
+
+
+def _child_cpu_seconds() -> float | None:
+    if os.name == "nt":
+        return None
+    try:
+        import resource
+
+        usage = resource.getrusage(resource.RUSAGE_CHILDREN)
+    except (ImportError, OSError):
+        return None
+    return usage.ru_utime + usage.ru_stime
 
 
 def _labels(value: object) -> dict[str, str]:
@@ -142,15 +181,30 @@ def collect_resource_breakdown(
     for project in projects:
         for container in project.get("containers") or []:
             name = str(container.get("name") or "")
+            container_id = str(container.get("id") or "")
             service = str(container.get("service") or name or "Container")
             if name and project.get("slug") in usage:
                 container_map[name] = (str(project["slug"]), service)
+            if container_id and project.get("slug") in usage:
+                container_map[container_id] = (str(project["slug"]), service)
 
     cpu_count = max(1, int(system.get("cpu_count") or 1))
+    cpu_start = _cpu_ticks()
+    child_cpu_start = _child_cpu_seconds()
+    sample_started_at = time.monotonic()
     stats = run_docker(("stats", "--no-stream", "--format", "{{json .}}"), timeout=15)
+    sample_seconds = max(time.monotonic() - sample_started_at, 0.001)
+    child_cpu_end = _child_cpu_seconds()
+    synchronized_cpu = _cpu_percent_between(cpu_start, _cpu_ticks())
+    if synchronized_cpu is not None:
+        system["cpu_percent"] = synchronized_cpu
     if stats.ok:
         for item in _json_lines(stats.stdout):
-            target = container_map.get(str(item.get("Name") or ""))
+            target = (
+                container_map.get(str(item.get("Container") or ""))
+                or container_map.get(str(item.get("ID") or ""))
+                or container_map.get(str(item.get("Name") or ""))
+            )
             if not target:
                 continue
             slug, service = target
@@ -163,6 +217,15 @@ def collect_resource_breakdown(
             if memory is not None:
                 usage[slug]["memory"] += memory
                 _add_component(usage[slug]["memory_components"], service, memory)
+    developer_os = usage.get("developer-os")
+    if developer_os is not None and child_cpu_start is not None and child_cpu_end is not None:
+        monitoring_cpu = max(0.0, child_cpu_end - child_cpu_start) / sample_seconds / cpu_count * 100
+        if synchronized_cpu is not None:
+            container_cpu = sum(float(project["cpu"]) for project in usage.values())
+            monitoring_cpu = min(monitoring_cpu, max(0.0, synchronized_cpu - container_cpu))
+        if monitoring_cpu > 0.05:
+            developer_os["cpu"] += monitoring_cpu
+            _add_component(developer_os["cpu_components"], "Resource monitoring", monitoring_cpu)
 
     disk_report = run_docker(
         (

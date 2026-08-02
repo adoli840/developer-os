@@ -34,6 +34,7 @@ class Settings:
     access_token: str
     secure_cookie: bool
     public_read_only: bool
+    trusted_local: bool
     projects: tuple[ProjectSpec, ...]
     usage_snapshot: Path
     backup_status_dir: Path
@@ -68,6 +69,10 @@ def _bool_env(name: str, default: bool) -> bool:
     if value is None:
         return default
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _is_loopback_bind(value: str) -> bool:
+    return value.strip().lower() in {"127.0.0.1", "::1", "localhost"}
 
 
 def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int | None = None) -> Settings:
@@ -125,6 +130,7 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
         )
 
     access_token = os.getenv("DEVOS_CONSOLE_TOKEN", "").strip()
+    resolved_bind = bind or os.getenv("DEVOS_BIND", "127.0.0.1")
     if not dev_mode and not access_token:
         raise RuntimeError("DEVOS_CONSOLE_TOKEN is required outside development mode.")
 
@@ -148,15 +154,18 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
         )
     ).expanduser()
 
+    public_read_only = _bool_env("DEVOS_PUBLIC_READ_ONLY", False)
+
     return Settings(
         repo_root=repo_root,
         workspace_root=workspace_root,
         runtime_dir=runtime_dir,
-        bind=bind or os.getenv("DEVOS_BIND", "127.0.0.1"),
-        port=port or int(os.getenv("DEVOS_PORT", "8080")),
+        bind=resolved_bind,
+        port=port if port is not None else int(os.getenv("DEVOS_PORT", "8080")),
         access_token=access_token,
         secure_cookie=_bool_env("DEVOS_SECURE_COOKIE", not dev_mode),
-        public_read_only=_bool_env("DEVOS_PUBLIC_READ_ONLY", False),
+        public_read_only=public_read_only,
+        trusted_local=dev_mode and _is_loopback_bind(resolved_bind) and not public_read_only,
         projects=tuple(projects),
         usage_snapshot=usage_snapshot,
         backup_status_dir=backup_status_dir,

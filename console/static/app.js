@@ -1,6 +1,7 @@
 const state = {
   authenticated: false,
   publicReadOnly: false,
+  trustedLocal: false,
   csrfToken: "",
   overview: null,
   roadmaps: null,
@@ -127,6 +128,7 @@ async function initialize() {
     const session = await request("/api/session");
     state.authenticated = Boolean(session.authenticated);
     state.publicReadOnly = Boolean(session.public_read_only);
+    state.trustedLocal = Boolean(session.trusted_local);
     state.csrfToken = session.csrf_token || "";
     showApplication();
     await refreshOverview();
@@ -144,12 +146,12 @@ function showLogin() {
 function showApplication() {
   elements.loginShell.hidden = true;
   elements.appShell.hidden = false;
-  elements.logoutButton.hidden = !state.authenticated;
+  elements.logoutButton.hidden = !state.authenticated || state.trustedLocal;
   if (state.publicReadOnly) {
     elements.modeBadge.textContent = "Public read-only";
     elements.modeBadge.classList.add("read-only");
   } else {
-    elements.modeBadge.textContent = "Secure session";
+    elements.modeBadge.textContent = state.trustedLocal ? "Local" : "Secure session";
     elements.modeBadge.classList.remove("read-only");
   }
 }
@@ -194,6 +196,33 @@ function roadmapStatusKind(status) {
   if (status === "Blocked" || status === "Cancelled") return "bad";
   if (status === "Paused") return "warn";
   return "neutral";
+}
+
+function roadmapStatusClass(status) {
+  return {
+    "Done": "done",
+    "In Progress": "in-progress",
+    "Planned": "planned",
+    "Blocked": "blocked",
+    "Paused": "paused",
+    "Cancelled": "cancelled",
+  }[status] || "planned";
+}
+
+function roadmapLegend() {
+  return [
+    ["Done", "done"],
+    ["In progress", "in-progress"],
+    ["Planned", "planned"],
+    ["Blocked", "blocked"],
+    ["Paused", "paused"],
+    ["Cancelled", "cancelled"],
+  ].map(([label, kind]) => `
+    <span class="roadmap-legend-item">
+      <i class="roadmap-status-swatch ${kind}" aria-hidden="true"></i>
+      ${escapeHtml(label)}
+    </span>
+  `).join("");
 }
 
 function renderRoadmaps(roadmaps) {
@@ -289,37 +318,65 @@ function renderRoadmapDetail(project) {
 
   const milestone = project.milestone || {};
   const latest = project.latest_status_change || {};
+  const topics = project.topics || [];
   elements.roadmapDetail.innerHTML = `
-    <section class="roadmap-lead">
-      <div>
+    <section class="roadmap-hero">
+      <div class="roadmap-title-block">
         <p class="eyebrow">UPDATED ${escapeHtml(project.updated_at)}</p>
         <h2>${escapeHtml(project.title)}</h2>
         <p>${escapeHtml(project.direction)}</p>
       </div>
-      <dl class="roadmap-milestone">
-        <div><dt>Milestone status</dt><dd>${statusBadge(milestone.status, roadmapStatusKind(milestone.status))}</dd></div>
-        <div><dt>Objective</dt><dd>${escapeHtml(milestone.objective)}</dd></div>
-        <div><dt>Completion signal</dt><dd>${escapeHtml(milestone.completion_signal)}</dd></div>
-      </dl>
+      <aside class="roadmap-legend" aria-label="Roadmap status legend">
+        <h3>Detail status</h3>
+        <div class="roadmap-legend-grid">${roadmapLegend()}</div>
+      </aside>
     </section>
 
-    <section class="roadmap-band">
-      <div class="roadmap-band-heading">
-        <h3>Roadmap topics</h3>
-        <span>${escapeHtml(project.topics.length)} topics</span>
+    <section class="roadmap-milestone-strip">
+      <div>
+        <span>Current milestone</span>
+        <strong>${escapeHtml(milestone.objective)}</strong>
       </div>
-      <div class="table-wrap">
-        <table class="roadmap-table">
-          <thead><tr><th>Topic</th><th>Status</th><th>Completion signal</th><th>Next transition</th></tr></thead>
-          <tbody>${project.topics.map((topic) => `
-            <tr>
-              <td><strong>${escapeHtml(topic.topic)}</strong></td>
-              <td>${statusBadge(topic.status, roadmapStatusKind(topic.status))}</td>
-              <td>${escapeHtml(topic.completion_signal)}</td>
-              <td>${escapeHtml(topic.next_transition)}</td>
-            </tr>
-          `).join("")}</tbody>
-        </table>
+      <div>
+        <span>Status</span>
+        ${statusBadge(milestone.status, roadmapStatusKind(milestone.status))}
+      </div>
+      <div>
+        <span>Completion signal</span>
+        <strong>${escapeHtml(milestone.completion_signal)}</strong>
+      </div>
+    </section>
+
+    <section class="roadmap-stage-section">
+      <div class="roadmap-band-heading">
+        <h3>Roadmap stages</h3>
+        <span>${escapeHtml(topics.length)} stages</span>
+      </div>
+      <div class="roadmap-stage-scroll">
+        <div class="roadmap-stage-track" role="list">
+          ${topics.map((topic, index) => {
+            const statusClass = roadmapStatusClass(topic.status);
+            return `
+              <article class="roadmap-stage ${statusClass}" role="listitem">
+                <div class="roadmap-stage-card">
+                  <span class="roadmap-stage-number" aria-hidden="true">${index + 1}</span>
+                  <h4>${escapeHtml(topic.topic)}</h4>
+                  <span class="roadmap-stage-status">${escapeHtml(topic.status)}</span>
+                </div>
+                <div class="roadmap-stage-facts">
+                  <div>
+                    <span>Completion</span>
+                    <p>${escapeHtml(topic.completion_signal)}</p>
+                  </div>
+                  <div>
+                    <span>Next</span>
+                    <p>${escapeHtml(topic.next_transition)}</p>
+                  </div>
+                </div>
+              </article>
+            `;
+          }).join("")}
+        </div>
       </div>
     </section>
 

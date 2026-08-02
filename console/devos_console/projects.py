@@ -136,8 +136,10 @@ class ProjectService:
             runtime = self._container_runtime(str(item.get("Names") or ""))
             containers.append(
                 {
+                    "id": item.get("ID"),
                     "name": item.get("Names"),
                     "service": labels.get("com.docker.compose.service") or item.get("Names"),
+                    "compose_project": labels.get("com.docker.compose.project"),
                     "state": item.get("State"),
                     "status": item.get("Status"),
                     "ports": item.get("Ports"),
