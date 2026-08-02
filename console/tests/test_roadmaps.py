@@ -228,6 +228,7 @@ class RoadmapRouteTests(unittest.TestCase):
                 trusted_local=False,
                 projects=(project_spec(project_path),),
                 usage_snapshot=runtime_path / "usage.json",
+                oracle_usage_snapshot=runtime_path / "oracle-usage.json",
                 backup_status_dir=runtime_path / "backups",
                 workstations=(),
                 workstation_status_dir=runtime_path / "workstations",

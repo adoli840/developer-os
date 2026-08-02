@@ -1,5 +1,5 @@
 [Unit]
-Description=Refresh DeveloperOS OpenAI cost snapshot hourly
+Description=Refresh DeveloperOS provider usage snapshots hourly
 
 [Timer]
 OnBootSec=2min

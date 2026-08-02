@@ -21,7 +21,7 @@ from .roadmaps import collect_roadmaps
 from .resources import collect_resource_breakdown
 from .settings import Settings, load_settings
 from .system_info import collect_system_info
-from .usage import read_usage_snapshot
+from .usage import read_usage_snapshots
 from .workstations import attach_server_comparisons, collect_workstations
 
 
@@ -78,7 +78,10 @@ class ConsoleApplication:
             "backups": backups,
             "workstations": workstations,
             "alerts": alerts,
-            "usage": read_usage_snapshot(self.settings.usage_snapshot),
+            "usage": read_usage_snapshots(
+                self.settings.usage_snapshot,
+                self.settings.oracle_usage_snapshot,
+            ),
             "audit": [] if public else self.audit.recent(20),
             "read_only": public,
         }

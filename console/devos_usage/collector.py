@@ -10,6 +10,8 @@ from typing import Any, Callable
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from .snapshot import write_snapshot
+
 
 COSTS_ENDPOINT = "https://api.openai.com/v1/organization/costs"
 
@@ -88,42 +90,38 @@ def build_snapshot(*, cost: Decimal, budget: Decimal, now: datetime) -> dict[str
     }
 
 
-def write_snapshot(path: Path, snapshot: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.tmp")
-    temporary.write_text(json.dumps(snapshot, indent=2) + "\n", encoding="utf-8")
-    os.chmod(temporary, 0o600)
-    temporary.replace(path)
-
-
 def main() -> int:
+    failures: list[str] = []
     admin_key = os.getenv("OPENAI_ADMIN_API_KEY", "").strip()
     if not admin_key:
-        print("OPENAI_ADMIN_API_KEY is required.", file=sys.stderr)
-        return 1
+        print("OpenAI usage collection is not configured; skipped.")
+    else:
+        try:
+            budget = Decimal(os.environ["OPENAI_MONTHLY_BUDGET_USD"].strip())
+            if not budget.is_finite() or budget < 0:
+                raise InvalidOperation
+            now = datetime.now(timezone.utc)
+            snapshot_path = Path(
+                os.getenv(
+                    "DEVOS_OPENAI_USAGE_SNAPSHOT",
+                    "/var/lib/developer-os-console/openai-usage.json",
+                )
+            )
+            cost = fetch_monthly_cost(admin_key, now=now)
+            write_snapshot(snapshot_path, build_snapshot(cost=cost, budget=budget, now=now))
+            print("OpenAI usage snapshot refreshed.")
+        except (KeyError, InvalidOperation):
+            failures.append("OPENAI_MONTHLY_BUDGET_USD must be a non-negative finite number.")
+        except Exception as exc:
+            failures.append(f"OpenAI cost refresh failed: {exc}")
 
     try:
-        budget = Decimal(os.environ["OPENAI_MONTHLY_BUDGET_USD"].strip())
-    except (KeyError, InvalidOperation):
-        print("OPENAI_MONTHLY_BUDGET_USD must be a valid number.", file=sys.stderr)
-        return 1
-    if budget < 0:
-        print("OPENAI_MONTHLY_BUDGET_USD must not be negative.", file=sys.stderr)
-        return 1
+        from .oracle import collect_from_environment
 
-    now = datetime.now(timezone.utc)
-    snapshot_path = Path(
-        os.getenv(
-            "DEVOS_OPENAI_USAGE_SNAPSHOT",
-            "/var/lib/developer-os-console/openai-usage.json",
-        )
-    )
-    try:
-        cost = fetch_monthly_cost(admin_key, now=now)
-        write_snapshot(snapshot_path, build_snapshot(cost=cost, budget=budget, now=now))
+        collect_from_environment()
     except Exception as exc:
-        print(f"OpenAI cost refresh failed: {exc}", file=sys.stderr)
-        return 1
+        failures.append(f"Oracle Cloud usage refresh failed: {exc}")
 
-    print("OpenAI usage snapshot refreshed.")
-    return 0
+    for failure in failures:
+        print(failure, file=sys.stderr)
+    return 1 if failures else 0

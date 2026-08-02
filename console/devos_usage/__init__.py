@@ -1,1 +1,1 @@
-"""OpenAI cost snapshot collector for the DeveloperOS console."""
+"""Provider usage snapshot collectors for the DeveloperOS console."""

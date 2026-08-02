@@ -302,10 +302,11 @@ public write API.
 
 Impact:
 
-Home reporting is installed only from the Home computer. Office remains
-unconfigured until work is performed from the Office computer. The browser
-console displays online state, last report time, branch, dirty count, and
-ahead/behind counts without exposing local paths or hostnames publicly.
+Home reporting is run explicitly from the Home computer. DeveloperOS does not
+install a periodic Windows Scheduled Task. Office remains unconfigured until
+work is performed from the Office computer. The browser console displays the
+last reported state, report freshness, branch, dirty count, and ahead/behind
+counts without exposing local paths or hostnames publicly.
 
 ## 2026-07-28 - Keep Arbitrary Server Commands Behind SSH
 
@@ -333,10 +334,11 @@ authentication system.
 
 Impact:
 
-Home can open project command consoles through a maintained local tunnel.
+Home can open project command consoles through an explicitly started local
+tunnel. DeveloperOS does not install a periodic tunnel Scheduled Task.
 Commands execute as the unprivileged server account, receive time and output
 limits, and write audit metadata without storing command text. Other
-workstations require their own explicit tunnel setup.
+workstations start their own tunnels explicitly.
 
 ## 2026-07-31 - Isolate OpenAI Cost Collection From The Public Console
 
@@ -604,3 +606,36 @@ facade. Projects without a production deploy target fail clearly. Projects
 without a synchronization target report a no-op. A future project may opt into
 post-deploy sync only after its `DATA_SYNC.md` allowlist and directional push
 implementation are verified.
+
+## 2026-08-02 - Generalize Usage Visibility Without Browser Credentials
+
+Status: Accepted
+
+Context:
+
+The console already displayed an OpenAI cost snapshot. Oracle Cloud cost and
+Always Free resource usage require different OCI APIs and should not introduce
+an OCI user private key into the repository or public web process.
+
+Decision:
+
+Treat Usage as a provider-neutral read-only view. Keep each provider collector
+outside the console process and expose only credential-free snapshots. Use the
+Oracle Compute instance principal for OCI authentication. Query billing cost
+and resource availability separately, and compare A1 usage with explicit
+operator-provided free allowances instead of assuming that an account service
+limit is the free allowance.
+
+Reason:
+
+Instance principals avoid another long-lived private key. Separating monetary
+cost, self-imposed budget, account limit, and Always Free allowance prevents a
+paid tenancy's larger service quota from being mislabeled as free capacity.
+
+Impact:
+
+The `Usage` tab shows OpenAI and Oracle Cloud independently. OCI collection
+requires read-only dynamic-group policies for `usage-report` and
+`resource-availability`; until configured, only the Oracle section reports a
+setup-pending state. The public console never receives the OpenAI Admin key,
+OCI identity material, or tenancy identifiers.

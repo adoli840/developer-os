@@ -213,11 +213,12 @@ from uncommitted local files.
 
 The deployed service listens on port `8080`; append `/roadmap` to that access
 address for the roadmap view. See `console/README.md` for its security boundary,
-management command allowlist, and OpenAI usage snapshot behavior.
+management command allowlist, and provider usage snapshot behavior.
 
-OpenAI organization costs are collected by a separate hourly server service.
-Its Admin key remains outside Git in
-`X:/Settings/env/developer-os.env` and is never exposed to the public console.
+OpenAI organization costs and optional Oracle Cloud costs and free-resource
+usage are collected by a separate hourly server service. The OpenAI Admin key
+remains outside Git in `X:/Settings/env/developer-os.env`; Oracle uses the
+server's instance principal. Neither credential reaches the public console.
 
 The Oracle deployment also installs:
 
@@ -239,13 +240,12 @@ The Home computer reports its local Git status to the server while powered on.
 The report contains repository state only and is transferred through SSH:
 
 ```powershell
-make workstation-home-install
 make workstation-home-report
 ```
 
-The scheduled reporter runs every five minutes while the current Windows user
-session is available. When the Home computer is off, the console preserves the
-last report and marks it offline. Office reporting is intentionally not
+Reporting is manual. DeveloperOS does not install a Windows Scheduled Task or
+start PowerShell periodically. The console preserves the last report and marks
+it offline after it becomes stale. Office reporting is intentionally not
 configured from the Home computer.
 
 The server terminal is deliberately separate from the public console. It
@@ -253,11 +253,14 @@ listens only on server loopback and is reached from the Home computer through
 the existing SSH key:
 
 ```powershell
-make terminal-tunnel-install
+make terminal-tunnel
 make terminal-developer-os
 make terminal-oa
 make terminal-gaia
 ```
+
+The tunnel is started only by an explicit command and is not maintained by a
+Windows Scheduled Task.
 
 The project `Terminal` links in the browser console open the same private
 endpoint at `http://127.0.0.1:8092`. No terminal port is opened in Oracle

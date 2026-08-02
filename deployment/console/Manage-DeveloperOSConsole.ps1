@@ -80,7 +80,7 @@ if ($Action -ne "Deploy") {
     "Backup" { "sudo systemctl start developer-os-backup.service; sudo systemctl --no-pager --full status developer-os-backup.service" }
     "VerifyBackup" { "sudo systemctl start developer-os-backup-verify.service; sudo systemctl --no-pager --full status developer-os-backup-verify.service" }
     "BackupStatus" { "systemctl list-timers developer-os-backup.timer developer-os-backup-verify.timer --no-pager; sudo journalctl -u developer-os-backup.service -u developer-os-backup-verify.service --no-pager -n 80" }
-    "UsageStatus" { "systemctl list-timers developer-os-openai-usage.timer --no-pager; sudo systemctl --no-pager --full status developer-os-openai-usage.service || true; sudo journalctl -u developer-os-openai-usage.service --no-pager -n 40; test -s /var/lib/developer-os-console/openai-usage.json && echo OPENAI_USAGE_SNAPSHOT=present || echo OPENAI_USAGE_SNAPSHOT=missing" }
+    "UsageStatus" { "systemctl list-timers developer-os-openai-usage.timer --no-pager; sudo systemctl --no-pager --full status developer-os-openai-usage.service || true; sudo journalctl -u developer-os-openai-usage.service --no-pager -n 60; test -s /var/lib/developer-os-console/openai-usage.json && echo OPENAI_USAGE_SNAPSHOT=present || echo OPENAI_USAGE_SNAPSHOT=missing; test -s /var/lib/developer-os-console/oracle-usage.json && echo ORACLE_USAGE_SNAPSHOT=present || echo ORACLE_USAGE_SNAPSHOT=missing" }
     "TerminalStatus" { "sudo systemctl --no-pager --full status developer-os-terminal; curl --fail --silent http://127.0.0.1:8022/healthz" }
     "TerminalLogs" { "sudo journalctl -u developer-os-terminal --no-pager -n 120" }
   }
@@ -279,6 +279,10 @@ if command -v restorecon >/dev/null 2>&1; then
   sudo restorecon -RF /opt/developer-os-console /etc/developer-os-console /etc/developer-os-terminal
 fi
 sudo usermod -aG docker opc
+if [ ! -x /opt/developer-os-console/usage-venv/bin/python ]; then
+  sudo python3 -m venv /opt/developer-os-console/usage-venv
+fi
+sudo /opt/developer-os-console/usage-venv/bin/python -m pip install --disable-pip-version-check --quiet -r "`$release/console/requirements-usage.txt"
 sudo install -m 0644 "`$release/deployment/console/developer-os-console.service" /etc/systemd/system/developer-os-console.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-terminal.service" /etc/systemd/system/developer-os-terminal.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.service" /etc/systemd/system/developer-os-openai-usage.service

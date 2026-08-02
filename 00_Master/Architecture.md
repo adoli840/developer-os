@@ -91,4 +91,20 @@ Review these candidates after inspecting active projects:
 - Shared deployment blueprints
 - Shared data synchronization contracts and manifest validation
 
+## Operational Cost Visibility
+
+Provider credentials must remain outside the public console process.
+
+```text
+OpenAI Admin key -> hardened hourly collector -> credential-free JSON
+OCI instance principal -> hardened hourly collector -> credential-free JSON
+credential-free JSON -> public read-only Usage view
+```
+
+The console may display derived monthly costs, operator-defined budgets,
+service breakdowns, and resource allowance usage. It must not expose provider
+credentials, tenancy identifiers, private key material, or unrestricted billing
+APIs. Monetary budgets and resource allowances remain separate because their
+units and authority differ.
+
 

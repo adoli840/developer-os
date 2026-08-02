@@ -73,8 +73,23 @@ function formatBytes(value) {
   return `${amount.toFixed(index > 2 ? 1 : 0)} ${units[index]}`;
 }
 
-function formatMoney(value) {
-  return Number.isFinite(value) ? `$${Number(value).toFixed(2)}` : "Unavailable";
+function formatMoney(value, currency = "USD") {
+  if (!Number.isFinite(value)) return "Unavailable";
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: String(currency || "USD").toUpperCase(),
+      maximumFractionDigits: 2,
+    }).format(Number(value));
+  } catch {
+    return `${Number(value).toFixed(2)} ${String(currency || "USD").toUpperCase()}`;
+  }
+}
+
+function formatQuantity(value, unit) {
+  if (!Number.isFinite(value)) return "Unavailable";
+  const amount = Number(value);
+  return `${amount.toLocaleString(undefined, {maximumFractionDigits: 2})} ${unit || ""}`.trim();
 }
 
 function formatDate(value) {
@@ -703,18 +718,79 @@ function renderCommands(projects) {
   });
 }
 
-function renderUsage(usage) {
-  elements.usagePanel.innerHTML = `
-    <p class="eyebrow">${escapeHtml(usage.provider || "API")}</p>
-    <h2>${usage.status === "snapshot" ? "Local cost snapshot" : "Usage data is not configured"}</h2>
-    <p class="muted">${escapeHtml(usage.message)}</p>
-    <div class="usage-grid">
-      <div class="usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost_usd)}</strong></div>
-      <div class="usage-value"><span>Budget</span><strong>${formatMoney(usage.budget_usd)}</strong></div>
-      <div class="usage-value"><span>Remaining</span><strong>${formatMoney(usage.remaining_usd)}</strong></div>
-    </div>
-    <p class="cell-detail">Last update: ${escapeHtml(usage.updated_at || "Unavailable")}</p>
+function renderOpenAIUsage(usage) {
+  return `
+    <section class="surface usage-surface">
+      <p class="eyebrow">OPENAI</p>
+      <h2>${usage.status === "snapshot" ? "Month-to-date API cost" : "Usage data is not configured"}</h2>
+      <p class="muted">${escapeHtml(usage.message)}</p>
+      <div class="usage-grid">
+        <div class="usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost_usd)}</strong></div>
+        <div class="usage-value"><span>Budget</span><strong>${formatMoney(usage.budget_usd)}</strong></div>
+        <div class="usage-value"><span>Remaining</span><strong>${formatMoney(usage.remaining_usd)}</strong></div>
+      </div>
+      <p class="cell-detail">Last update: ${escapeHtml(usage.updated_at || "Unavailable")}</p>
+    </section>
   `;
+}
+
+function renderOracleUsage(usage) {
+  const resources = Array.isArray(usage.free_resources) ? usage.free_resources : [];
+  const resourceRows = resources.length
+    ? resources.map((resource) => `
+      <tr>
+        <td><strong>${escapeHtml(resource.label || resource.key)}</strong></td>
+        <td>${escapeHtml(formatQuantity(resource.used, resource.unit))}</td>
+        <td>${escapeHtml(formatQuantity(resource.free_allowance, resource.unit))}</td>
+        <td>${escapeHtml(formatQuantity(resource.free_remaining, resource.unit))}</td>
+      </tr>
+    `).join("")
+    : `<tr><td colspan="4" class="muted">Free allowance data is not configured.</td></tr>`;
+  const serviceCosts = Array.isArray(usage.service_costs) ? usage.service_costs : [];
+  const serviceRows = serviceCosts.length
+    ? serviceCosts.map((service) => `
+      <tr>
+        <td>${escapeHtml(service.name || "Other")}</td>
+        <td>${escapeHtml(formatMoney(service.cost, service.currency || usage.currency))}</td>
+      </tr>
+    `).join("")
+    : `<tr><td colspan="2" class="muted">No billable service cost is available.</td></tr>`;
+
+  return `
+    <section class="surface usage-surface">
+      <p class="eyebrow">ORACLE CLOUD</p>
+      <h2>${usage.status === "snapshot" ? "Month-to-date infrastructure cost" : "Usage data is not configured"}</h2>
+      <p class="muted">${escapeHtml(usage.message)}</p>
+      <div class="usage-grid">
+        <div class="usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost, usage.currency)}</strong></div>
+        <div class="usage-value"><span>Budget</span><strong>${formatMoney(usage.budget, usage.currency)}</strong></div>
+        <div class="usage-value"><span>Remaining</span><strong>${formatMoney(usage.remaining, usage.currency)}</strong></div>
+      </div>
+      <div class="usage-section">
+        <h3>Always Free compute</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Resource</th><th>Used</th><th>Free allowance</th><th>Remaining</th></tr></thead>
+            <tbody>${resourceRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <details class="usage-details">
+        <summary>Cost by service</summary>
+        <div class="table-wrap">
+          <table><thead><tr><th>Service</th><th>Cost</th></tr></thead><tbody>${serviceRows}</tbody></table>
+        </div>
+      </details>
+      <p class="cell-detail">Last update: ${escapeHtml(usage.updated_at || "Unavailable")}</p>
+    </section>
+  `;
+}
+
+function renderUsage(usage) {
+  const providers = Array.isArray(usage?.providers) ? usage.providers : [usage || {}];
+  elements.usagePanel.innerHTML = providers.map((provider) => (
+    provider.provider === "Oracle Cloud" ? renderOracleUsage(provider) : renderOpenAIUsage(provider)
+  )).join("");
 }
 
 function openActionDialog(project, action, label) {

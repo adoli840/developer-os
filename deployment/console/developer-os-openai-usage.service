@@ -1,5 +1,5 @@
 [Unit]
-Description=DeveloperOS OpenAI cost snapshot refresh
+Description=DeveloperOS provider usage snapshot refresh
 After=network-online.target
 Wants=network-online.target
 
@@ -11,7 +11,8 @@ WorkingDirectory=/opt/developer-os-console/current
 EnvironmentFile=/etc/developer-os-console/openai.env
 Environment=PYTHONUNBUFFERED=1
 Environment=DEVOS_OPENAI_USAGE_SNAPSHOT=/var/lib/developer-os-console/openai-usage.json
-ExecStart=/usr/bin/python3 -m console.devos_usage
+Environment=DEVOS_ORACLE_USAGE_SNAPSHOT=/var/lib/developer-os-console/oracle-usage.json
+ExecStart=/opt/developer-os-console/usage-venv/bin/python -m console.devos_usage
 StateDirectory=developer-os-console
 StateDirectoryMode=0700
 UMask=0077

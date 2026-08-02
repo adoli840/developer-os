@@ -17,7 +17,7 @@ The console reads:
 - Oracle Linux CPU, memory, disk, uptime, and Docker health.
 - Daily database backup and weekly isolated restore-verification status.
 - Local actionable alerts for delivery and recovery conditions.
-- An optional local OpenAI cost snapshot.
+- Optional local OpenAI and Oracle Cloud usage snapshots.
 - A local audit log for allowlisted management commands.
 - Standard roadmap fields for configured projects, without raw files or source
   paths.
@@ -79,8 +79,8 @@ The deployment script:
 8. Verifies `http://127.0.0.1:8080/healthz`.
 9. Installs daily PostgreSQL backup and weekly restore-verification timers.
 10. Runs an initial OA, Gaia, and bTest backup and isolated restore test.
-11. Installs an hourly OpenAI cost collector using the protected local
-    `X:/Settings/env/developer-os.env` file.
+11. Installs an hourly provider usage collector using the protected local
+    `X:/Settings/env/developer-os.env` file and a dedicated Python environment.
 12. Installs `developer-os-terminal.service` on `127.0.0.1:8022` without
     opening a firewall port.
 
@@ -122,27 +122,53 @@ make console-backup-status
 
 The Home workstation reporter executes read-only Git commands for
 DeveloperOS, OA, Gaia, and bTest. It sends a small JSON summary through SSH to
-the Oracle server every five minutes while the current Windows user session is
-available.
+the Oracle server only when explicitly requested.
 
 ```powershell
-make workstation-home-install
 make workstation-home-report
 ```
 
 The public console does not expose local paths or the Windows hostname. A
 report older than 15 minutes is displayed as offline. Office is not registered
-by the Home installation. Local revisions are compared directly with the
-server checkout and the running deployment image.
+from the Home computer. Local revisions are compared directly with the server
+checkout and the running deployment image. No Windows Scheduled Task is
+installed, so reporting never starts PowerShell periodically.
 
-## OpenAI Usage Collection
+## Provider Usage Collection
 
-The public console never receives an OpenAI credential. A separate hardened
-oneshot service reads `OPENAI_ADMIN_API_KEY` and
-`OPENAI_MONTHLY_BUDGET_USD` from
-`/etc/developer-os-console/openai.env`, calls the organization Costs API, and
-writes a credential-free snapshot to
-`/var/lib/developer-os-console/openai-usage.json`.
+The public console never receives a provider credential. A separate hardened
+oneshot service collects provider data and writes credential-free snapshots
+under `/var/lib/developer-os-console`.
+
+OpenAI collection reads `OPENAI_ADMIN_API_KEY` and
+`OPENAI_MONTHLY_BUDGET_USD`, calls the organization Costs API, and writes
+`openai-usage.json`.
+
+Oracle Cloud collection uses the Compute instance principal rather than an OCI
+API private key. It calls the Usage API for month-to-date cost and the Limits
+API for current Ampere A1 OCPU and memory usage, then writes
+`oracle-usage.json`. Enable it with these non-secret values in the same external
+environment file:
+
+```text
+DEVOS_OCI_ENABLED=1
+OCI_MONTHLY_BUDGET=your_budget_in_the_billing_currency
+OCI_FREE_A1_OCPUS=your_tenancy_free_allowance
+OCI_FREE_A1_MEMORY_GB=your_tenancy_free_allowance
+```
+
+The budget and free allowances are explicit operator values because a paid
+tenancy's service limit is not necessarily its Always Free allowance. The
+collector obtains tenancy, region, and availability domain from the instance;
+`OCI_TENANCY_OCID`, `OCI_REGION`, and `OCI_AVAILABILITY_DOMAIN` are optional
+overrides for troubleshooting.
+
+The instance must belong to an OCI dynamic group with these tenancy policies:
+
+```text
+Allow dynamic-group DeveloperOSUsageCollectors to read usage-report in tenancy
+Allow dynamic-group DeveloperOSUsageCollectors to read resource-availability in tenancy
+```
 
 The source environment file remains outside every repository at
 `X:/Settings/env/developer-os.env`. Deployment transfers it separately from
@@ -158,10 +184,10 @@ make console-usage-status
 
 ## Private Server Terminal
 
-Install the Home SSH tunnel task once:
+Start the Home SSH tunnel explicitly when it is needed:
 
 ```powershell
-make terminal-tunnel-install
+make terminal-tunnel
 ```
 
 Open a project:
@@ -177,6 +203,9 @@ project view links to this Home-only address. The terminal service runs actual
 Bash commands in the selected allowlisted project directory as `opc`, limits
 each command to 120 seconds, caps returned output, and records only a command
 hash and result metadata in its audit log.
+
+DeveloperOS does not install a tunnel Scheduled Task. The tunnel remains a
+manual, user-initiated process.
 
 This is a command-oriented shell rather than a full PTY. Interactive programs
 such as editors, password prompts, and `top` are not supported. Commands that

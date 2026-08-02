@@ -27,6 +27,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Docker image build minimization | Done | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Monitor lifecycle and deployment commands for regressions |
 | Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
 | Workspace release commands | Done | Shared deploy and local-to-server sync facades delegate only to explicit project-owned hooks and preserve Git revision identity | Add project hooks only after their deployment or data contracts are verified |
+| Provider usage visibility | Done | OpenAI and Oracle Cloud costs plus explicit A1 free-resource allowances are published through credential-free snapshots | Monitor collector freshness and add providers only when they preserve the same isolation boundary |
 | Snapshot Manager | Planned | Create and restore tooling protects risky AI work without Git noise | Move to In Progress after workspace foundation stabilizes |
 
 ## Current Priority
@@ -41,11 +42,11 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Latest Status Change
 
-- Topic: Workspace release commands
+- Topic: Provider usage visibility
 - Change: Added as Done
-- Evidence or reason: Shared `make deploy` and fixed-direction `make sync`
-  facades now require explicit project hooks; automatic commit creation and
-  implicit database selection remain prohibited.
+- Evidence or reason: The provider-neutral Usage view and isolated OpenAI and
+  OCI collectors expose only credential-free snapshots; OCI remains inactive
+  until its read-only instance-principal policy is configured.
 
 ## Next Status Transitions
 

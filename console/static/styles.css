@@ -1248,6 +1248,11 @@ tbody tr:last-child td {
   margin-bottom: 0;
 }
 
+.usage-providers {
+  display: grid;
+  gap: 18px;
+}
+
 .usage-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1431,6 +1436,30 @@ pre {
   .roadmap-legend {
     width: min(100%, 520px);
   }
+}
+
+.usage-section {
+  margin-top: 24px;
+}
+
+.usage-section h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.usage-details {
+  margin-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.usage-details summary {
+  padding: 16px 0;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.usage-details[open] summary {
+  border-bottom: 1px solid var(--line);
 }
 
 @media (max-width: 600px) {

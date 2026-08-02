@@ -37,6 +37,7 @@ class Settings:
     trusted_local: bool
     projects: tuple[ProjectSpec, ...]
     usage_snapshot: Path
+    oracle_usage_snapshot: Path
     backup_status_dir: Path
     workstations: tuple[WorkstationSpec, ...]
     workstation_status_dir: Path
@@ -141,6 +142,12 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
             str(runtime_dir / "openai-usage.json"),
         )
     ).expanduser()
+    oracle_usage_snapshot = Path(
+        os.getenv(
+            "DEVOS_ORACLE_USAGE_SNAPSHOT",
+            str(runtime_dir / "oracle-usage.json"),
+        )
+    ).expanduser()
     backup_status_dir = Path(
         os.getenv(
             "DEVOS_BACKUP_STATUS_DIR",
@@ -168,6 +175,7 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
         trusted_local=dev_mode and _is_loopback_bind(resolved_bind) and not public_read_only,
         projects=tuple(projects),
         usage_snapshot=usage_snapshot,
+        oracle_usage_snapshot=oracle_usage_snapshot,
         backup_status_dir=backup_status_dir,
         workstations=tuple(workstations),
         workstation_status_dir=workstation_status_dir,

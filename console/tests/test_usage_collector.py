@@ -2,14 +2,16 @@ from __future__ import annotations
 
 import io
 import json
+import os
 import tempfile
 import unittest
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
+from unittest.mock import patch
 from urllib.parse import parse_qs, urlparse
 
-from console.devos_usage.collector import build_snapshot, fetch_monthly_cost, write_snapshot
+from console.devos_usage.collector import build_snapshot, fetch_monthly_cost, main, write_snapshot
 
 
 class UsageCollectorTests(unittest.TestCase):
@@ -79,6 +81,16 @@ class UsageCollectorTests(unittest.TestCase):
         self.assertEqual(stored["period_start"], "2026-07-01")
         self.assertEqual(stored["period_end"], "2026-07-31")
         self.assertNotIn("key", stored)
+
+    def test_oracle_collection_runs_without_openai_configuration(self) -> None:
+        with (
+            patch.dict(os.environ, {}, clear=True),
+            patch("console.devos_usage.oracle.collect_from_environment") as collect_oracle,
+        ):
+            result = main()
+
+        self.assertEqual(result, 0)
+        collect_oracle.assert_called_once_with()
 
 
 if __name__ == "__main__":

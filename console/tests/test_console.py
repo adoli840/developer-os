@@ -19,7 +19,7 @@ from console.devos_console.resources import _cpu_percent_between, _parse_size, c
 from console.devos_console.runner import CommandResult
 from console.devos_console.server import create_server
 from console.devos_console.settings import ProjectSpec, WorkstationSpec, load_settings
-from console.devos_console.usage import read_usage_snapshot
+from console.devos_console.usage import read_oracle_usage_snapshot, read_usage_snapshot, read_usage_snapshots
 from console.devos_console.workstations import attach_server_comparisons, collect_workstations
 
 
@@ -58,6 +58,49 @@ class UsageSnapshotTests(unittest.TestCase):
             result = read_usage_snapshot(path)
         self.assertEqual(result["status"], "snapshot")
         self.assertEqual(result["remaining_usd"], 17.75)
+
+    def test_oracle_snapshot_keeps_free_resource_units_separate(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "oracle.json"
+            path.write_text(
+                json.dumps(
+                    {
+                        "cost": 1.25,
+                        "currency": "USD",
+                        "budget": 10,
+                        "free_resources": [
+                            {
+                                "label": "Ampere A1 OCPU",
+                                "unit": "OCPU",
+                                "used": 4,
+                                "free_allowance": 4,
+                                "free_remaining": 0,
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result = read_oracle_usage_snapshot(path)
+        self.assertEqual(result["remaining"], 8.75)
+        self.assertEqual(result["free_resources"][0]["unit"], "OCPU")
+
+    def test_provider_collection_is_present_when_oracle_is_not_configured(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            result = read_usage_snapshots(root / "openai.json", root / "oracle.json")
+        self.assertEqual([item["provider"] for item in result["providers"]], ["OpenAI", "Oracle Cloud"])
+
+    def test_windows_utf8_bom_usage_snapshot_is_accepted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "usage.json"
+            path.write_text(
+                json.dumps({"cost_usd": 2, "budget_usd": 5}),
+                encoding="utf-8-sig",
+            )
+            result = read_usage_snapshot(path)
+        self.assertEqual(result["status"], "snapshot")
+        self.assertEqual(result["remaining_usd"], 3)
 
 
 class SettingsTests(unittest.TestCase):
