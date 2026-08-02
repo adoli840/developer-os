@@ -145,29 +145,30 @@ OpenAI collection reads `OPENAI_ADMIN_API_KEY` and
 `openai-usage.json`.
 
 Oracle Cloud collection uses the Compute instance principal rather than an OCI
-API private key. It calls the Usage API for month-to-date cost and the Limits
-API for current Ampere A1 OCPU and memory usage, account limits, and available
-capacity, then writes
-`oracle-usage.json`. Enable it with these non-secret values in the same external
-environment file:
+API private key. It calls the Usage API for month-to-date cost and actual
+Ampere A1 OCPU-hour and GB-hour consumption, then writes
+`oracle-usage.json`. The console compares those quantities with Oracle's
+public price list, which currently returns monthly A1 free quantities of 3,000
+OCPU-hours and 18,000 GB-hours plus the billing-currency overage rates. Enable
+it with this non-secret value in the same external environment file:
 
 ```text
 DEVOS_OCI_ENABLED=1
-OCI_MONTHLY_BUDGET=your_budget_in_the_billing_currency
 ```
 
-The monthly budget is an optional operator target, not an Oracle entitlement.
-Resource usage, account limit, and available capacity come directly from OCI.
-The console does not label a service limit as an Always Free allowance because
-those are separate concepts. The collector obtains tenancy, region, and
-availability domain from the instance; `OCI_TENANCY_OCID`, `OCI_REGION`, and
-`OCI_AVAILABILITY_DOMAIN` are optional overrides for troubleshooting.
+Usage and cost are queried through the latest completed UTC day. The console
+linearly projects those observations across the number of days in the current
+month. Projected A1 overage is priced with Oracle's public rate, and the larger
+of that estimate or the current total-cost run rate is shown. The projection is
+an operational estimate, not an Oracle forecast or invoice. Account service
+limits and additional paid capacity are intentionally not displayed. The
+collector obtains tenancy and region from the instance;
+`OCI_TENANCY_OCID` and `OCI_REGION` are optional troubleshooting overrides.
 
 The instance must belong to an OCI dynamic group with these tenancy policies:
 
 ```text
 Allow dynamic-group DeveloperOSUsageCollectors to read usage-report in tenancy
-Allow dynamic-group DeveloperOSUsageCollectors to read resource-availability in tenancy
 ```
 
 The source environment file remains outside every repository at

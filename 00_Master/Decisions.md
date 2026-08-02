@@ -609,7 +609,7 @@ implementation are verified.
 
 ## 2026-08-02 - Generalize Usage Visibility Without Browser Credentials
 
-Status: Accepted
+Status: Superseded by the 2026-08-03 free-tier consumption decision
 
 Context:
 
@@ -623,21 +623,54 @@ Treat Usage as a provider-neutral read-only view. Keep each provider collector
 outside the console process and expose only credential-free snapshots. Use the
 Oracle Compute instance principal for OCI authentication. Query billing cost
 and resource availability separately. Present the A1 values returned by OCI as
-usage, account limit, and available capacity. Do not ask the operator to supply
-Oracle-owned allowance facts, and do not label a service limit as an Always
-Free entitlement.
+usage, account limit, and available capacity. Do not label a service limit as
+an Always Free entitlement.
 
 Reason:
 
 Instance principals avoid another long-lived private key. Provider-reported
-capacity is more reliable than manually copied allowance values. Separating
-monetary cost, self-imposed budget, and account capacity prevents a paid
-tenancy's larger service quota from being mislabeled as free capacity.
+capacity is more reliable than manually copied values, but later observation
+showed that account capacity does not answer the operator's cost question.
+
+Impact:
+
+This initial implementation established the credential isolation boundary. Its
+account-capacity presentation was replaced the following day without changing
+that boundary.
+
+## 2026-08-03 - Show Free-Tier Consumption Instead of Account Capacity
+
+Status: Accepted
+
+Context:
+
+The console already displayed OpenAI and Oracle cost snapshots. OCI Service
+Limits reported the tenancy's maximum A1 capacity, which is much larger than
+the monthly free quantity and is not useful for routine cost awareness.
+
+Decision:
+
+Treat Usage as a provider-neutral read-only view. Keep each provider collector
+outside the console process and expose only credential-free snapshots. Use the
+Oracle Compute instance principal for OCI authentication. Query billing cost
+and actual SKU usage through the Usage API. Read A1 part numbers B93297 and
+B93298, their monthly free ranges, and their overage rates from Oracle's public
+price list. Show consumed and remaining free quantities, not account service
+limits or paid headroom. Project month-end usage from completed UTC days and
+estimate cost from the observed cost run rate and projected A1 overage. Label
+the result as an estimate rather than an invoice.
+
+Reason:
+
+Instance principals avoid another long-lived private key. Provider-reported
+SKU consumption is the relevant evidence for free-tier awareness, while a paid
+tenancy's service limit is not a free allowance. A simple disclosed projection
+is useful for early warning without pretending to reproduce Oracle billing.
 
 Impact:
 
 The `Usage` tab shows OpenAI and Oracle Cloud independently. OCI collection
-requires read-only dynamic-group policies for `usage-report` and
-`resource-availability`; until configured, only the Oracle section reports a
-setup-pending state. The public console never receives the OpenAI Admin key,
-OCI identity material, or tenancy identifiers.
+requires only the read-only dynamic-group policy for `usage-report`. The public
+console never receives the OpenAI Admin key, OCI identity material, or tenancy
+identifiers. The previously granted `resource-availability` permission is no
+longer required and may remain harmlessly or be removed by the operator.

@@ -9,7 +9,8 @@ from types import SimpleNamespace
 
 from console.devos_usage.oracle import (
     build_oracle_snapshot,
-    fetch_account_resources,
+    fetch_free_resource_usage,
+    fetch_free_resource_pricing,
     fetch_instance_metadata,
     fetch_monthly_costs,
 )
@@ -98,28 +99,107 @@ class OracleUsageCollectorTests(unittest.TestCase):
 
         self.assertEqual(result, (Decimal("0"), "USD", []))
 
-    def test_account_resources_use_provider_reported_capacity(self) -> None:
-        values = [
-            SimpleNamespace(fractional_usage=4.0, used=4, fractional_availability=12.0, available=12),
-            SimpleNamespace(fractional_usage=24.0, used=24, fractional_availability=72.0, available=72),
+    def test_public_price_list_supplies_free_ranges_and_overage_rates(self) -> None:
+        payloads = {
+            "B93297": {
+                "items": [
+                    {
+                        "partNumber": "B93297",
+                        "currencyCodeLocalizations": [
+                            {
+                                "currencyCode": "SGD",
+                                "prices": [
+                                    {"model": "PAY_AS_YOU_GO", "value": 0, "rangeMin": 0, "rangeMax": 3000},
+                                    {"model": "PAY_AS_YOU_GO", "value": 0.013819, "rangeMin": 3000},
+                                ],
+                            }
+                        ],
+                    }
+                ]
+            },
+            "B93298": {
+                "items": [
+                    {
+                        "partNumber": "B93298",
+                        "currencyCodeLocalizations": [
+                            {
+                                "currencyCode": "SGD",
+                                "prices": [
+                                    {"model": "PAY_AS_YOU_GO", "value": 0, "rangeMin": 0, "rangeMax": 18000},
+                                    {"model": "PAY_AS_YOU_GO", "value": 0.00207285, "rangeMin": 18000},
+                                ],
+                            }
+                        ],
+                    }
+                ]
+            },
+        }
+
+        def opener(request, timeout):
+            sku = next(sku for sku in payloads if sku in request.full_url)
+            self.assertEqual(timeout, 10)
+            return io.BytesIO(json.dumps(payloads[sku]).encode("utf-8"))
+
+        result = fetch_free_resource_pricing("SGD", opener)
+
+        self.assertEqual(result["B93297"]["free_allowance"], Decimal("3000"))
+        self.assertEqual(result["B93297"]["overage_rate"], Decimal("0.013819"))
+        self.assertEqual(result["B93298"]["free_allowance"], Decimal("18000"))
+
+    def test_free_resources_use_actual_usage_and_project_to_month_end(self) -> None:
+        responses = [
+            SimpleNamespace(
+                data=SimpleNamespace(
+                    items=[
+                        SimpleNamespace(sku_part_number="B93297", computed_quantity="96"),
+                        SimpleNamespace(sku_part_number="B93298", computed_quantity="576"),
+                        SimpleNamespace(sku_part_number="B91444", computed_quantity="24"),
+                    ]
+                ),
+                headers={},
+            )
         ]
+        calls = []
 
         class Client:
-            def get_resource_availability(self, **kwargs):
-                self.last_arguments = kwargs
-                return SimpleNamespace(data=values.pop(0))
+            def request_summarized_usages(self, **kwargs):
+                calls.append(kwargs)
+                return responses.pop(0)
 
-        result = fetch_account_resources(
+        result = fetch_free_resource_usage(
             Client(),
             "ocid1.tenancy.example",
-            "example:AP-SEOUL-1-AD-1",
+            now=datetime(2026, 8, 2, 12, tzinfo=timezone.utc),
+            details_factory=lambda **kwargs: kwargs,
         )
 
-        self.assertEqual(result[0]["used"], 4.0)
-        self.assertEqual(result[0]["account_limit"], 16.0)
-        self.assertEqual(result[0]["available"], 12.0)
-        self.assertEqual(result[1]["account_limit"], 96.0)
-        self.assertEqual(result[1]["available"], 72.0)
+        self.assertEqual(result[0]["used"], 96.0)
+        self.assertEqual(result[0]["free_allowance"], 3000.0)
+        self.assertEqual(result[0]["free_remaining"], 2904.0)
+        self.assertEqual(result[0]["projected_month_usage"], 2976.0)
+        self.assertEqual(result[0]["projected_overage"], 0.0)
+        self.assertEqual(result[1]["used"], 576.0)
+        self.assertEqual(result[1]["free_remaining"], 17424.0)
+        self.assertEqual(result[1]["projected_month_usage"], 17856.0)
+        details = calls[0]["request_summarized_usages_details"]
+        self.assertEqual(details["query_type"], "USAGE")
+        self.assertEqual(details["group_by"], ["service", "skuName", "skuPartNumber", "unit"])
+
+    def test_first_day_has_zero_free_usage_without_a_projection(self) -> None:
+        class Client:
+            def request_summarized_usages(self, **kwargs):
+                raise AssertionError("Usage API should not be called for an empty period.")
+
+        result = fetch_free_resource_usage(
+            Client(),
+            "ocid1.tenancy.example",
+            now=datetime(2026, 8, 1, 12, tzinfo=timezone.utc),
+            details_factory=lambda **kwargs: kwargs,
+        )
+
+        self.assertEqual(result[0]["used"], 0.0)
+        self.assertEqual(result[0]["free_remaining"], 3000.0)
+        self.assertIsNone(result[0]["projected_month_usage"])
 
     def test_snapshot_contains_only_derived_values(self) -> None:
         snapshot = build_oracle_snapshot(
@@ -133,9 +213,29 @@ class OracleUsageCollectorTests(unittest.TestCase):
 
         self.assertEqual(snapshot["cost"], 1.5)
         self.assertEqual(snapshot["budget"], 10.0)
+        self.assertEqual(snapshot["projected_cost"], 46.5)
+        self.assertEqual(snapshot["completed_days"], 1)
+        self.assertEqual(snapshot["days_in_month"], 31)
         self.assertEqual(snapshot["period_start"], "2026-08-01")
         self.assertNotIn("tenancy", snapshot)
         self.assertNotIn("key", snapshot)
+
+    def test_snapshot_forecast_includes_projected_free_tier_overage(self) -> None:
+        snapshot = build_oracle_snapshot(
+            cost=Decimal("0"),
+            currency="SGD",
+            budget=None,
+            resources=[
+                {
+                    "projected_overage": 100,
+                    "overage_rate": 0.013819,
+                }
+            ],
+            service_costs=[],
+            now=datetime(2026, 8, 2, 12, tzinfo=timezone.utc),
+        )
+
+        self.assertEqual(snapshot["projected_cost"], 1.3819)
 
 
 if __name__ == "__main__":

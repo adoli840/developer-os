@@ -741,11 +741,12 @@ function renderOracleUsage(usage) {
       <tr>
         <td><strong>${escapeHtml(resource.label || resource.key)}</strong></td>
         <td>${escapeHtml(formatQuantity(resource.used, resource.unit))}</td>
-        <td>${escapeHtml(formatQuantity(resource.account_limit, resource.unit))}</td>
-        <td>${escapeHtml(formatQuantity(resource.available, resource.unit))}</td>
+        <td>${escapeHtml(formatQuantity(resource.free_allowance, resource.unit))}</td>
+        <td>${escapeHtml(formatQuantity(resource.free_remaining, resource.unit))}</td>
+        <td>${escapeHtml(formatQuantity(resource.projected_month_usage, resource.unit))}</td>
       </tr>
     `).join("")
-    : `<tr><td colspan="4" class="muted">Account capacity data is not available.</td></tr>`;
+    : `<tr><td colspan="5" class="muted">Free usage data is not available.</td></tr>`;
   const serviceCosts = Array.isArray(usage.service_costs) ? usage.service_costs : [];
   const serviceRows = serviceCosts.length
     ? serviceCosts.map((service) => `
@@ -763,18 +764,18 @@ function renderOracleUsage(usage) {
       <p class="muted">${escapeHtml(usage.message)}</p>
       <div class="usage-grid">
         <div class="usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost, usage.currency)}</strong></div>
-        <div class="usage-value"><span>Monthly budget</span><strong>${formatMoney(usage.budget, usage.currency)}</strong></div>
-        <div class="usage-value"><span>Budget remaining</span><strong>${formatMoney(usage.remaining, usage.currency)}</strong></div>
+        <div class="usage-value"><span>Projected month-end cost</span><strong>${formatMoney(usage.projected_cost, usage.currency)}</strong></div>
+        <div class="usage-value"><span>Forecast basis</span><strong>${usage.completed_days == null ? "Unavailable" : `${escapeHtml(usage.completed_days)} completed UTC day${usage.completed_days === 1 ? "" : "s"}`}</strong></div>
       </div>
       <div class="usage-section">
-        <h3>Compute account capacity</h3>
+        <h3>Ampere A1 monthly free usage</h3>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Resource</th><th>Used</th><th>Account limit</th><th>Available</th></tr></thead>
+            <thead><tr><th>Resource</th><th>Free used</th><th>Free allowance</th><th>Free remaining</th><th>Month-end projection</th></tr></thead>
             <tbody>${resourceRows}</tbody>
           </table>
         </div>
-        <p class="cell-detail">Capacity comes from OCI Service Limits and is not labeled as an Always Free entitlement.</p>
+        <p class="cell-detail">Usage comes from OCI billing records through the latest completed UTC day. Free ranges and overage rates come from Oracle's public price list. Month-end values are estimates, not an Oracle invoice.</p>
       </div>
       <details class="usage-details">
         <summary>Cost by service</summary>

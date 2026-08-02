@@ -57,6 +57,9 @@ def read_oracle_usage_snapshot(path: Path) -> dict[str, Any]:
         "currency": "USD",
         "budget": None,
         "remaining": None,
+        "projected_cost": None,
+        "completed_days": None,
+        "days_in_month": None,
         "resources": [],
         "service_costs": [],
         "updated_at": None,
@@ -79,28 +82,11 @@ def read_oracle_usage_snapshot(path: Path) -> dict[str, Any]:
         remaining = round(float(budget) - float(cost), 4)
     resources = value.get("resources")
     if not isinstance(resources, list):
-        legacy_resources = value.get("free_resources")
         resources = []
-        if isinstance(legacy_resources, list):
-            for resource in legacy_resources:
-                if not isinstance(resource, dict):
-                    continue
-                used = resource.get("used")
-                available = resource.get("account_available")
-                account_limit = None
-                if isinstance(used, (int, float)) and isinstance(available, (int, float)):
-                    account_limit = used + available
-                resources.append(
-                    {
-                        "key": resource.get("key"),
-                        "label": resource.get("label"),
-                        "unit": resource.get("unit"),
-                        "used": used,
-                        "account_limit": account_limit,
-                        "available": available,
-                    }
-                )
     service_costs = value.get("service_costs")
+    projected_cost = value.get("projected_cost")
+    completed_days = value.get("completed_days")
+    days_in_month = value.get("days_in_month")
     return {
         "status": "snapshot",
         "provider": "Oracle Cloud",
@@ -108,6 +94,9 @@ def read_oracle_usage_snapshot(path: Path) -> dict[str, Any]:
         "currency": str(value.get("currency") or "USD").upper(),
         "budget": budget if isinstance(budget, (int, float)) else None,
         "remaining": remaining,
+        "projected_cost": projected_cost if isinstance(projected_cost, (int, float)) else None,
+        "completed_days": completed_days if isinstance(completed_days, int) else None,
+        "days_in_month": days_in_month if isinstance(days_in_month, int) else None,
         "resources": resources,
         "service_costs": service_costs if isinstance(service_costs, list) else [],
         "updated_at": value.get("updated_at"),

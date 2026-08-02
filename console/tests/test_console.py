@@ -59,7 +59,7 @@ class UsageSnapshotTests(unittest.TestCase):
         self.assertEqual(result["status"], "snapshot")
         self.assertEqual(result["remaining_usd"], 17.75)
 
-    def test_oracle_snapshot_keeps_account_resource_units_separate(self) -> None:
+    def test_oracle_snapshot_keeps_free_usage_and_projection(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "oracle.json"
             path.write_text(
@@ -71,20 +71,26 @@ class UsageSnapshotTests(unittest.TestCase):
                         "resources": [
                             {
                                 "label": "Ampere A1 OCPU",
-                                "unit": "OCPU",
-                                "used": 4,
-                                "account_limit": 16,
-                                "available": 12,
+                                "unit": "OCPU-hours",
+                                "used": 96,
+                                "free_allowance": 3000,
+                                "free_remaining": 2904,
+                                "projected_month_usage": 2976,
                             }
                         ],
+                        "projected_cost": 2.5,
+                        "completed_days": 15,
+                        "days_in_month": 31,
                     }
                 ),
                 encoding="utf-8",
             )
             result = read_oracle_usage_snapshot(path)
         self.assertEqual(result["remaining"], 8.75)
-        self.assertEqual(result["resources"][0]["unit"], "OCPU")
-        self.assertEqual(result["resources"][0]["available"], 12)
+        self.assertEqual(result["resources"][0]["unit"], "OCPU-hours")
+        self.assertEqual(result["resources"][0]["free_remaining"], 2904)
+        self.assertEqual(result["projected_cost"], 2.5)
+        self.assertEqual(result["completed_days"], 15)
 
     def test_provider_collection_is_present_when_oracle_is_not_configured(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
