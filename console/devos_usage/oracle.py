@@ -13,9 +13,9 @@ from .snapshot import write_snapshot
 
 
 INSTANCE_METADATA_URL = "http://169.254.169.254/opc/v2/instance/"
-FREE_RESOURCE_SPECS = (
-    ("a1_ocpu", "Ampere A1 OCPU", "compute", "standard-a1-core-count", "OCPU", "OCI_FREE_A1_OCPUS"),
-    ("a1_memory", "Ampere A1 memory", "compute", "standard-a1-memory-count", "GB", "OCI_FREE_A1_MEMORY_GB"),
+ACCOUNT_RESOURCE_SPECS = (
+    ("a1_ocpu", "Ampere A1 OCPU", "compute", "standard-a1-core-count", "OCPU"),
+    ("a1_memory", "Ampere A1 memory", "compute", "standard-a1-memory-count", "GB"),
 )
 
 
@@ -113,14 +113,13 @@ def fetch_monthly_costs(
     return total, currency, services
 
 
-def fetch_free_resources(
+def fetch_account_resources(
     client: Any,
     tenant_id: str,
     availability_domain: str,
-    allowances: dict[str, Decimal | None],
 ) -> list[dict[str, Any]]:
     resources: list[dict[str, Any]] = []
-    for key, label, service_name, limit_name, unit, _ in FREE_RESOURCE_SPECS:
+    for key, label, service_name, limit_name, unit in ACCOUNT_RESOURCE_SPECS:
         response = client.get_resource_availability(
             service_name=service_name,
             limit_name=limit_name,
@@ -131,22 +130,18 @@ def fetch_free_resources(
         used = _number(getattr(data, "fractional_usage", None))
         if used is None:
             used = _number(getattr(data, "used", None))
-        account_available = _number(getattr(data, "fractional_availability", None))
-        if account_available is None:
-            account_available = _number(getattr(data, "available", None))
-        allowance = allowances.get(key)
-        remaining = None
-        if allowance is not None and used is not None:
-            remaining = max(Decimal("0"), allowance - Decimal(str(used)))
+        available = _number(getattr(data, "fractional_availability", None))
+        if available is None:
+            available = _number(getattr(data, "available", None))
+        account_limit = used + available if used is not None and available is not None else None
         resources.append(
             {
                 "key": key,
                 "label": label,
                 "unit": unit,
                 "used": used,
-                "free_allowance": float(allowance) if allowance is not None else None,
-                "free_remaining": float(remaining) if remaining is not None else None,
-                "account_available": account_available,
+                "account_limit": account_limit,
+                "available": available,
             }
         )
     return resources
@@ -157,7 +152,7 @@ def build_oracle_snapshot(
     cost: Decimal,
     currency: str,
     budget: Decimal | None,
-    free_resources: list[dict[str, Any]],
+    resources: list[dict[str, Any]],
     service_costs: list[dict[str, Any]],
     now: datetime,
 ) -> dict[str, Any]:
@@ -168,7 +163,7 @@ def build_oracle_snapshot(
         "budget": float(round(budget, 2)) if budget is not None else None,
         "period_start": _month_start(current).date().isoformat(),
         "period_end": current.date().isoformat(),
-        "free_resources": free_resources,
+        "resources": resources,
         "service_costs": service_costs,
         "updated_at": current.isoformat().replace("+00:00", "Z"),
     }
@@ -218,15 +213,10 @@ def collect_from_environment() -> bool:
         now=now,
         details_factory=oci.usage_api.models.RequestSummarizedUsagesDetails,
     )
-    allowances = {
-        key: _optional_non_negative_decimal(environment_name)
-        for key, _, _, _, _, environment_name in FREE_RESOURCE_SPECS
-    }
-    free_resources = fetch_free_resources(
+    resources = fetch_account_resources(
         limits_client,
         tenant_id,
         availability_domain,
-        allowances,
     )
     budget = _optional_non_negative_decimal("OCI_MONTHLY_BUDGET")
     snapshot_path = Path(
@@ -241,7 +231,7 @@ def collect_from_environment() -> bool:
             cost=cost,
             currency=currency,
             budget=budget,
-            free_resources=free_resources,
+            resources=resources,
             service_costs=service_costs,
             now=now,
         ),

@@ -57,7 +57,7 @@ def read_oracle_usage_snapshot(path: Path) -> dict[str, Any]:
         "currency": "USD",
         "budget": None,
         "remaining": None,
-        "free_resources": [],
+        "resources": [],
         "service_costs": [],
         "updated_at": None,
         "message": "Oracle Cloud collection is waiting for instance-principal access.",
@@ -77,7 +77,29 @@ def read_oracle_usage_snapshot(path: Path) -> dict[str, Any]:
     remaining = None
     if isinstance(cost, (int, float)) and isinstance(budget, (int, float)):
         remaining = round(float(budget) - float(cost), 4)
-    free_resources = value.get("free_resources")
+    resources = value.get("resources")
+    if not isinstance(resources, list):
+        legacy_resources = value.get("free_resources")
+        resources = []
+        if isinstance(legacy_resources, list):
+            for resource in legacy_resources:
+                if not isinstance(resource, dict):
+                    continue
+                used = resource.get("used")
+                available = resource.get("account_available")
+                account_limit = None
+                if isinstance(used, (int, float)) and isinstance(available, (int, float)):
+                    account_limit = used + available
+                resources.append(
+                    {
+                        "key": resource.get("key"),
+                        "label": resource.get("label"),
+                        "unit": resource.get("unit"),
+                        "used": used,
+                        "account_limit": account_limit,
+                        "available": available,
+                    }
+                )
     service_costs = value.get("service_costs")
     return {
         "status": "snapshot",
@@ -86,7 +108,7 @@ def read_oracle_usage_snapshot(path: Path) -> dict[str, Any]:
         "currency": str(value.get("currency") or "USD").upper(),
         "budget": budget if isinstance(budget, (int, float)) else None,
         "remaining": remaining,
-        "free_resources": free_resources if isinstance(free_resources, list) else [],
+        "resources": resources,
         "service_costs": service_costs if isinstance(service_costs, list) else [],
         "updated_at": value.get("updated_at"),
         "period_start": value.get("period_start"),

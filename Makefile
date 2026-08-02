@@ -50,7 +50,12 @@ console-backup-status:
 	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action BackupStatus -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
 
 console-usage-status:
+
+ifeq ($(OS),Windows_NT)
 	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action UsageStatus -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
+else
+	systemctl list-timers developer-os-openai-usage.timer --no-pager; sudo systemctl --no-pager --full status developer-os-openai-usage.service || true; sudo journalctl -u developer-os-openai-usage.service --no-pager -n 60; test -s /var/lib/developer-os-console/openai-usage.json && echo OPENAI_USAGE_SNAPSHOT=present || echo OPENAI_USAGE_SNAPSHOT=missing; test -s /var/lib/developer-os-console/oracle-usage.json && echo ORACLE_USAGE_SNAPSHOT=present || echo ORACLE_USAGE_SNAPSHOT=missing
+endif
 
 terminal-status:
 	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action TerminalStatus -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"

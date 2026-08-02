@@ -614,7 +614,7 @@ Status: Accepted
 Context:
 
 The console already displayed an OpenAI cost snapshot. Oracle Cloud cost and
-Always Free resource usage require different OCI APIs and should not introduce
+compute account capacity require different OCI APIs and should not introduce
 an OCI user private key into the repository or public web process.
 
 Decision:
@@ -622,15 +622,17 @@ Decision:
 Treat Usage as a provider-neutral read-only view. Keep each provider collector
 outside the console process and expose only credential-free snapshots. Use the
 Oracle Compute instance principal for OCI authentication. Query billing cost
-and resource availability separately, and compare A1 usage with explicit
-operator-provided free allowances instead of assuming that an account service
-limit is the free allowance.
+and resource availability separately. Present the A1 values returned by OCI as
+usage, account limit, and available capacity. Do not ask the operator to supply
+Oracle-owned allowance facts, and do not label a service limit as an Always
+Free entitlement.
 
 Reason:
 
-Instance principals avoid another long-lived private key. Separating monetary
-cost, self-imposed budget, account limit, and Always Free allowance prevents a
-paid tenancy's larger service quota from being mislabeled as free capacity.
+Instance principals avoid another long-lived private key. Provider-reported
+capacity is more reliable than manually copied allowance values. Separating
+monetary cost, self-imposed budget, and account capacity prevents a paid
+tenancy's larger service quota from being mislabeled as free capacity.
 
 Impact:
 

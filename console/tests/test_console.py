@@ -59,7 +59,7 @@ class UsageSnapshotTests(unittest.TestCase):
         self.assertEqual(result["status"], "snapshot")
         self.assertEqual(result["remaining_usd"], 17.75)
 
-    def test_oracle_snapshot_keeps_free_resource_units_separate(self) -> None:
+    def test_oracle_snapshot_keeps_account_resource_units_separate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "oracle.json"
             path.write_text(
@@ -68,13 +68,13 @@ class UsageSnapshotTests(unittest.TestCase):
                         "cost": 1.25,
                         "currency": "USD",
                         "budget": 10,
-                        "free_resources": [
+                        "resources": [
                             {
                                 "label": "Ampere A1 OCPU",
                                 "unit": "OCPU",
                                 "used": 4,
-                                "free_allowance": 4,
-                                "free_remaining": 0,
+                                "account_limit": 16,
+                                "available": 12,
                             }
                         ],
                     }
@@ -83,7 +83,8 @@ class UsageSnapshotTests(unittest.TestCase):
             )
             result = read_oracle_usage_snapshot(path)
         self.assertEqual(result["remaining"], 8.75)
-        self.assertEqual(result["free_resources"][0]["unit"], "OCPU")
+        self.assertEqual(result["resources"][0]["unit"], "OCPU")
+        self.assertEqual(result["resources"][0]["available"], 12)
 
     def test_provider_collection_is_present_when_oracle_is_not_configured(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -474,6 +475,33 @@ class WorkstationStatusTests(unittest.TestCase):
         comparison = workstations[0]["projects"][0]["comparison"]
         self.assertEqual(comparison["deployment_status"], "mismatch")
         self.assertEqual(comparison["runtime_status"], "match")
+
+    def test_projects_are_sorted_by_server_port(self) -> None:
+        workstations = [
+            {
+                "projects": [
+                    {"slug": "gaia", "name": "Gaia", "repository": None},
+                    {"slug": "unknown", "name": "Unknown", "repository": None},
+                    {"slug": "developer-os", "name": "DeveloperOS", "repository": None},
+                    {"slug": "btest", "name": "bTest", "repository": None},
+                    {"slug": "oa", "name": "OA", "repository": None},
+                ],
+                "summary": {},
+            }
+        ]
+        server_projects = [
+            {"slug": "oa", "available": True, "port": 8082},
+            {"slug": "gaia", "available": True, "port": 8083},
+            {"slug": "developer-os", "available": True, "port": 8080},
+            {"slug": "btest", "available": True, "port": 8081},
+        ]
+
+        attach_server_comparisons(workstations, server_projects)
+
+        self.assertEqual(
+            [project["slug"] for project in workstations[0]["projects"]],
+            ["developer-os", "btest", "oa", "gaia", "unknown"],
+        )
 
 
 if __name__ == "__main__":

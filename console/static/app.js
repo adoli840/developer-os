@@ -735,17 +735,17 @@ function renderOpenAIUsage(usage) {
 }
 
 function renderOracleUsage(usage) {
-  const resources = Array.isArray(usage.free_resources) ? usage.free_resources : [];
+  const resources = Array.isArray(usage.resources) ? usage.resources : [];
   const resourceRows = resources.length
     ? resources.map((resource) => `
       <tr>
         <td><strong>${escapeHtml(resource.label || resource.key)}</strong></td>
         <td>${escapeHtml(formatQuantity(resource.used, resource.unit))}</td>
-        <td>${escapeHtml(formatQuantity(resource.free_allowance, resource.unit))}</td>
-        <td>${escapeHtml(formatQuantity(resource.free_remaining, resource.unit))}</td>
+        <td>${escapeHtml(formatQuantity(resource.account_limit, resource.unit))}</td>
+        <td>${escapeHtml(formatQuantity(resource.available, resource.unit))}</td>
       </tr>
     `).join("")
-    : `<tr><td colspan="4" class="muted">Free allowance data is not configured.</td></tr>`;
+    : `<tr><td colspan="4" class="muted">Account capacity data is not available.</td></tr>`;
   const serviceCosts = Array.isArray(usage.service_costs) ? usage.service_costs : [];
   const serviceRows = serviceCosts.length
     ? serviceCosts.map((service) => `
@@ -763,17 +763,18 @@ function renderOracleUsage(usage) {
       <p class="muted">${escapeHtml(usage.message)}</p>
       <div class="usage-grid">
         <div class="usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost, usage.currency)}</strong></div>
-        <div class="usage-value"><span>Budget</span><strong>${formatMoney(usage.budget, usage.currency)}</strong></div>
-        <div class="usage-value"><span>Remaining</span><strong>${formatMoney(usage.remaining, usage.currency)}</strong></div>
+        <div class="usage-value"><span>Monthly budget</span><strong>${formatMoney(usage.budget, usage.currency)}</strong></div>
+        <div class="usage-value"><span>Budget remaining</span><strong>${formatMoney(usage.remaining, usage.currency)}</strong></div>
       </div>
       <div class="usage-section">
-        <h3>Always Free compute</h3>
+        <h3>Compute account capacity</h3>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Resource</th><th>Used</th><th>Free allowance</th><th>Remaining</th></tr></thead>
+            <thead><tr><th>Resource</th><th>Used</th><th>Account limit</th><th>Available</th></tr></thead>
             <tbody>${resourceRows}</tbody>
           </table>
         </div>
+        <p class="cell-detail">Capacity comes from OCI Service Limits and is not labeled as an Always Free entitlement.</p>
       </div>
       <details class="usage-details">
         <summary>Cost by service</summary>

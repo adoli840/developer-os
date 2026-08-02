@@ -146,22 +146,22 @@ OpenAI collection reads `OPENAI_ADMIN_API_KEY` and
 
 Oracle Cloud collection uses the Compute instance principal rather than an OCI
 API private key. It calls the Usage API for month-to-date cost and the Limits
-API for current Ampere A1 OCPU and memory usage, then writes
+API for current Ampere A1 OCPU and memory usage, account limits, and available
+capacity, then writes
 `oracle-usage.json`. Enable it with these non-secret values in the same external
 environment file:
 
 ```text
 DEVOS_OCI_ENABLED=1
 OCI_MONTHLY_BUDGET=your_budget_in_the_billing_currency
-OCI_FREE_A1_OCPUS=your_tenancy_free_allowance
-OCI_FREE_A1_MEMORY_GB=your_tenancy_free_allowance
 ```
 
-The budget and free allowances are explicit operator values because a paid
-tenancy's service limit is not necessarily its Always Free allowance. The
-collector obtains tenancy, region, and availability domain from the instance;
-`OCI_TENANCY_OCID`, `OCI_REGION`, and `OCI_AVAILABILITY_DOMAIN` are optional
-overrides for troubleshooting.
+The monthly budget is an optional operator target, not an Oracle entitlement.
+Resource usage, account limit, and available capacity come directly from OCI.
+The console does not label a service limit as an Always Free allowance because
+those are separate concepts. The collector obtains tenancy, region, and
+availability domain from the instance; `OCI_TENANCY_OCID`, `OCI_REGION`, and
+`OCI_AVAILABILITY_DOMAIN` are optional overrides for troubleshooting.
 
 The instance must belong to an OCI dynamic group with these tenancy policies:
 
@@ -181,6 +181,10 @@ Inspect the collector without displaying its key:
 ```powershell
 make console-usage-status
 ```
+
+On Windows this command checks the server through the configured SSH wrapper.
+Inside the DeveloperOS server checkout on Linux, the same target reads the
+local systemd timer, service log, and snapshot presence directly.
 
 ## Private Server Terminal
 

@@ -135,6 +135,14 @@ def _service_status(server_project: dict[str, Any] | None) -> str:
     return "stopped" if running == 0 else "degraded"
 
 
+def _project_port_sort_key(project: dict[str, Any]) -> tuple[int, int, str]:
+    try:
+        port = int(project.get("port"))
+    except (TypeError, ValueError):
+        return (1, 0, str(project.get("name") or "").casefold())
+    return (0, port, str(project.get("name") or "").casefold())
+
+
 def attach_server_comparisons(
     workstations: list[dict[str, Any]],
     server_projects: list[dict[str, Any]],
@@ -188,4 +196,5 @@ def attach_server_comparisons(
                 "service_status": _service_status(server_project),
             }
             project["port"] = server_project.get("port") if server_project else None
+        workstation["projects"].sort(key=_project_port_sort_key)
         workstation["summary"]["mismatches"] = mismatches

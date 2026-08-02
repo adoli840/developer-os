@@ -215,9 +215,9 @@ The deployed service listens on port `8080`; append `/roadmap` to that access
 address for the roadmap view. See `console/README.md` for its security boundary,
 management command allowlist, and provider usage snapshot behavior.
 
-OpenAI organization costs and optional Oracle Cloud costs and free-resource
-usage are collected by a separate hourly server service. The OpenAI Admin key
-remains outside Git in `X:/Settings/env/developer-os.env`; Oracle uses the
+OpenAI organization costs and optional Oracle Cloud costs and account resource
+capacity are collected by a separate hourly server service. The OpenAI Admin
+key remains outside Git in `X:/Settings/env/developer-os.env`; Oracle uses the
 server's instance principal. Neither credential reaches the public console.
 
 The Oracle deployment also installs:

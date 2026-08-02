@@ -102,9 +102,9 @@ credential-free JSON -> public read-only Usage view
 ```
 
 The console may display derived monthly costs, operator-defined budgets,
-service breakdowns, and resource allowance usage. It must not expose provider
-credentials, tenancy identifiers, private key material, or unrestricted billing
-APIs. Monetary budgets and resource allowances remain separate because their
-units and authority differ.
+service breakdowns, and provider-reported resource usage, account limits, and
+available capacity. It must not expose provider credentials, tenancy
+identifiers, private key material, or unrestricted billing APIs. A provider
+service limit must not be presented as a free-tier entitlement.
 
 
