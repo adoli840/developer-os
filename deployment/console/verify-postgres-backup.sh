@@ -139,7 +139,7 @@ verify_one() (
       return 1
     fi
     if [ "$(docker exec "$verification_container" psql -U devos_verify -d "$legacy_database" -Atc \
-      "select (to_regclass('public.symbol') is not null)::int;")" != "1" ]; then
+      "select (to_regclass('public.app_settings') is not null)::int;")" != "1" ]; then
       write_verification "$project" failed "$filename" "Legacy bTest schema validation failed."
       return 1
     fi
