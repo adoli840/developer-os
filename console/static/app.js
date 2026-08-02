@@ -6,6 +6,7 @@ const state = {
   roadmaps: null,
   activeRoadmap: "",
   activeRoadmapTrack: "overall",
+  activeResourceMetric: "",
   pendingAction: null,
   refreshTimer: null,
 };
@@ -21,7 +22,6 @@ const elements = {
   refreshButton: document.querySelector("#refresh-button"),
   logoutButton: document.querySelector("#logout-button"),
   serverMetrics: document.querySelector("#server-metrics"),
-  overviewProjects: document.querySelector("#overview-projects"),
   overviewTime: document.querySelector("#overview-time"),
   alertSummary: document.querySelector("#alert-summary"),
   workstationSummary: document.querySelector("#workstation-summary"),
@@ -70,13 +70,6 @@ function formatBytes(value) {
     index += 1;
   }
   return `${amount.toFixed(index > 2 ? 1 : 0)} ${units[index]}`;
-}
-
-function formatUptime(seconds) {
-  if (!Number.isFinite(seconds)) return "Unavailable";
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor((seconds % 86400) / 3600);
-  return days ? `${days}d ${hours}h` : `${hours}h`;
 }
 
 function formatMoney(value) {
@@ -184,7 +177,6 @@ function render() {
   renderMetrics(state.overview.system);
   renderAlerts(state.overview.alerts || []);
   renderWorkstations(state.overview.workstations || []);
-  renderOverviewProjects(state.overview.projects);
   renderDocker(state.overview.system.docker);
   renderActivity(state.overview.audit);
   renderRoadmaps(state.roadmaps);
@@ -384,19 +376,45 @@ function selectPrimaryTab(tab, updateHistory = true) {
 
 function renderMetrics(system) {
   const metrics = [
-    {label: "CPU", value: Number.isFinite(system.cpu_percent) ? `${system.cpu_percent}%` : `${system.cpu_count || "-"} cores`, percent: system.cpu_percent || 0},
-    {label: "Memory", value: formatBytes(system.memory.used), detail: `of ${formatBytes(system.memory.total)}`, percent: system.memory.percent || 0},
-    {label: "Root disk", value: formatBytes(system.disk.used), detail: `${formatBytes(system.disk.free)} free`, percent: system.disk.percent || 0},
-    {label: "Uptime", value: formatUptime(system.uptime_seconds), detail: system.hostname, percent: 100},
+    {key: "cpu", label: "CPU", value: Number.isFinite(system.cpu_percent) ? `${system.cpu_percent}%` : `${system.cpu_count || "-"} cores`, percent: system.cpu_percent || 0},
+    {key: "memory", label: "Memory", value: formatBytes(system.memory.used), detail: `of ${formatBytes(system.memory.total)}`, percent: system.memory.percent || 0},
+    {key: "disk", label: "Root disk", value: formatBytes(system.disk.used), detail: `${formatBytes(system.disk.free)} free`, percent: system.disk.percent || 0},
   ];
-  elements.serverMetrics.innerHTML = metrics.map((metric) => `
-    <div class="metric">
-      <span class="metric-label">${escapeHtml(metric.label)}</span>
-      <strong class="metric-value">${escapeHtml(metric.value)}</strong>
-      <span class="cell-detail">${escapeHtml(metric.detail || "")}</span>
-      <progress class="meter" max="100" value="${Math.max(0, Math.min(100, metric.percent))}">${metric.percent}%</progress>
+  const activeMetric = metrics.find((metric) => metric.key === state.activeResourceMetric);
+  elements.serverMetrics.innerHTML = `
+    ${metrics.map((metric) => `
+      <button class="metric${activeMetric?.key === metric.key ? " active" : ""}" type="button" data-metric="${escapeHtml(metric.key)}" aria-expanded="${activeMetric?.key === metric.key}">
+        <span class="metric-label">${escapeHtml(metric.label)}</span>
+        <strong class="metric-value">${escapeHtml(metric.value)}</strong>
+        <span class="cell-detail">${escapeHtml(metric.detail || "")}</span>
+        <progress class="meter" max="100" value="${Math.max(0, Math.min(100, metric.percent))}">${metric.percent}%</progress>
+      </button>
+    `).join("")}
+    ${activeMetric ? resourceBreakdown(activeMetric.key, system.resources?.[activeMetric.key] || []) : ""}
+  `;
+  elements.serverMetrics.querySelectorAll("button[data-metric]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activeResourceMetric = state.activeResourceMetric === button.dataset.metric
+        ? ""
+        : button.dataset.metric;
+      renderMetrics(system);
+    });
+  });
+}
+
+function resourceBreakdown(metric, rows) {
+  if (!rows.length) return `<p class="resource-empty">Usage breakdown unavailable.</p>`;
+  const formatValue = (value) => metric === "cpu" ? `${Number(value).toFixed(1)}%` : formatBytes(value);
+  return `
+    <div class="resource-breakdown">
+      ${rows.map((row) => `
+        <div class="resource-row">
+          <div class="resource-row-heading"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(formatValue(row.value))}</span></div>
+          <p>${(row.components || []).map((component) => `${escapeHtml(component.name)} ${escapeHtml(formatValue(component.value))}`).join(" / ")}</p>
+        </div>
+      `).join("")}
     </div>
-  `).join("");
+  `;
 }
 
 function repositoryStatus(project) {
@@ -407,15 +425,6 @@ function repositoryStatus(project) {
   if (repo.behind > 0) return statusBadge(`${repo.behind} behind`, "warn");
   if (repo.ahead > 0) return statusBadge(`${repo.ahead} ahead`, "neutral");
   return statusBadge("Clean", "good");
-}
-
-function containerStatus(project) {
-  if (!project.containers.length) return statusBadge("None", "neutral");
-  const unhealthy = project.containers.filter((container) => String(container.status).toLowerCase().includes("unhealthy"));
-  const running = project.containers.filter((container) => String(container.state).toLowerCase() === "running");
-  if (unhealthy.length) return statusBadge(`${unhealthy.length} unhealthy`, "bad");
-  if (running.length === project.containers.length) return statusBadge(`${running.length} running`, "good");
-  return statusBadge(`${running.length}/${project.containers.length} running`, "warn");
 }
 
 function deploymentStatus(project) {
@@ -486,7 +495,7 @@ function renderWorkstations(workstations) {
     </div>
     <div class="table-wrap">
       <table class="project-comparison-table">
-        <thead><tr><th>Project</th><th>Local</th><th>GitHub</th><th>Server</th><th>Service</th><th>Terminal</th></tr></thead>
+        <thead><tr><th>Project</th><th>Local</th><th>GitHub</th><th>Server</th><th>Service</th><th>Port</th><th>Terminal</th></tr></thead>
         <tbody>
           ${home.projects.length ? home.projects.map((project) => `
             <tr>
@@ -495,9 +504,10 @@ function renderWorkstations(workstations) {
               <td>${githubStatus(project.repository)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div></td>
               <td>${comparisonStatus(project.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(project.comparison?.deployed_revisions))}</div></td>
               <td>${serviceStatus(project.comparison?.service_status)}</td>
+              <td><strong>${project.port ? escapeHtml(project.port) : "-"}</strong></td>
               <td class="terminal-cell">${terminalLink(project)}</td>
             </tr>
-          `).join("") : `<tr><td colspan="6" class="muted">No Home report has been received yet.</td></tr>`}
+          `).join("") : `<tr><td colspan="7" class="muted">No Home report has been received yet.</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -531,19 +541,6 @@ function comparisonStatus(status) {
   if (status === "match") return statusBadge("Match", "good");
   if (status === "mismatch") return statusBadge("Mismatch", "bad");
   return statusBadge("Unavailable", "neutral");
-}
-
-function renderOverviewProjects(projects) {
-  elements.overviewProjects.innerHTML = projects.map((project) => `
-    <tr>
-      <td><span class="project-name"><strong>${escapeHtml(project.name)}</strong><small>${project.available ? "Available" : "Not present on this server"}</small></span></td>
-      <td>${repositoryStatus(project)}</td>
-      <td><strong>${escapeHtml(project.repository?.revision || "-")}</strong><div class="cell-detail">${escapeHtml(project.repository?.branch || "-")}</div></td>
-      <td>${deploymentStatus(project)}</td>
-      <td>${containerStatus(project)}</td>
-      <td>${project.port ? `<strong>${escapeHtml(project.port)}</strong>` : "-"}</td>
-    </tr>
-  `).join("");
 }
 
 function renderDocker(docker) {

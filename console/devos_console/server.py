@@ -17,6 +17,7 @@ from .auth import Session, SessionStore
 from .backups import collect_backup_status
 from .projects import ProjectService
 from .roadmaps import collect_roadmaps
+from .resources import collect_resource_breakdown
 from .settings import Settings, load_settings
 from .system_info import collect_system_info
 from .usage import read_usage_snapshot
@@ -51,6 +52,11 @@ class ConsoleApplication:
             projects = projects_future.result()
             backups = backups_future.result()
             workstations = workstations_future.result()
+        system["resources"] = collect_resource_breakdown(
+            self.settings.projects,
+            projects,
+            system,
+        )
         attach_server_comparisons(workstations, projects)
         if public:
             for project in projects:

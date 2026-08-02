@@ -187,4 +187,5 @@ def attach_server_comparisons(
                 "runtime_status": runtime_status,
                 "service_status": _service_status(server_project),
             }
+            project["port"] = server_project.get("port") if server_project else None
         workstation["summary"]["mismatches"] = mismatches

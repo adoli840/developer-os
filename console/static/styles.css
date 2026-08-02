@@ -254,7 +254,7 @@ button {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: 18px;
   border: 1px solid var(--line);
   border-radius: 6px;
@@ -263,13 +263,84 @@ button {
 }
 
 .metric {
+  appearance: none;
+  position: relative;
   min-width: 0;
-  padding: 17px 18px;
+  padding: 17px 42px 17px 18px;
   border-right: 1px solid var(--line);
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
 
 .metric:last-child {
   border-right: 0;
+}
+
+.metric::after {
+  content: "+";
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  color: var(--green);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.metric.active::after {
+  content: "-";
+}
+
+.metric:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+.resource-breakdown {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+}
+
+.resource-row {
+  padding: 11px 18px;
+  border-right: 1px solid var(--line);
+}
+
+.resource-row:last-child {
+  border-right: 0;
+}
+
+.resource-row-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.resource-row-heading span,
+.resource-row p,
+.resource-empty {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.resource-row p {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.resource-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
 }
 
 .metric-label {
@@ -1076,15 +1147,19 @@ pre {
   }
 
   .metrics-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .resource-breakdown {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .metric:nth-child(2) {
+  .resource-row:nth-child(2n) {
     border-right: 0;
   }
 
-  .metric:nth-child(-n + 2) {
-    border-bottom: 1px solid var(--line);
+  .resource-row:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
   }
 
   .two-column {
@@ -1186,13 +1261,27 @@ pre {
     grid-template-columns: 1fr;
   }
 
-  .metric,
-  .metric:nth-child(2) {
+  .metric {
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
 
   .metric:last-child {
+    border-bottom: 0;
+  }
+
+  .resource-breakdown {
+    grid-template-columns: 1fr;
+  }
+
+  .resource-row,
+  .resource-row:nth-child(2n) {
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .resource-row:last-child {
     border-bottom: 0;
   }
 

@@ -12,6 +12,8 @@ from console.devos_console.alerts import build_alerts
 from console.devos_console.auth import SessionStore
 from console.devos_console.backups import collect_backup_status
 from console.devos_console.projects import ProjectService
+from console.devos_console.resources import _parse_size, collect_resource_breakdown
+from console.devos_console.runner import CommandResult
 from console.devos_console.settings import ProjectSpec, WorkstationSpec, load_settings
 from console.devos_console.usage import read_usage_snapshot
 from console.devos_console.workstations import attach_server_comparisons, collect_workstations
@@ -103,6 +105,70 @@ class ProjectStatusTests(unittest.TestCase):
         deployment = {"status": "current"}
         result = ProjectService._work_end_checks(True, repository, [], deployment)
         self.assertTrue(result["ready"])
+
+
+class ResourceBreakdownTests(unittest.TestCase):
+    def test_size_parser_accepts_docker_decimal_and_binary_units(self) -> None:
+        self.assertEqual(_parse_size("1.5GB"), 1_500_000_000)
+        self.assertEqual(_parse_size("2MiB"), 2_097_152)
+        self.assertIsNone(_parse_size("N/A"))
+
+    def test_resources_are_grouped_by_project_and_component(self) -> None:
+        spec = ProjectSpec(
+            slug="oa",
+            name="OA",
+            path=Path("."),
+            compose_project="oa",
+            port=8082,
+            backup_expected=True,
+        )
+        projects = [
+            {
+                "slug": "oa",
+                "containers": [{"name": "oa", "service": "app"}],
+            }
+        ]
+        stats = CommandResult(
+            ("docker", "stats"),
+            0,
+            json.dumps({"Name": "oa", "CPUPerc": "40%", "MemUsage": "200MiB / 8GiB"}),
+            "",
+        )
+        disk = CommandResult(
+            ("docker", "system", "df"),
+            0,
+            json.dumps(
+                {
+                    "Containers": [
+                        {"Labels": "com.docker.compose.project=oa", "Size": "10MB"}
+                    ],
+                    "Volumes": [
+                        {"Labels": "com.docker.compose.project=oa", "Size": "1GB"}
+                    ],
+                }
+            ),
+            "",
+        )
+        system = {
+            "cpu_count": 4,
+            "cpu_percent": 25,
+            "memory": {"used": 1_000_000_000},
+            "disk": {"used": 5_000_000_000},
+        }
+        with (
+            patch("console.devos_console.resources.run_docker", side_effect=[stats, disk]),
+            patch("console.devos_console.resources._directory_size", return_value=100_000_000),
+        ):
+            result = collect_resource_breakdown((spec,), projects, system)
+
+        self.assertEqual(result["cpu"][0]["name"], "OA")
+        self.assertEqual(result["cpu"][0]["value"], 10.0)
+        self.assertEqual(result["memory"][0]["value"], 209_715_200)
+        self.assertEqual(result["disk"][0]["value"], 1_110_000_000)
+        self.assertEqual(
+            [item["name"] for item in result["disk"][0]["components"]],
+            ["Docker volumes", "Project files", "Container writes"],
+        )
 
 
 class BackupStatusTests(unittest.TestCase):
@@ -249,6 +315,7 @@ class WorkstationStatusTests(unittest.TestCase):
             {
                 "slug": "gaia",
                 "available": True,
+                "port": 8083,
                 "repository": {"revision": "abc1234"},
                 "deployment": {"deployed_revisions": ["abc123456789"]},
                 "containers": [
@@ -262,6 +329,7 @@ class WorkstationStatusTests(unittest.TestCase):
         self.assertEqual(comparison["deployment_status"], "match")
         self.assertEqual(comparison["runtime_status"], "match")
         self.assertEqual(comparison["service_status"], "healthy")
+        self.assertEqual(workstations[0]["projects"][0]["port"], 8083)
         self.assertEqual(workstations[0]["summary"]["mismatches"], 0)
 
     def test_runtime_is_compared_with_the_tracked_github_revision(self) -> None:
