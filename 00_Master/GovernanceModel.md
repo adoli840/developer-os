@@ -14,6 +14,22 @@ Each project may define a short **Project Constitution** through `PROJECT_CONTEX
 
 Global rules live in one place. Project-specific exceptions live inside the project.
 
+## Self-Application Rule
+
+DeveloperOS is also a project repository and must follow every applicable
+policy it defines for other projects. This includes roadmap continuity,
+snapshot safety, Git safety, coding and language rules, verification, and
+meaningful decision records.
+
+DeveloperOS also applies the Docker image build minimization policy to itself.
+Because it has no root container application, its applicable implementation is
+zero routine Docker image builds and a non-containerized console deployment.
+
+A capability may be excluded only when DeveloperOS structurally lacks the
+corresponding application surface, such as a root Docker Compose stack or an
+application PostgreSQL database. Every exclusion must be explicit in the root
+`PROJECT_RULES.md`; convenience alone is not a valid reason.
+
 DeveloperOS is a decision engine, not a project dashboard.
 
 It defines how development decisions are made across the workspace. It should not collect project information simply because it can.
@@ -24,6 +40,7 @@ Do not copy these documents into individual projects.
 
 - `AI_Rules.md`
 - `CodingStandards.md`
+- `DockerImageBuildPolicy.md`
 - `LanguagePolicy.md`
 - `AI_Collaboration.md`
 - `AI_Workflow_Safety_Policy.md`

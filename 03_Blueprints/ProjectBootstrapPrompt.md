@@ -21,6 +21,10 @@ Preserve the separation between DeveloperOS and this project repository:
 - Do not update DeveloperOS with project-local state unless the finding changes future engineering decisions across projects.
 
 Use the task routing rules in `BOOT.md` to decide which DeveloperOS documents to read before implementation.
+
+For Docker, Compose, image, deployment, or container lifecycle work, follow `DeveloperOS/00_Master/DockerImageBuildPolicy.md`. Routine starts and restarts must reuse existing images; use an explicit build command only when a build input changed or an image is missing.
+
+For meaningful project work, follow `DeveloperOS/00_Master/ProjectRoadmapPolicy.md` without waiting for a separate request. Use this project's existing roadmap or generator, and create a root `ROADMAP.md` from the DeveloperOS blueprint only when no canonical roadmap exists. When `ROADMAPS.json` exists, read the root overview and each affected track. Before finishing, update an affected track only when its status, scope, priority, completion signal, or material blocker changed, and update the overview only for a project-wide boundary.
 ```
 
 ## Short Invocation

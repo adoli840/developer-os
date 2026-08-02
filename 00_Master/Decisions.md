@@ -368,3 +368,163 @@ DeveloperOS deployments require the local
 `OPENAI_MONTHLY_BUDGET_USD`. The server installs it with restricted
 permissions, and the public console reads only aggregate cost, budget,
 remaining amount, period, and update time.
+
+## 2026-08-02 - Require Project-Owned Roadmap Continuity
+
+Status: Accepted
+
+Context:
+
+Some repositories maintain detailed roadmaps while others depend on transient
+chat context. Requiring a separate roadmap request for each task produces
+inconsistent project memory and makes later context restoration expensive.
+
+Decision:
+
+Treat roadmap maintenance as part of the definition of done for every
+meaningful work unit. DeveloperOS defines one lifecycle policy and a fallback
+template. Each project keeps its own canonical roadmap; an established local
+roadmap or generator takes precedence over the fallback `ROADMAP.md`. Install a
+concise global Codex guidance block so the policy is loaded without a separate
+prompt.
+
+Reason:
+
+A small roadmap update at verified work boundaries preserves current direction,
+results, blockers, and the next action without turning every command into
+documentation work.
+
+Impact:
+
+Codex reads the project roadmap before meaningful implementation and updates it
+after verification. Read-only work and trivial edits do not create roadmap
+churn. DeveloperOS remains the policy owner and does not duplicate
+project-local roadmap state.
+
+## 2026-08-02 - Apply DeveloperOS Policies To DeveloperOS Itself
+
+Status: Accepted
+
+Context:
+
+DeveloperOS provides automatic governance and tooling to application
+repositories, but implicit self-application leaves gaps that are difficult to
+detect. Treating the governance repository as exempt would weaken the rules it
+defines for every other project.
+
+Decision:
+
+Treat DeveloperOS as a project governed by every applicable DeveloperOS policy.
+Maintain repository-local agent guidance, project context, explicit exceptions,
+roadmap state, snapshot recovery, Git checks, verification, monitoring, and
+deployment controls. Provide one installer and one self-check for durable local
+integrations.
+
+Reason:
+
+The governance source should demonstrate the operating model it requires.
+Explicit checks make omissions visible, while explicit exclusions prevent fake
+Docker stacks, empty databases, or duplicate project documents created only for
+symmetry.
+
+Impact:
+
+`make self-enable` installs the user-level integrations and `make self-check`
+audits the self-application contract. Root `PROJECT_RULES.md` records why Docker
+Compose lifecycle, PostgreSQL backup, generic Docker deployment, and duplicate
+root TODO or decision files do not apply.
+
+## 2026-08-02 - Update Roadmaps At Topic Status Boundaries
+
+Status: Accepted
+
+Context:
+
+Updating a roadmap after every meaningful implementation unit makes it behave
+like a changelog and creates documentation noise even when project direction is
+unchanged.
+
+Decision:
+
+Supersede the work-unit update cadence in the earlier roadmap continuity
+decision. A meaningful work unit is now an evaluation point. Update the
+canonical roadmap only when a topic is created or restructured, changes status,
+changes priority or material scope, changes its completion signal, or gains or
+resolves a blocker that affects its next transition.
+
+Reason:
+
+A roadmap should expose planning state rather than narrate implementation
+activity. Topic status boundaries are stable enough to restore direction while
+ordinary implementation details remain in Git and focused project documents.
+
+Impact:
+
+Codex reads the roadmap before meaningful work and evaluates transition triggers
+before finishing. It does not edit the roadmap when work progresses inside the
+same status. Projects without a roadmap still create an initial one during their
+first meaningful work unit.
+
+## 2026-08-02 - Standardize Roadmap Format And Web Publication
+
+Status: Accepted
+
+Context:
+
+Project-owned roadmap continuity defines when planning state changes, but new
+repositories still need a predictable shape and browser-accessible projects
+need one stable location where people can inspect that state.
+
+Decision:
+
+Define one standard `ROADMAP.md` field set and table shape for new roadmaps.
+Require browser-accessible projects to render their canonical roadmap read-only
+at `/roadmap`. Preserve existing project-specific generators and map their
+canonical output to the standard web fields rather than creating a duplicate
+roadmap. DeveloperOS provides a parsed cross-project view in its console.
+
+Reason:
+
+A stable format makes status recoverable by both people and tooling. A derived
+web view makes that state easy to inspect while repository ownership prevents
+the display layer from becoming a second source of truth.
+
+Impact:
+
+The public API exposes only validated standard fields and omits raw Markdown,
+filesystem paths, and parser diagnostics. DeveloperOS implements the first
+`/roadmap` view. Existing projects without a standard root roadmap or adapter
+remain visibly unavailable until their project-specific rollout is completed.
+
+## 2026-08-02 - Minimize Docker Image Builds By Default
+
+Status: Accepted
+
+Context:
+
+Compose can build implicitly when an image is absent, and several routine
+project commands used `up --build`. This made ordinary starts and restarts
+potentially expensive and obscured whether a source change actually affected an
+image layer.
+
+Decision:
+
+Make no-build startup the workspace default. Shared `make run` and `make up`,
+project-specific runtime commands, restarts, and deployment startup must reuse
+existing images with `--no-build`. Named build and release commands may perform
+one cached build, then start separately without another build request. Preserve
+images, volumes, and cache during ordinary cleanup.
+
+Reason:
+
+Separating build from startup makes resource use predictable, keeps development
+loops fast for bind-mounted projects, and still provides a clear path when a
+Dockerfile, dependency layer, copied artifact, architecture, or immutable
+release revision requires a new image.
+
+Impact:
+
+`00_Master/DockerImageBuildPolicy.md` is the global source of truth. The shared
+Make contract enforces no-build starts, `make docker-policy-check` audits all
+managed projects, and DeveloperOS applies the policy as a non-containerized
+console with zero routine image builds.

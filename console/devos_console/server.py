@@ -16,6 +16,7 @@ from .audit import AuditLog
 from .auth import Session, SessionStore
 from .backups import collect_backup_status
 from .projects import ProjectService
+from .roadmaps import collect_roadmaps
 from .settings import Settings, load_settings
 from .system_info import collect_system_info
 from .usage import read_usage_snapshot
@@ -75,16 +76,20 @@ class ConsoleApplication:
             "read_only": public,
         }
 
+    def roadmaps(self) -> dict[str, Any]:
+        return collect_roadmaps(self.settings.projects)
+
 
 class ConsoleHandler(BaseHTTPRequestHandler):
     server_version = "DeveloperOSConsole/1"
     application: ConsoleApplication
 
     def log_message(self, format_string: str, *args: object) -> None:
-        sys.stderr.write(
-            "%s - - [%s] %s\n"
-            % (self.address_string(), self.log_date_time_string(), format_string % args)
-        )
+        if sys.stderr is not None:
+            sys.stderr.write(
+                "%s - - [%s] %s\n"
+                % (self.address_string(), self.log_date_time_string(), format_string % args)
+            )
 
     def _security_headers(self, *, cache: str = "no-store") -> None:
         self.send_header("Cache-Control", cache)
@@ -153,15 +158,18 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return
 
         if parsed.path.startswith("/api/"):
-            public_overview = (
+            public_read = (
                 self.application.settings.public_read_only
-                and parsed.path == "/api/overview"
+                and parsed.path in {"/api/overview", "/api/roadmaps"}
             )
-            if not public_overview and self._require_session() is None:
+            if not public_read and self._require_session() is None:
                 return
             try:
                 if parsed.path == "/api/overview":
-                    self._json(HTTPStatus.OK, self.application.overview(public=public_overview))
+                    self._json(HTTPStatus.OK, self.application.overview(public=public_read))
+                    return
+                if parsed.path == "/api/roadmaps":
+                    self._json(HTTPStatus.OK, self.application.roadmaps())
                     return
                 if parsed.path.startswith("/api/projects/") and parsed.path.endswith("/logs"):
                     slug = parsed.path.split("/")[3]

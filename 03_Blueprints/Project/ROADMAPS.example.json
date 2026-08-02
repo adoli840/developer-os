@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "tracks": [
+    {
+      "slug": "first-track",
+      "name": "First Track",
+      "path": "docs/roadmaps/first-track.md"
+    },
+    {
+      "slug": "second-track",
+      "name": "Second Track",
+      "path": "docs/roadmaps/second-track.md"
+    }
+  ]
+}

@@ -40,19 +40,37 @@ Do not copy DeveloperOS policy documents into projects. Reference them instead.
 2. `DeveloperOS/00_Master/Workspace.md`
 3. `DeveloperOS/00_Master/Architecture.md`
 4. `DeveloperOS/00_Master/CodingStandards.md`
-5. `DeveloperOS/00_Master/GovernanceModel.md`
-6. `DeveloperOS/00_Master/PM_Role.md`
-7. `DeveloperOS/00_Master/Roadmap.md`
-8. `DeveloperOS/00_Master/ProjectStatus.md`
-9. `DeveloperOS/02_AI/LanguagePolicy.md`
-10. `DeveloperOS/02_AI/AI_Collaboration.md`
-11. `DeveloperOS/02_AI/AI_Workflow_Safety_Policy.md`
-12. `DeveloperOS/03_Blueprints`
-13. Relevant project README
+5. `DeveloperOS/00_Master/DockerImageBuildPolicy.md`, for Docker work
+6. `DeveloperOS/00_Master/GovernanceModel.md`
+7. `DeveloperOS/00_Master/PM_Role.md`
+8. `DeveloperOS/00_Master/Roadmap.md`
+9. `DeveloperOS/00_Master/ProjectStatus.md`
+10. `DeveloperOS/02_AI/LanguagePolicy.md`
+11. `DeveloperOS/02_AI/AI_Collaboration.md`
+12. `DeveloperOS/02_AI/AI_Workflow_Safety_Policy.md`
+13. `DeveloperOS/03_Blueprints`
+14. Relevant project README
 
 ## Current Priority Rule
 
 The current operating mode prioritizes active project inspection, convenience improvements, efficiency improvements, and workspace stabilization over new feature development.
+
+## Project Roadmap Continuity Rule
+
+Meaningful project work must follow `00_Master/ProjectRoadmapPolicy.md` without
+requiring a separate developer request. Codex must use the project's existing
+canonical roadmap or generator, create a root `ROADMAP.md` only when none
+exists, and update it only when a roadmap topic crosses a status, scope,
+priority, completion-signal, or material-blocker boundary.
+
+When `ROADMAPS.json` exists, Codex must read the root overview and each affected
+track. A track-only state change updates that track; the overview changes only
+for project-wide direction, priority, dependency, milestone, or release state.
+
+Project roadmaps remain project-owned. DeveloperOS defines the lifecycle but
+does not duplicate project state. New roadmaps use the DeveloperOS standard
+format, and browser-accessible projects render their canonical planning state
+read-only at `/roadmap`.
 
 ## GPT And Codex Collaboration Rule
 
@@ -90,6 +108,25 @@ A rebuild is required.
 Use this notice only when the developer must actually rebuild to apply the completed change.
 
 The goal is to prevent unnecessary rebuild habits while making required rebuilds explicit.
+
+## Docker Image Build Minimization Rule
+
+All Docker work must follow `00_Master/DockerImageBuildPolicy.md`.
+
+Routine starts, detached starts, restarts, one-shot runtime tasks, status, and
+logs must reuse existing images. Compose `up` commands at these boundaries must
+include `--no-build`; use a named build command only when an image is missing or
+a Docker build input changed.
+
+Do not use `docker compose up --build` as a convenience command. Explicit build
+flows build once and then start with `--no-build`. Preserve the build cache and
+reusable images unless the developer is performing deliberate disk recovery or
+cache diagnosis.
+
+Before requesting or running a build, inspect the Dockerfile, Compose `build`,
+`image`, and `volumes` definitions and state which build input requires it.
+Deployment may build an immutable image for the exact release revision, but the
+deployment startup itself must use `--no-build`.
 
 ## Language Rule
 

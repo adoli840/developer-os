@@ -16,6 +16,8 @@ Before making architectural or structural changes, consult:
 
 - `../DeveloperOS/00_Master/AI_Rules.md`
 - `../DeveloperOS/00_Master/CodingStandards.md`
+- `../DeveloperOS/00_Master/DockerImageBuildPolicy.md`, for Docker work
+- `../DeveloperOS/00_Master/ProjectRoadmapPolicy.md`
 - `../DeveloperOS/02_AI/LanguagePolicy.md`
 - `../DeveloperOS/02_AI/AI_Collaboration.md`
 - `../DeveloperOS/02_AI/AI_Workflow_Safety_Policy.md`
@@ -34,8 +36,9 @@ Before making changes, AI should read:
 1. `README.md`
 2. `PROJECT_CONTEXT.md`
 3. `PROJECT_RULES.md`, if present
-4. DeveloperOS global policies
-5. Relevant source files
+4. The canonical project roadmap
+5. DeveloperOS global policies
+6. Relevant source files
 
 ## Do Not Change
 

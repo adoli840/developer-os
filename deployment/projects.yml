@@ -6,7 +6,7 @@ projects:
     dockerfile: "Dockerfile"
     compose_file: "docker-compose.prod.yml"
     server_path_secret: "PROD_PATH_BTEST"
-    deploy_command: "docker compose -f docker-compose.prod.yml up -d"
+    deploy_command: "docker compose -f docker-compose.prod.yml up -d --no-build"
 
   oa:
     repo_path: "X:/Projects/oa"
@@ -15,7 +15,7 @@ projects:
     dockerfile: "Dockerfile"
     compose_file: "docker-compose.prod.yml"
     server_path_secret: "PROD_PATH_OA"
-    deploy_command: "docker compose -f docker-compose.prod.yml up -d"
+    deploy_command: "docker compose -f docker-compose.prod.yml up -d --no-build"
 
   gaia:
     repo_path: "X:/Projects/gaia"
@@ -24,7 +24,7 @@ projects:
     dockerfile: "Dockerfile"
     compose_file: "docker-compose.prod.yml"
     server_path_secret: "PROD_PATH_GAIA"
-    deploy_command: "docker compose -f docker-compose.prod.yml up -d"
+    deploy_command: "docker compose -f docker-compose.prod.yml up -d --no-build"
 
 required_secrets:
   common:

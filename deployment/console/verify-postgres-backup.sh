@@ -67,6 +67,8 @@ verify_one() (
   local backup
   local expected_checksum
   local actual_checksum
+  local policy
+  local legacy_database
   local verification_container="devos-restore-check-${project}-$$"
   local ready=0
 
@@ -77,6 +79,9 @@ verify_one() (
   filename=$(read_status_value "$status_file" last_file)
   image=$(read_status_value "$status_file" source_image)
   expected_checksum=$(read_status_value "$status_file" sha256)
+  policy=$(read_status_value "$status_file" backup_policy)
+  policy=${policy:-full-cluster}
+  legacy_database=$(read_status_value "$status_file" legacy_database)
   backup="$BACKUP_ROOT/$project/$filename"
   if [ -z "$filename" ] || [ -z "$image" ] || [ ! -f "$backup" ]; then
     write_verification "$project" failed "$filename" "Backup file or source image metadata is missing."
@@ -117,7 +122,28 @@ verify_one() (
     write_verification "$project" failed "$filename" "Isolated PostgreSQL restore failed."
     return 1
   fi
-  if ! docker exec "$verification_container" psql -U devos_verify -d devos_verify -Atc \
+  if [ "$policy" = "multi-container-excluding-market.klines-data" ]; then
+    if [ "$(docker exec "$verification_container" psql -U devos_verify -d devos_verify -Atc \
+      "select (to_regclass('market.klines') is not null and to_regclass('analysis.ai_analysis_requests') is not null and to_regclass('learning.elliott_knowledge_items') is not null)::int;")" != "1" ]; then
+      write_verification "$project" failed "$filename" "Selective backup schema validation failed."
+      return 1
+    fi
+    if [ "$(docker exec "$verification_container" psql -U devos_verify -d devos_verify -Atc \
+      "select count(*) from market.klines;")" != "0" ]; then
+      write_verification "$project" failed "$filename" "Excluded Kline data was unexpectedly restored."
+      return 1
+    fi
+    if [ -z "$legacy_database" ] || ! docker exec "$verification_container" \
+      psql -U devos_verify -d "$legacy_database" -Atc "select 1;" >/dev/null 2>&1; then
+      write_verification "$project" failed "$filename" "Legacy bTest database was not restored."
+      return 1
+    fi
+    if [ "$(docker exec "$verification_container" psql -U devos_verify -d "$legacy_database" -Atc \
+      "select (to_regclass('public.symbol') is not null)::int;")" != "1" ]; then
+      write_verification "$project" failed "$filename" "Legacy bTest schema validation failed."
+      return 1
+    fi
+  elif ! docker exec "$verification_container" psql -U devos_verify -d devos_verify -Atc \
     "select count(*) from pg_database where datistemplate = false;" | grep -Eq '^[1-9][0-9]*$'; then
     write_verification "$project" failed "$filename" "Restored database catalog validation failed."
     return 1
@@ -128,7 +154,7 @@ verify_one() (
 
 projects=("$@")
 if [ ${#projects[@]} -eq 0 ] || [ "${projects[0]}" = "--all" ]; then
-  projects=(oa gaia)
+  projects=(oa gaia btest)
 fi
 
 failed=0

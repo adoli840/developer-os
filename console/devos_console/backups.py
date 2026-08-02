@@ -104,6 +104,7 @@ def collect_backup_status(
             status = "healthy"
             message = "The latest backup passed integrity checks."
         verification_status = str(value.get("verification_status") or "missing")
+        backup_policy = str(value.get("backup_policy") or "full-cluster")
         if verification_status == "passed" and verification_age_days is not None and verification_age_days > 8:
             verification_status = "stale"
         items.append(
@@ -120,6 +121,8 @@ def collect_backup_status(
                 "verification_status": verification_status,
                 "last_verification_at": value.get("last_verification_at"),
                 "verified_file": value.get("verified_file"),
+                "backup_policy": backup_policy,
+                "retention_days": value.get("retention_days", 14),
             }
         )
     return {

@@ -4,6 +4,24 @@
 
 DeveloperOS automation tools live here.
 
+## DeveloperOS Self-Application
+
+Install every durable user-level DeveloperOS integration and verify that this
+repository receives its own applicable policies:
+
+```powershell
+make self-enable
+make self-check
+```
+
+`self-enable` installs the shared Make file, the `devos` command path, and the
+global Codex guidance block. `self-check` verifies project guidance, roadmap and
+snapshot rules, shared Git commands, monitoring, terminal access, workstation
+reporting, deployment controls, and Codex task generation. Structurally
+inapplicable Docker lifecycle, database backup, and generic deployment
+capabilities are reported as explicit skips. Docker image build minimization is
+still checked as an active zero-build policy for DeveloperOS itself.
+
 ## Shared Make Targets
 
 `04_Tools/make/DeveloperOS.mk` defines standard workspace commands.
@@ -15,6 +33,9 @@ X:\Projects\DeveloperOS\04_Tools\make\Enable-DeveloperOSMake.ps1
 ```
 
 Once enabled, projects do not need duplicate local Makefiles just to expose common DeveloperOS commands.
+The shared Docker target names are reserved and must not be redefined in project
+Makefiles. Project-specific Compose filenames and image behavior belong in
+`docker-config`.
 
 Available workspace command:
 
@@ -30,6 +51,17 @@ make b-run
 make down
 make dh-b-push
 make dh-pull
+```
+
+`make run` and `make up` always reuse existing images. `make b-run` performs one
+cached build and then starts with `--no-build`. The complete policy lives in
+`00_Master/DockerImageBuildPolicy.md`.
+
+Verify DeveloperOS, OA, Gaia, and bTest against the shared contract:
+
+```bash
+make make-check
+make docker-policy-check
 ```
 
 ## Git Dashboard
@@ -49,6 +81,20 @@ X:\Projects\DeveloperOS\04_Tools\bin\devos.cmd git-check
 ```
 
 The tool fetches `origin` when available and reports modified files, commit need, push need, pull need, and current branch.
+
+## Global Codex Guidance
+
+Enable the DeveloperOS entry point and project-roadmap lifecycle for every
+Codex repository under `X:\Projects`:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File X:\Projects\DeveloperOS\04_Tools\codex\Enable-DeveloperOSCodex.ps1
+```
+
+The installer maintains a marked DeveloperOS block in
+`$CODEX_HOME/AGENTS.md` and preserves unrelated personal guidance. Project
+instructions may choose their own roadmap filename or generator, while
+`00_Master/ProjectRoadmapPolicy.md` supplies the shared update lifecycle.
 
 ## Codex Task Generator
 

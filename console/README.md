@@ -4,7 +4,8 @@
 
 The browser console is a live operational view of the workspace. It does not
 store project roadmaps, duplicate project documentation, or become the source
-of truth for project state.
+of truth for project state. `/roadmap` derives a read-only standard view from
+project-owned root `ROADMAP.md` files.
 
 The console reads:
 
@@ -18,6 +19,8 @@ The console reads:
 - Local actionable alerts for delivery and recovery conditions.
 - An optional local OpenAI cost snapshot.
 - A local audit log for allowlisted management commands.
+- Standard roadmap fields for configured projects, without raw files or source
+  paths.
 
 ## Security Model
 
@@ -28,6 +31,8 @@ The console reads:
   available on the authenticated console API.
 - The direct public HTTP deployment uses `DEVOS_PUBLIC_READ_ONLY=1`; it hides
   project paths and audit history and disables login and commands.
+- The public roadmap API returns only parsed standard fields. It does not return
+  raw Markdown, source paths, or parser diagnostics.
 - A separate command console binds to server loopback only and is reachable
   through an SSH local-forward from a trusted workstation.
 
@@ -37,7 +42,9 @@ The console reads:
 make console-run
 ```
 
-Open `http://127.0.0.1:8080`. Development mode does not require an access token.
+Open `http://127.0.0.1:8080`. The roadmap view is
+`http://127.0.0.1:8080/roadmap`. Development mode does not require an access
+token.
 
 Run tests:
 
@@ -71,7 +78,7 @@ The deployment script:
 7. Opens `8080/tcp` in Oracle Linux `firewalld`.
 8. Verifies `http://127.0.0.1:8080/healthz`.
 9. Installs daily PostgreSQL backup and weekly restore-verification timers.
-10. Runs an initial OA and Gaia backup and isolated restore test.
+10. Runs an initial OA, Gaia, and bTest backup and isolated restore test.
 11. Installs an hourly OpenAI cost collector using the protected local
     `X:/Settings/env/developer-os.env` file.
 12. Installs `developer-os-terminal.service` on `127.0.0.1:8022` without
@@ -82,13 +89,26 @@ addresses to reach TCP port 8080.
 
 ## Database Recovery Protection
 
-`developer-os-backup.timer` creates compressed `pg_dumpall` backups for the
-`oa_db` and `gaia_db` containers every day. Backups are stored under
-`/var/backups/developer-os`, readable only by root, and retained for 14 days.
+`developer-os-backup.timer` creates compressed full-cluster backups for the
+`oa_db` and `gaia_db` containers every day. Those backups are retained for 14
+days. It also creates one combined bTest backup containing a full dump of
+`btest_db` and a selective dump of `btest-elliott-db`; all Elliott schemas and
+data are included except rows in `market.klines`, which can be downloaded again
+from the market-data source. bTest backups are retained for 3 days because of
+their larger size and the server's limited root disk.
+Backups are stored under `/var/backups/developer-os` and are readable only by
+root.
+
+OA database backups preserve job, log, generated-file metadata, configuration,
+and mapping knowledge. Files referenced by OA metadata under host-mounted
+`storage` or output directories are not PostgreSQL data and require a separate
+file-backup policy.
 
 `developer-os-backup-verify.timer` starts temporary network-isolated
 PostgreSQL containers each week and restores the latest backups into them.
-The verification never connects to or writes into the production databases.
+For bTest it also verifies that the Kline table schema exists with no restored
+rows and that the legacy bTest database and schema were restored. The
+verification never connects to or writes into the production databases.
 
 Manual checks remain available:
 

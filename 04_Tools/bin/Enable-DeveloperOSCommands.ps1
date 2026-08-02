@@ -20,3 +20,8 @@ if ($parts -notcontains $binDir) {
     Write-Host "DeveloperOS command directory is already in the user PATH:"
     Write-Host $binDir
 }
+
+$processParts = @($env:Path -split ";" | Where-Object { $_ })
+if ($processParts -notcontains $binDir) {
+    $env:Path = if ($env:Path) { "$env:Path;$binDir" } else { $binDir }
+}

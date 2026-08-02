@@ -28,8 +28,10 @@ Use this order when working from an individual project:
 2. Current project `README.md`
 3. Current project `PROJECT_CONTEXT.md`, if present
 4. Current project `PROJECT_RULES.md`, if present
-5. Task-relevant DeveloperOS documents from the routing table below
-6. Relevant project source files
+5. The canonical project roadmap resolved through
+   `00_Master/ProjectRoadmapPolicy.md`
+6. Task-relevant DeveloperOS documents from the routing table below
+7. Relevant project source files
 
 ## Precedence Rule
 
@@ -42,12 +44,27 @@ When rules conflict:
 
 Project-specific documents override DeveloperOS only when the override is explicit. Otherwise, DeveloperOS remains the default global policy.
 
+## Project Roadmap Rule
+
+For meaningful project work, read and follow
+`00_Master/ProjectRoadmapPolicy.md` even when the developer does not separately
+request roadmap maintenance.
+
+Use the project's existing canonical roadmap or generator. If the project has
+none, create a root `ROADMAP.md` from the DeveloperOS project blueprint. When
+`ROADMAPS.json` exists, read the root overview and every track affected by the
+work. Before the final response, evaluate whether a roadmap topic changed
+status, scope, priority, completion signal, or material blocker. Update the
+affected track on its own boundary; update the overview only when project-wide
+direction, priority, dependency, milestone, or release state also changed.
+
 ## Task Routing
 
 | Task Type | Read These DeveloperOS Documents |
 |---|---|
 | Coding task | `00_Master/CodingStandards.md`, `02_AI/AI_Workflow_Safety_Policy.md`, `02_AI/AI_Collaboration.md` |
 | Bug fix | `00_Master/CodingStandards.md`, `02_AI/Review.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
+| Docker, Compose, image, or container lifecycle | `00_Master/DockerImageBuildPolicy.md`, `00_Master/CodingStandards.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
 | Architecture task | `00_Master/Architecture.md`, `00_Master/Decisions.md`, `02_AI/AI_Collaboration.md` |
 | Architecture review | `00_Master/ArchitectureReview.md`, `00_Master/Architecture.md`, `00_Master/Decisions.md` |
 | Documentation task | `02_AI/LanguagePolicy.md`, `02_AI/Prompts.md`, `00_Master/GovernanceModel.md` |
@@ -73,5 +90,9 @@ If a task can be completed by reading project-local context and one or two Devel
 ## Output Rule
 
 When DeveloperOS affected the work, summarize which DeveloperOS documents were used and why.
+
+For meaningful repository work, confirm that roadmap transition triggers were
+evaluated. Create or update the project-owned roadmap only when required by
+`00_Master/ProjectRoadmapPolicy.md`.
 
 When a finding belongs to the project, update or recommend updating the project repository. When a finding affects future engineering decisions across projects, record or recommend recording it in DeveloperOS.

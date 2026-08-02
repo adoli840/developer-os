@@ -3,7 +3,20 @@ CONSOLE_SERVER ?= opc@168.107.18.16
 CONSOLE_SSH_KEY ?= X:/Settings/ssh/ssh-key-ops.key
 DEVOS_OPENAI_ENV ?= X:/Settings/env/developer-os.env
 
-.PHONY: console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel-install terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-install workstation-home-report
+.PHONY: self-enable self-check make-check docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel-install terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-install workstation-home-report
+
+self-enable:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/self/Enable-DeveloperOSSelfApplication.ps1
+
+self-check:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/self/Test-DeveloperOSSelfApplication.ps1
+
+make-check:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/make/Test-DeveloperOSMake.ps1
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Test-DockerImageBuildPolicy.ps1
+
+docker-policy-check:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Test-DockerImageBuildPolicy.ps1
 
 console-run:
 	$(PYTHON) -m console.devos_console --dev --bind 127.0.0.1 --port 8080

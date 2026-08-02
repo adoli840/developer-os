@@ -68,6 +68,18 @@ class SettingsTests(unittest.TestCase):
         self.assertTrue(settings.public_read_only)
         self.assertEqual(settings.port, 8080)
 
+    def test_btest_backup_is_enabled_by_default(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_CONSOLE_TOKEN": "test-token",
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings()
+        btest = next(project for project in settings.projects if project.slug == "btest")
+        self.assertTrue(btest.backup_expected)
+
 
 class ProjectStatusTests(unittest.TestCase):
     def test_status_counts_distinguish_worktree_states(self) -> None:
@@ -105,6 +117,8 @@ class BackupStatusTests(unittest.TestCase):
                         "size_bytes": 100,
                         "verification_status": "passed",
                         "last_verification_at": now,
+                        "backup_policy": "full-cluster",
+                        "retention_days": 14,
                     }
                 ),
                 encoding="utf-8",
@@ -121,6 +135,8 @@ class BackupStatusTests(unittest.TestCase):
                 result = collect_backup_status((project,), status_dir)
         self.assertEqual(result["items"][0]["status"], "healthy")
         self.assertEqual(result["items"][0]["verification_status"], "passed")
+        self.assertEqual(result["items"][0]["backup_policy"], "full-cluster")
+        self.assertEqual(result["items"][0]["retention_days"], 14)
 
     def test_missing_backup_becomes_warning(self) -> None:
         backups = {

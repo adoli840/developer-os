@@ -48,11 +48,30 @@ DeveloperOS
 - DeveloperOS is the constitution of the workspace, not the government of each project.
 - Projects reference DeveloperOS instead of copying global policy documents.
 - Projects own their own README, TODO, roadmap, implementation state, and current architecture.
+- Every meaningful work unit evaluates roadmap transitions; the canonical roadmap changes only when a topic's status or other material planning state changes.
+- Routine Docker lifecycle commands reuse existing images; builds occur only at explicit build or release boundaries.
 - GPT handles thinking; Codex handles implementation.
 - Codex treats existing design documents as implementation specifications.
 - Git is for meaningful final history; snapshots are for short-term AI recovery.
 - DeveloperOS governance documents are written in English.
 - The developer may communicate with GPT and Codex in Korean.
+
+## DeveloperOS Self-Application
+
+DeveloperOS is also a project repository. It follows its own applicable
+governance, roadmap, snapshot, Git, coding, language, verification, and
+documentation rules. Root `PROJECT_RULES.md` records the narrow capabilities
+that do not fit its system-management architecture.
+
+Install and verify the complete self-application contract:
+
+```powershell
+make self-enable
+make self-check
+```
+
+The self-check reports active capabilities as `PASS` and structurally
+inapplicable capabilities as `SKIP` with a reason.
 
 ## Shared Developer Commands
 
@@ -80,7 +99,20 @@ make dh-b-push
 make dh-pull
 ```
 
+`make run` and `make up` use `--no-build`. `make b-run` builds once with the
+normal Docker cache and then starts without requesting another build. See
+`00_Master/DockerImageBuildPolicy.md` for rebuild criteria and release rules.
+
 The Docker targets auto-detect `docker-compose.yml`, `compose.yml`, `docker-compose.yaml`, or `compose.yaml` in the current project directory.
+Projects configure exceptional Compose filenames and image workflows through
+`docker-config`; project Makefiles must not redefine the shared public targets.
+
+Verify the shared contract across DeveloperOS, OA, Gaia, and bTest:
+
+```bash
+make make-check
+make docker-policy-check
+```
 
 ## Git Dashboard
 
@@ -128,7 +160,9 @@ Secret values are not stored in DeveloperOS. The scripts print required GitHub S
 
 DeveloperOS includes a live browser console under `console/`. It derives status
 from project repositories and the Oracle server without duplicating
-project-owned state.
+project-owned state. Its read-only roadmap view is available at `/roadmap` and
+derives standard fields from each project's root `ROADMAP.md` and any tracks
+declared by `ROADMAPS.json`.
 
 Run locally:
 
@@ -149,9 +183,9 @@ Deployment is accepted only from a clean `main` branch that exactly matches
 `origin/main`. The release is built from the committed Git revision, never
 from uncommitted local files.
 
-The deployed service listens on port `8080`. See `console/README.md` for its
-security boundary, management command allowlist, and OpenAI usage snapshot
-behavior.
+The deployed service listens on port `8080`; append `/roadmap` to that access
+address for the roadmap view. See `console/README.md` for its security boundary,
+management command allowlist, and OpenAI usage snapshot behavior.
 
 OpenAI organization costs are collected by a separate hourly server service.
 Its Admin key remains outside Git in
@@ -159,7 +193,8 @@ Its Admin key remains outside Git in
 
 The Oracle deployment also installs:
 
-- Daily OA and Gaia PostgreSQL backups with 14-day retention.
+- Daily OA and Gaia full PostgreSQL backups with 14-day retention.
+- Daily bTest PostgreSQL backups with Kline rows excluded and 3-day retention.
 - Weekly isolated restore verification in temporary PostgreSQL containers.
 - Deployment revision and container image comparison.
 - Git end-of-work checks and local operational alerts.
@@ -202,7 +237,22 @@ firewall or OCI networking.
 
 ## Project Agent Entry Point
 
+- `AGENTS.md`: repository-local DeveloperOS self-application entry point.
 - `BOOT.md`: single entry point for AI agents working inside individual projects.
+- `00_Master/ProjectRoadmapPolicy.md`: mandatory project-owned roadmap lifecycle at topic status boundaries.
+
+Install the concise DeveloperOS entry rule in the user's global Codex guidance:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File X:\Projects\DeveloperOS\04_Tools\codex\Enable-DeveloperOSCodex.ps1
+```
+
+Existing project-specific roadmaps and generators remain canonical. Projects
+without one receive a root `ROADMAP.md` at the close of their next meaningful
+work unit. Browser-accessible projects expose their canonical planning state at
+`/roadmap` according to the shared policy. Projects with independently
+prioritizable workstreams keep the root roadmap as an overview and declare
+their standard-format track files in `ROADMAPS.json`.
 
 ## Key Documents
 
@@ -210,6 +260,7 @@ firewall or OCI networking.
 - `00_Master/Workspace.md`
 - `00_Master/GovernanceModel.md`
 - `00_Master/PM_Role.md`
+- `00_Master/ProjectRoadmapPolicy.md`
 - `00_Master/Roadmap.md`
 - `00_Master/ProjectStatus.md`
 - `00_Master/Metrics.md`

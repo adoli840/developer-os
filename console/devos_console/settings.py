@@ -43,7 +43,7 @@ class Settings:
 
 DEFAULT_PROJECTS = (
     {"slug": "developer-os", "name": "DeveloperOS", "directory": "DeveloperOS", "compose_project": "developer-os-console", "port": 8080, "backup_expected": False},
-    {"slug": "btest", "name": "bTest", "directory": "bTest", "compose_project": "btest", "port": 8080, "backup_expected": False},
+    {"slug": "btest", "name": "bTest", "directory": "bTest", "compose_project": "btest", "port": 8080, "backup_expected": True},
     {"slug": "oa", "name": "OA", "directory": "oa", "compose_project": "oa", "port": 8082, "backup_expected": True},
     {"slug": "gaia", "name": "Gaia", "directory": "gaia", "compose_project": "gaia", "port": 8083, "backup_expected": True},
 )

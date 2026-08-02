@@ -193,7 +193,7 @@ try {
 {
   "projects": [
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current","compose_project":"developer-os-console","port":8080,"backup_expected":false},
-    {"slug":"btest","name":"bTest","path":"/home/opc/bTest","compose_project":"btest","port":8080,"backup_expected":false},
+    {"slug":"btest","name":"bTest","path":"/home/opc/bTest","compose_project":"btest","port":8080,"backup_expected":true},
     {"slug":"oa","name":"OA","path":"/home/opc/oa","compose_project":"oa","port":8082,"backup_expected":true},
     {"slug":"gaia","name":"Gaia","path":"/home/opc/gaia","compose_project":"gaia","port":8083,"backup_expected":true}
   ],
@@ -295,7 +295,7 @@ sudo systemctl reset-failed developer-os-terminal || true
 sudo systemctl restart developer-os-console developer-os-terminal
 sudo systemctl start developer-os-openai-usage.service
 sudo install -d -m 0750 -o opc -g opc /var/lib/developer-os-console/workstations
-if [ ! -s /var/lib/developer-os-console/backup-status/oa.json ] || [ ! -s /var/lib/developer-os-console/backup-status/gaia.json ]; then
+if [ ! -s /var/lib/developer-os-console/backup-status/oa.json ] || [ ! -s /var/lib/developer-os-console/backup-status/gaia.json ] || [ ! -s /var/lib/developer-os-console/backup-status/btest.json ]; then
   sudo systemctl start developer-os-backup.service
   sudo systemctl start developer-os-backup-verify.service
 fi

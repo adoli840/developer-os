@@ -3,6 +3,9 @@ const state = {
   publicReadOnly: false,
   csrfToken: "",
   overview: null,
+  roadmaps: null,
+  activeRoadmap: "",
+  activeRoadmapTrack: "overall",
   pendingAction: null,
   refreshTimer: null,
 };
@@ -26,6 +29,11 @@ const elements = {
   activitySummary: document.querySelector("#activity-summary"),
   projectList: document.querySelector("#project-list"),
   workstationDetail: document.querySelector("#workstation-detail"),
+  roadmapTime: document.querySelector("#roadmap-time"),
+  roadmapSummary: document.querySelector("#roadmap-summary"),
+  roadmapTabs: document.querySelector("#roadmap-tabs"),
+  roadmapTrackTabs: document.querySelector("#roadmap-track-tabs"),
+  roadmapDetail: document.querySelector("#roadmap-detail"),
   backupSummary: document.querySelector("#backup-summary"),
   timerSummary: document.querySelector("#timer-summary"),
   deploymentList: document.querySelector("#deployment-list"),
@@ -111,6 +119,7 @@ async function request(path, options = {}) {
 }
 
 async function initialize() {
+  selectPrimaryTab(tabFromPath(), false);
   try {
     const session = await request("/api/session");
     state.authenticated = Boolean(session.authenticated);
@@ -146,7 +155,10 @@ async function refreshOverview() {
   elements.syncState.textContent = "Refreshing";
   elements.refreshButton.disabled = true;
   try {
-    state.overview = await request("/api/overview");
+    [state.overview, state.roadmaps] = await Promise.all([
+      request("/api/overview"),
+      request("/api/roadmaps"),
+    ]);
     render();
     elements.syncState.textContent = "Live";
   } catch (error) {
@@ -166,6 +178,7 @@ function render() {
   renderDocker(state.overview.system.docker);
   renderActivity(state.overview.audit);
   renderProjects(state.overview.projects);
+  renderRoadmaps(state.roadmaps);
   renderOperations(state.overview.projects, state.overview.backups);
   renderCommands(state.overview.projects);
   renderUsage(state.overview.usage);
@@ -173,6 +186,191 @@ function render() {
   elements.overviewTime.textContent = collectedAt
     ? `Collected ${new Date(collectedAt * 1000).toLocaleString()}`
     : "Collection time unavailable";
+}
+
+function roadmapStatusKind(status) {
+  if (status === "Done") return "good";
+  if (status === "Blocked" || status === "Cancelled") return "bad";
+  if (status === "Paused") return "warn";
+  return "neutral";
+}
+
+function renderRoadmaps(roadmaps) {
+  if (!roadmaps) return;
+  const summary = roadmaps.summary || {};
+  elements.roadmapSummary.innerHTML = [
+    {label: "Projects", value: summary.total || 0},
+    {label: "Available", value: summary.available || 0},
+    {label: "Missing", value: summary.missing || 0},
+    {label: "Invalid", value: summary.invalid || 0},
+  ].map((item) => `
+    <div class="roadmap-summary-item">
+      <span>${escapeHtml(item.label)}</span>
+      <strong>${escapeHtml(item.value)}</strong>
+    </div>
+  `).join("");
+
+  const projects = roadmaps.projects || [];
+  if (!projects.some((project) => project.slug === state.activeRoadmap)) {
+    state.activeRoadmap = projects.find((project) => project.slug === "developer-os")?.slug
+      || projects[0]?.slug
+      || "";
+  }
+  elements.roadmapTabs.innerHTML = projects.map((project) => {
+    const active = project.slug === state.activeRoadmap;
+    return `<button class="roadmap-tab${active ? " active" : ""}" data-roadmap="${escapeHtml(project.slug)}" role="tab" aria-selected="${active}" type="button">${escapeHtml(project.name)}</button>`;
+  }).join("");
+  elements.roadmapTabs.querySelectorAll("button[data-roadmap]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activeRoadmap = button.dataset.roadmap;
+      state.activeRoadmapTrack = "overall";
+      renderRoadmaps(state.roadmaps);
+    });
+  });
+
+  const activeProject = projects.find((project) => project.slug === state.activeRoadmap);
+  renderRoadmapTracks(activeProject);
+  elements.roadmapTime.textContent = roadmaps.generated_at
+    ? `Collected ${new Date(roadmaps.generated_at).toLocaleString()}`
+    : "Collection time unavailable";
+}
+
+function renderRoadmapTracks(project) {
+  const tracks = project?.state === "available" ? (project.tracks || []) : [];
+  if (!tracks.length) {
+    state.activeRoadmapTrack = "overall";
+    elements.roadmapTrackTabs.hidden = true;
+    elements.roadmapTrackTabs.innerHTML = "";
+    renderRoadmapDetail(project);
+    return;
+  }
+
+  const choices = [{slug: "overall", name: "Overall", roadmap: project}]
+    .concat(tracks.map((track) => ({slug: track.slug, name: track.name, roadmap: track})));
+  if (!choices.some((choice) => choice.slug === state.activeRoadmapTrack)) {
+    state.activeRoadmapTrack = "overall";
+  }
+  elements.roadmapTrackTabs.hidden = false;
+  elements.roadmapTrackTabs.innerHTML = choices.map((choice) => {
+    const active = choice.slug === state.activeRoadmapTrack;
+    return `<button class="roadmap-track-tab${active ? " active" : ""}" data-roadmap-track="${escapeHtml(choice.slug)}" role="tab" aria-selected="${active}" type="button">${escapeHtml(choice.name)}</button>`;
+  }).join("");
+  elements.roadmapTrackTabs.querySelectorAll("button[data-roadmap-track]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activeRoadmapTrack = button.dataset.roadmapTrack;
+      renderRoadmapTracks(project);
+    });
+  });
+  const active = choices.find((choice) => choice.slug === state.activeRoadmapTrack);
+  renderRoadmapDetail(active?.roadmap || project);
+}
+
+function renderRoadmapDetail(project) {
+  if (!project) {
+    elements.roadmapDetail.innerHTML = `<section class="roadmap-empty"><h2>No projects configured</h2></section>`;
+    return;
+  }
+  if (project.state !== "available") {
+    const label = project.state === "missing" ? "Not available" : "Format mismatch";
+    const kind = project.state === "missing" ? "warn" : "bad";
+    elements.roadmapDetail.innerHTML = `
+      <section class="roadmap-empty">
+        <div>
+          <p class="eyebrow">${escapeHtml(project.name)}</p>
+          <h2>Standard roadmap view unavailable</h2>
+          <p class="muted">${escapeHtml(project.message)}</p>
+        </div>
+        ${statusBadge(label, kind)}
+      </section>
+    `;
+    return;
+  }
+
+  const milestone = project.milestone || {};
+  const latest = project.latest_status_change || {};
+  elements.roadmapDetail.innerHTML = `
+    <section class="roadmap-lead">
+      <div>
+        <p class="eyebrow">UPDATED ${escapeHtml(project.updated_at)}</p>
+        <h2>${escapeHtml(project.title)}</h2>
+        <p>${escapeHtml(project.direction)}</p>
+      </div>
+      <dl class="roadmap-milestone">
+        <div><dt>Milestone status</dt><dd>${statusBadge(milestone.status, roadmapStatusKind(milestone.status))}</dd></div>
+        <div><dt>Objective</dt><dd>${escapeHtml(milestone.objective)}</dd></div>
+        <div><dt>Completion signal</dt><dd>${escapeHtml(milestone.completion_signal)}</dd></div>
+      </dl>
+    </section>
+
+    <section class="roadmap-band">
+      <div class="roadmap-band-heading">
+        <h3>Roadmap topics</h3>
+        <span>${escapeHtml(project.topics.length)} topics</span>
+      </div>
+      <div class="table-wrap">
+        <table class="roadmap-table">
+          <thead><tr><th>Topic</th><th>Status</th><th>Completion signal</th><th>Next transition</th></tr></thead>
+          <tbody>${project.topics.map((topic) => `
+            <tr>
+              <td><strong>${escapeHtml(topic.topic)}</strong></td>
+              <td>${statusBadge(topic.status, roadmapStatusKind(topic.status))}</td>
+              <td>${escapeHtml(topic.completion_signal)}</td>
+              <td>${escapeHtml(topic.next_transition)}</td>
+            </tr>
+          `).join("")}</tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="roadmap-columns">
+      <section class="roadmap-band">
+        <h3>Current priority</h3>
+        ${roadmapOrderedList(project.current_priority)}
+      </section>
+      <section class="roadmap-band">
+        <h3>Latest status change</h3>
+        <dl class="roadmap-change">
+          <div><dt>Topic</dt><dd>${escapeHtml(latest.topic)}</dd></div>
+          <div><dt>Change</dt><dd>${escapeHtml(latest.change)}</dd></div>
+          <div><dt>Evidence</dt><dd>${escapeHtml(latest.evidence_or_reason)}</dd></div>
+        </dl>
+      </section>
+    </div>
+
+    <div class="roadmap-columns">
+      <section class="roadmap-band">
+        <h3>Next status transitions</h3>
+        ${roadmapOrderedList(project.next_status_transitions)}
+      </section>
+      <section class="roadmap-band">
+        <h3>Risks and blockers</h3>
+        ${roadmapBulletList(project.risks_and_blockers)}
+      </section>
+    </div>
+  `;
+}
+
+function roadmapOrderedList(items) {
+  return `<ol class="roadmap-list">${(items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>`;
+}
+
+function roadmapBulletList(items) {
+  return `<ul class="roadmap-list">${(items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+
+function tabFromPath() {
+  return window.location.pathname.replace(/\/$/, "") === "/roadmap" ? "roadmap" : "overview";
+}
+
+function selectPrimaryTab(tab, updateHistory = true) {
+  const button = document.querySelector(`.nav-item[data-tab="${tab}"]`);
+  if (!button) return;
+  document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
+  document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${tab}`));
+  if (updateHistory) {
+    const nextPath = tab === "roadmap" ? "/roadmap" : "/";
+    if (window.location.pathname !== nextPath) window.history.pushState({tab}, "", nextPath);
+  }
 }
 
 function renderMetrics(system) {
@@ -384,6 +582,7 @@ function renderOperations(projects, backups) {
           <dl>
             <dt>Backup</dt><dd>${escapeHtml(formatDate(backup.last_success_at))}</dd>
             <dt>Restore test</dt><dd>${escapeHtml(formatDate(backup.last_verification_at))}</dd>
+            <dt>Policy</dt><dd>${escapeHtml(!backup.backup_policy ? "Pending first backup" : backup.backup_policy === "multi-container-excluding-market.klines-data" ? "All DBs except Kline rows" : "Full database")}</dd>
           </dl>
         </div>
       `).join("") : `<p class="muted">No databases are configured for managed backups.</p>`}
@@ -527,11 +726,10 @@ elements.dialogConfirm.addEventListener("click", (event) => {
 });
 
 document.querySelectorAll(".nav-item").forEach((button) => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
-    document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${button.dataset.tab}`));
-  });
+  button.addEventListener("click", () => selectPrimaryTab(button.dataset.tab));
 });
+
+window.addEventListener("popstate", () => selectPrimaryTab(tabFromPath(), false));
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && elements.appShell.hidden === false) refreshOverview();

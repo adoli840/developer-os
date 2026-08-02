@@ -40,6 +40,7 @@
     <aside class="sidebar" aria-label="Console sections">
       <button class="nav-item active" data-tab="overview" type="button">Overview</button>
       <button class="nav-item" data-tab="projects" type="button">Projects</button>
+      <button class="nav-item" data-tab="roadmap" type="button">Roadmap</button>
       <button class="nav-item" data-tab="operations" type="button">Operations</button>
       <button class="nav-item" data-tab="commands" type="button">Commands</button>
       <button class="nav-item" data-tab="usage" type="button">API usage</button>
@@ -95,6 +96,20 @@
         </div>
         <section class="surface" id="workstation-detail"></section>
         <div class="project-list" id="project-list"></div>
+      </section>
+
+      <section class="tab-view" id="tab-roadmap">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">CANONICAL PLANNING STATE</p>
+            <h1>Project roadmaps</h1>
+          </div>
+          <p class="timestamp" id="roadmap-time">Not collected</p>
+        </div>
+        <div class="roadmap-summary" id="roadmap-summary"></div>
+        <div class="roadmap-tabs" id="roadmap-tabs" role="tablist" aria-label="Project roadmaps"></div>
+        <div class="roadmap-track-tabs" id="roadmap-track-tabs" role="tablist" aria-label="Roadmap tracks" hidden></div>
+        <div class="roadmap-detail" id="roadmap-detail" role="tabpanel" aria-live="polite"></div>
       </section>
 
       <section class="tab-view" id="tab-operations">
