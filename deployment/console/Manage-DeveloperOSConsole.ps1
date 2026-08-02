@@ -283,6 +283,8 @@ if [ ! -x /opt/developer-os-console/usage-venv/bin/python ]; then
   sudo python3 -m venv /opt/developer-os-console/usage-venv
 fi
 sudo /opt/developer-os-console/usage-venv/bin/python -m pip install --disable-pip-version-check --quiet -r "`$release/console/requirements-usage.txt"
+sudo chgrp -R opc /opt/developer-os-console/usage-venv
+sudo chmod -R g+rX,o-rwx /opt/developer-os-console/usage-venv
 sudo install -m 0644 "`$release/deployment/console/developer-os-console.service" /etc/systemd/system/developer-os-console.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-terminal.service" /etc/systemd/system/developer-os-terminal.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.service" /etc/systemd/system/developer-os-openai-usage.service
