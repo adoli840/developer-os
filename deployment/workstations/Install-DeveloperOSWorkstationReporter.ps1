@@ -20,7 +20,7 @@ $wrapperContent = @"
 "@
 Set-Content -LiteralPath $wrapper -Value $wrapperContent -Encoding utf8
 
-$taskCommand = "`"$powershell`" -NoProfile -ExecutionPolicy Bypass -File `"$wrapper`""
+$taskCommand = "`"$powershell`" -NoProfile -NonInteractive -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$wrapper`""
 & schtasks.exe /Create `
   /TN $taskName `
   /TR $taskCommand `
@@ -36,6 +36,7 @@ $taskSettings = $registeredTask.Settings
 $taskSettings.DisallowStartIfOnBatteries = $false
 $taskSettings.StopIfGoingOnBatteries = $false
 $taskSettings.ExecutionTimeLimit = "PT2M"
+$taskSettings.Hidden = $true
 Set-ScheduledTask -TaskName $taskName -Settings $taskSettings > $null
 & $reporter `
   -Workstation $Workstation `

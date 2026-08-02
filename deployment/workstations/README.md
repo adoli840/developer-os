@@ -12,7 +12,9 @@ make workstation-home-install
 It creates a current-user Windows Scheduled Task named
 `DeveloperOS-Home-Git-Reporter`. The task runs every five minutes while the
 current user session is available. It reads Git metadata only and uploads the
-resulting JSON through the existing SSH connection to the Oracle server.
+resulting JSON through the existing SSH connection to the Oracle server. The
+scheduled PowerShell process is non-interactive and hidden, so reporting does
+not open a visible terminal window.
 
 The server compares each local revision with both its repository checkout and
 the running deployment revision. This avoids relying only on potentially stale
