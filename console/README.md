@@ -7,6 +7,10 @@ store project roadmaps, duplicate project documentation, or become the source
 of truth for project state. `/roadmap` derives a read-only standard view from
 project-owned root `ROADMAP.md` files.
 
+The stage presentation is loaded directly from the canonical, versioned bundle
+under `04_Tools/roadmap-web`. Project-local `/roadmap` routes install and use
+the same bundle; projects continue to own their roadmap parser and content.
+
 The console reads:
 
 - Git working-tree and upstream status from project repositories.

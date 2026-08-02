@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import tempfile
 import threading
 import unittest
@@ -34,6 +35,17 @@ Build a small, reliable example project.
 |---|---|---|---|
 | Foundation | In Progress | Focused checks pass | Move to Done after verification |
 | Publishing | Planned | Read-only page is available | Start after Foundation |
+
+## Roadmap Details
+
+| Stage | Item | Status | Blocker Type | Description |
+|---|---|---|---|---|
+| Foundation | Parser | Done | None | The canonical roadmap parser accepts the standard fields. |
+| Foundation | Visual renderer | In Progress | None | The public view renders every declared detail item. |
+| Foundation | Operator approval | Blocked | Operator | The developer must approve the final publication boundary. |
+| Publishing | Historical build | Blocked | Processing | Existing source data is still being processed. |
+| Publishing | Paper observation | Blocked | Future | Evidence depends on future paper-runtime observations. |
+| Publishing | Production bypass | Prohibited | None | Publication must never bypass the reviewed source document. |
 
 ## Current Priority
 
@@ -89,6 +101,9 @@ class RoadmapParserTests(unittest.TestCase):
             "Deliver the first useful release across supported environments.",
         )
         self.assertEqual(len(result["topics"]), 2)
+        self.assertEqual(result["detail_mode"], "explicit")
+        self.assertEqual(len(result["topics"][0]["items"]), 3)
+        self.assertEqual(result["topics"][0]["items"][2]["blocker_type"], "Operator")
         self.assertNotIn("path", result)
         self.assertNotIn("raw", result)
 
@@ -96,6 +111,29 @@ class RoadmapParserTests(unittest.TestCase):
         invalid = STANDARD_ROADMAP.replace("- Status: In Progress", "- Status: Almost")
         with self.assertRaisesRegex(ValueError, "Unsupported roadmap status"):
             parse_roadmap(invalid, slug="example", name="Example")
+
+    def test_blocked_detail_requires_a_specific_blocker_type(self) -> None:
+        invalid = STANDARD_ROADMAP.replace(
+            "| Foundation | Operator approval | Blocked | Operator |",
+            "| Foundation | Operator approval | Blocked | None |",
+        )
+        with self.assertRaisesRegex(ValueError, "must declare a blocker type"):
+            parse_roadmap(invalid, slug="example", name="Example")
+
+    def test_legacy_roadmap_derives_compatible_detail_items(self) -> None:
+        legacy = re.sub(
+            r"\n## Roadmap Details\n.*?(?=\n## Current Priority)",
+            "",
+            STANDARD_ROADMAP,
+            flags=re.DOTALL,
+        )
+        result = parse_roadmap(legacy, slug="example", name="Example")
+
+        self.assertEqual(result["detail_mode"], "derived")
+        self.assertEqual(
+            [item["item"] for item in result["topics"][0]["items"]],
+            ["Completion signal", "Next transition"],
+        )
 
     def test_collection_distinguishes_missing_and_invalid_documents(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -242,6 +280,10 @@ class RoadmapRouteTests(unittest.TestCase):
                     payload = json.load(response)
                 with urlopen(f"{base_url}/roadmap", timeout=5) as response:
                     page = response.read().decode("utf-8")
+                with urlopen(f"{base_url}/roadmap-assets/roadmap-view.js", timeout=5) as response:
+                    renderer = response.read().decode("utf-8")
+                with urlopen(f"{base_url}/roadmap-assets/roadmap-view.css", timeout=5) as response:
+                    renderer_css = response.read().decode("utf-8")
             finally:
                 server.shutdown()
                 server.server_close()
@@ -254,7 +296,11 @@ class RoadmapRouteTests(unittest.TestCase):
         self.assertNotIn("path", payload["projects"][0]["tracks"][0])
         self.assertIn('id="tab-roadmap"', page)
         self.assertIn('id="roadmap-track-tabs"', page)
+        self.assertIn('src="/roadmap-assets/roadmap-view.js"', page)
+        self.assertIn('href="/roadmap-assets/roadmap-view.css"', page)
         self.assertIn('src="/app.js"', page)
+        self.assertIn("DeveloperOSRoadmapView", renderer)
+        self.assertIn(".devos-roadmap-view", renderer_css)
 
 
 if __name__ == "__main__":

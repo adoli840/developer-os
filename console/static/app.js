@@ -204,43 +204,9 @@ function render() {
     : "Collection time unavailable";
 }
 
-function roadmapStatusKind(status) {
-  if (status === "Done") return "good";
-  if (status === "Blocked" || status === "Cancelled") return "bad";
-  if (status === "Paused") return "warn";
-  return "neutral";
-}
-
 async function refreshRoadmaps() {
   state.roadmaps = await request("/api/roadmaps");
   renderRoadmaps(state.roadmaps);
-}
-
-function roadmapStatusClass(status) {
-  return {
-    "Done": "done",
-    "In Progress": "in-progress",
-    "Planned": "planned",
-    "Blocked": "blocked",
-    "Paused": "paused",
-    "Cancelled": "cancelled",
-  }[status] || "planned";
-}
-
-function roadmapLegend() {
-  return [
-    ["Done", "done"],
-    ["In progress", "in-progress"],
-    ["Planned", "planned"],
-    ["Blocked", "blocked"],
-    ["Paused", "paused"],
-    ["Cancelled", "cancelled"],
-  ].map(([label, kind]) => `
-    <span class="roadmap-legend-item">
-      <i class="roadmap-status-swatch ${kind}" aria-hidden="true"></i>
-      ${escapeHtml(label)}
-    </span>
-  `).join("");
 }
 
 function renderRoadmaps(roadmaps) {
@@ -314,124 +280,16 @@ function renderRoadmapTracks(project) {
 }
 
 function renderRoadmapDetail(project) {
-  if (!project) {
-    elements.roadmapDetail.innerHTML = `<section class="roadmap-empty"><h2>No projects configured</h2></section>`;
-    return;
-  }
-  if (project.state !== "available") {
-    const label = project.state === "missing" ? "Not available" : "Format mismatch";
-    const kind = project.state === "missing" ? "warn" : "bad";
+  if (!window.DeveloperOSRoadmapView) {
     elements.roadmapDetail.innerHTML = `
       <section class="roadmap-empty">
-        <div>
-          <p class="eyebrow">${escapeHtml(project.name)}</p>
-          <h2>Standard roadmap view unavailable</h2>
-          <p class="muted">${escapeHtml(project.message)}</p>
-        </div>
-        ${statusBadge(label, kind)}
+        <h2>Roadmap renderer unavailable</h2>
+        <p class="muted">The shared DeveloperOS roadmap bundle could not be loaded.</p>
       </section>
     `;
     return;
   }
-
-  const milestone = project.milestone || {};
-  const latest = project.latest_status_change || {};
-  const topics = project.topics || [];
-  elements.roadmapDetail.innerHTML = `
-    <section class="roadmap-hero">
-      <div class="roadmap-title-block">
-        <p class="eyebrow">UPDATED ${escapeHtml(project.updated_at)}</p>
-        <h2>${escapeHtml(project.title)}</h2>
-        <p>${escapeHtml(project.direction)}</p>
-      </div>
-      <aside class="roadmap-legend" aria-label="Roadmap status legend">
-        <h3>Detail status</h3>
-        <div class="roadmap-legend-grid">${roadmapLegend()}</div>
-      </aside>
-    </section>
-
-    <section class="roadmap-milestone-strip">
-      <div>
-        <span>Current milestone</span>
-        <strong>${escapeHtml(milestone.objective)}</strong>
-      </div>
-      <div>
-        <span>Status</span>
-        ${statusBadge(milestone.status, roadmapStatusKind(milestone.status))}
-      </div>
-      <div>
-        <span>Completion signal</span>
-        <strong>${escapeHtml(milestone.completion_signal)}</strong>
-      </div>
-    </section>
-
-    <section class="roadmap-stage-section">
-      <div class="roadmap-band-heading">
-        <h3>Roadmap stages</h3>
-        <span>${escapeHtml(topics.length)} stages</span>
-      </div>
-      <div class="roadmap-stage-scroll">
-        <div class="roadmap-stage-track" role="list">
-          ${topics.map((topic, index) => {
-            const statusClass = roadmapStatusClass(topic.status);
-            return `
-              <article class="roadmap-stage ${statusClass}" role="listitem">
-                <div class="roadmap-stage-card">
-                  <span class="roadmap-stage-number" aria-hidden="true">${index + 1}</span>
-                  <h4>${escapeHtml(topic.topic)}</h4>
-                  <span class="roadmap-stage-status">${escapeHtml(topic.status)}</span>
-                </div>
-                <div class="roadmap-stage-facts">
-                  <div>
-                    <span>Completion</span>
-                    <p>${escapeHtml(topic.completion_signal)}</p>
-                  </div>
-                  <div>
-                    <span>Next</span>
-                    <p>${escapeHtml(topic.next_transition)}</p>
-                  </div>
-                </div>
-              </article>
-            `;
-          }).join("")}
-        </div>
-      </div>
-    </section>
-
-    <div class="roadmap-columns">
-      <section class="roadmap-band">
-        <h3>Current priority</h3>
-        ${roadmapOrderedList(project.current_priority)}
-      </section>
-      <section class="roadmap-band">
-        <h3>Latest status change</h3>
-        <dl class="roadmap-change">
-          <div><dt>Topic</dt><dd>${escapeHtml(latest.topic)}</dd></div>
-          <div><dt>Change</dt><dd>${escapeHtml(latest.change)}</dd></div>
-          <div><dt>Evidence</dt><dd>${escapeHtml(latest.evidence_or_reason)}</dd></div>
-        </dl>
-      </section>
-    </div>
-
-    <div class="roadmap-columns">
-      <section class="roadmap-band">
-        <h3>Next status transitions</h3>
-        ${roadmapOrderedList(project.next_status_transitions)}
-      </section>
-      <section class="roadmap-band">
-        <h3>Risks and blockers</h3>
-        ${roadmapBulletList(project.risks_and_blockers)}
-      </section>
-    </div>
-  `;
-}
-
-function roadmapOrderedList(items) {
-  return `<ol class="roadmap-list">${(items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ol>`;
-}
-
-function roadmapBulletList(items) {
-  return `<ul class="roadmap-list">${(items || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+  window.DeveloperOSRoadmapView.renderDetail(elements.roadmapDetail, project);
 }
 
 function tabFromPath() {

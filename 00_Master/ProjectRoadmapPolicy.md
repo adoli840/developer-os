@@ -26,6 +26,7 @@ Use a small status set unless a project already has an established equivalent:
 - `Paused`
 - `Done`
 - `Cancelled`
+- `Prohibited`
 
 ## Update Triggers
 
@@ -130,6 +131,33 @@ The standard format uses these sections in this order:
 9. `## Risks And Blockers`
 10. Optional `## Completed Topics`
 
+Projects that publish a rich roadmap view should add `## Roadmap Details`
+between `Roadmap Topics` and `Current Priority`. It uses this exact table:
+
+```markdown
+| Stage | Item | Status | Blocker Type | Description |
+|---|---|---|---|---|
+| Initial project foundation | Repository contract | In Progress | None | Establish the first reviewed project boundary. |
+```
+
+Every roadmap topic must appear as a `Stage` at least once. List every sibling
+item that materially contributes to that stage; renderers must not truncate the
+list to an arbitrary count. Item names must be unique within a stage.
+
+Detail `Status` uses the presentation states `Done`, `In Progress`, `Blocked`,
+or `Prohibited`. `Blocker Type` is `None` except for blocked items, which must
+choose exactly one of:
+
+- `Operator`: progress requires a developer decision, credential, approval, or
+  other human response.
+- `Processing`: progress waits for historical processing such as learning,
+  backtesting, migration, or batch computation.
+- `Future`: progress waits for future evidence such as paper, shadow, soak, or
+  scheduled observation time.
+
+`Description` is a short explanatory sentence shown on hover and keyboard
+focus. It must explain the item rather than repeat its title.
+
 `Current Milestone` must contain `Objective`, `Status`, and
 `Completion signal` fields. `Roadmap Topics` must use this exact table header:
 
@@ -209,6 +237,20 @@ The view must:
   project repository and its normal review process.
 - For a multi-track project, provide an `Overall` view and one clearly named
   view per manifest track without merging their detailed topic tables.
+- Use the DeveloperOS roadmap presentation families consistently: green for
+  done, blue for in progress, orange for blocked, and red for prohibited.
+- Distinguish operator blockers with an attention animation, processing
+  blockers with a gray-to-orange horizontal gradient, and future blockers with
+  an orange-to-green horizontal gradient. Respect reduced-motion preferences.
+- Render every declared detail item and expose its description on pointer hover
+  and keyboard focus.
+- Use the versioned presentation assets under `04_Tools/roadmap-web` or a
+  verified project-native implementation with equivalent DOM, colors,
+  interaction, escaping, responsiveness, and accessibility behavior.
+
+Legacy roadmaps without `Roadmap Details` remain valid. A compatible renderer
+may derive `Completion signal` and `Next transition` items temporarily, but a
+project adopting the shared rich presentation must add explicit detail rows.
 
 Projects without a browser-accessible application are exempt from a local
 route. DeveloperOS may provide a derived cross-project view, but each project

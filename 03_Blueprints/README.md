@@ -24,6 +24,10 @@ Blueprints should reference DeveloperOS through `PROJECT_CONTEXT.md` and use `PR
 - `AIProject`: planned AI-integrated project blueprint
 - `WebApp`: planned web application blueprint
 
+Browser projects should render the blueprint's `Roadmap Details` through the
+shared assets documented in `04_Tools/roadmap-web/README.md` so project-local
+and DeveloperOS roadmap views remain identical.
+
 ## Naming Rule
 
 Use blueprint names that describe the project shape, not just a single file type.

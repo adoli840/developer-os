@@ -674,3 +674,36 @@ requires only the read-only dynamic-group policy for `usage-report`. The public
 console never receives the OpenAI Admin key, OCI identity material, or tenancy
 identifiers. The previously granted `resource-availability` permission is no
 longer required and may remain harmlessly or be removed by the operator.
+
+## 2026-08-03 - Standardize Roadmap Presentation Across Projects
+
+Status: Accepted
+
+Context:
+
+DeveloperOS, OA, bTest, and Gaia read equivalent canonical roadmap documents,
+but each application implemented its own HTML and CSS. The resulting project
+routes diverged from the more useful stage view in the DeveloperOS console.
+
+Decision:
+
+DeveloperOS owns a framework-neutral roadmap presentation bundle and a versioned
+detail contract. Projects continue to own roadmap content and parsing adapters.
+Each stage may declare every sibling detail item with one of four presentation
+states: done, in progress, blocked, or prohibited. Blocked items distinguish
+operator response, historical processing, and future observation. Descriptions
+are available on hover and keyboard focus. Legacy documents remain readable
+through derived completion and transition items during migration.
+
+Reason:
+
+Central ownership keeps visual semantics and accessibility consistent without
+moving project state into DeveloperOS or forcing all projects onto one web
+framework.
+
+Impact:
+
+DeveloperOS uses the canonical renderer directly. Individual projects vendor
+the versioned assets and adapt their project-owned parser output to the same
+JSON shape. Updating a shared visual contract requires deliberate project
+adoption and verification rather than silent cross-repository mutation.

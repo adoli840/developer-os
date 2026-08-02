@@ -337,16 +337,31 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
 
     def _serve_static(self, request_path: str) -> None:
-        static_root = self.application.settings.repo_root / "console" / "static"
-        relative = "index.html" if request_path in {"", "/"} else request_path.lstrip("/")
+        roadmap_prefix = "/roadmap-assets/"
+        if request_path.startswith(roadmap_prefix):
+            static_root = (
+                self.application.settings.repo_root
+                / "04_Tools"
+                / "roadmap-web"
+                / "assets"
+            )
+            relative = request_path.removeprefix(roadmap_prefix)
+            fallback_to_index = False
+        else:
+            static_root = self.application.settings.repo_root / "console" / "static"
+            relative = "index.html" if request_path in {"", "/"} else request_path.lstrip("/")
+            fallback_to_index = True
         candidate = (static_root / relative).resolve()
         try:
             candidate.relative_to(static_root.resolve())
         except ValueError:
             self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
             return
-        if not candidate.is_file():
+        if not candidate.is_file() and fallback_to_index:
             candidate = static_root / "index.html"
+        if not candidate.is_file():
+            self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
+            return
         payload = candidate.read_bytes()
         content_type = mimetypes.guess_type(candidate.name)[0] or "application/octet-stream"
         self.send_response(HTTPStatus.OK)

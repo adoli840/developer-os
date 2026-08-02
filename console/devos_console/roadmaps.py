@@ -20,8 +20,11 @@ ROADMAP_STATUSES = (
     "Blocked",
     "Paused",
     "Done",
+    "Prohibited",
     "Cancelled",
 )
+ROADMAP_DETAIL_STATUSES = ("Done", "In Progress", "Blocked", "Prohibited")
+ROADMAP_BLOCKER_TYPES = ("None", "Operator", "Processing", "Future")
 REQUIRED_SECTIONS = (
     "Direction",
     "Current Milestone",
@@ -81,6 +84,15 @@ def parse_roadmap(text: str, *, slug: str, name: str) -> dict[str, Any]:
         "Latest Status Change",
     )
     topics = _topic_rows(sections["Roadmap Topics"])
+    detail_mode = "derived"
+    if "Roadmap Details" in sections:
+        details = _detail_rows(sections["Roadmap Details"], topics)
+        for topic in topics:
+            topic["items"] = details[topic["topic"]]
+        detail_mode = "explicit"
+    else:
+        for topic in topics:
+            topic["items"] = _derived_detail_items(topic)
     priorities = _ordered_items(sections["Current Priority"])
     transitions = _ordered_items(sections["Next Status Transitions"])
     risks = _bullet_items(sections["Risks And Blockers"])
@@ -104,6 +116,7 @@ def parse_roadmap(text: str, *, slug: str, name: str) -> dict[str, Any]:
             "completion_signal": milestone["Completion signal"],
         },
         "topics": topics,
+        "detail_mode": detail_mode,
         "current_priority": priorities,
         "latest_status_change": {
             "topic": latest_change["Topic"],
@@ -323,6 +336,83 @@ def _topic_rows(lines: list[str]) -> list[dict[str, str]]:
     return rows
 
 
+def _detail_rows(
+    lines: list[str],
+    topics: list[dict[str, Any]],
+) -> dict[str, list[dict[str, str]]]:
+    topic_names = {topic["topic"] for topic in topics}
+    rows = {name: [] for name in topic_names}
+    seen_items: set[tuple[str, str]] = set()
+    header_seen = False
+    for line in lines:
+        stripped = line.strip()
+        if not stripped.startswith("|") or not stripped.endswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped[1:-1].split("|")]
+        if cells == ["Stage", "Item", "Status", "Blocker Type", "Description"]:
+            header_seen = True
+            continue
+        if all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells):
+            continue
+        if len(cells) != 5 or not all(cells):
+            raise ValueError("Roadmap Details contains a malformed row.")
+        stage, item, status, blocker_type, description = cells
+        if stage not in topic_names:
+            raise ValueError(f"Roadmap Details references an unknown stage: {stage}.")
+        status = _canonical_detail_status(status)
+        blocker_type = _canonical_blocker_type(blocker_type)
+        if status == "Blocked" and blocker_type == "None":
+            raise ValueError("Blocked roadmap details must declare a blocker type.")
+        if status != "Blocked" and blocker_type != "None":
+            raise ValueError("Only blocked roadmap details may declare a blocker type.")
+        item_key = (stage.casefold(), item.casefold())
+        if item_key in seen_items:
+            raise ValueError("Roadmap detail item names must be unique within a stage.")
+        seen_items.add(item_key)
+        rows[stage].append(
+            {
+                "item": item,
+                "status": status,
+                "blocker_type": blocker_type,
+                "description": description,
+            }
+        )
+    if not header_seen:
+        raise ValueError("Roadmap Details must use the standard table header.")
+    missing = next((name for name, items in rows.items() if not items), None)
+    if missing:
+        raise ValueError(f"Roadmap Details must include every stage: {missing}.")
+    return rows
+
+
+def _derived_detail_items(topic: dict[str, str]) -> list[dict[str, str]]:
+    status = _detail_status_for_topic(topic["status"])
+    return [
+        {
+            "item": "Completion signal",
+            "status": status,
+            "blocker_type": "None",
+            "description": topic["completion_signal"],
+        },
+        {
+            "item": "Next transition",
+            "status": status,
+            "blocker_type": "None",
+            "description": topic["next_transition"],
+        },
+    ]
+
+
+def _detail_status_for_topic(status: str) -> str:
+    if status == "Done":
+        return "Done"
+    if status in {"Blocked", "Paused"}:
+        return "Blocked"
+    if status in {"Prohibited", "Cancelled"}:
+        return "Prohibited"
+    return "In Progress"
+
+
 def _ordered_items(lines: list[str]) -> list[str]:
     return _list_items(lines, re.compile(r"^\s*\d+\.\s+(.+)$"))
 
@@ -348,6 +438,22 @@ def _canonical_status(value: str) -> str:
         if status.casefold() == normalized:
             return status
     raise ValueError(f"Unsupported roadmap status: {value}.")
+
+
+def _canonical_detail_status(value: str) -> str:
+    normalized = value.strip().casefold()
+    for status in ROADMAP_DETAIL_STATUSES:
+        if status.casefold() == normalized:
+            return status
+    raise ValueError(f"Unsupported roadmap detail status: {value}.")
+
+
+def _canonical_blocker_type(value: str) -> str:
+    normalized = value.strip().casefold()
+    for blocker_type in ROADMAP_BLOCKER_TYPES:
+        if blocker_type.casefold() == normalized:
+            return blocker_type
+    raise ValueError(f"Unsupported roadmap blocker type: {value}.")
 
 
 def _collapse(parts: Iterable[str]) -> str:

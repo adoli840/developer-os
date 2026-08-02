@@ -117,6 +117,14 @@ The installer maintains a marked DeveloperOS block in
 instructions may choose their own roadmap filename or generator, while
 `00_Master/ProjectRoadmapPolicy.md` supplies the shared update lifecycle.
 
+## Shared Roadmap Web Presentation
+
+`04_Tools/roadmap-web` owns the versioned, framework-neutral roadmap renderer
+used by the DeveloperOS console and project-local `/roadmap` routes. Its
+installer copies the canonical CSS and JavaScript into a project, and `-Check`
+verifies byte-for-byte parity. Projects own their roadmap content and parser;
+they must not independently restyle or truncate the shared stage presentation.
+
 ## Codex Task Generator
 
 `04_Tools/codex-task/New-CodexTask.ps1` creates a project-local `.codex/TASK.md` from the shared DeveloperOS task template.

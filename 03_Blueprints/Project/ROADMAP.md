@@ -18,6 +18,13 @@ Describe the project's durable goal in one or two sentences.
 |---|---|---|---|
 | Initial project foundation | Planned | Purpose and first usable milestone are defined | Move to In Progress when implementation starts |
 
+## Roadmap Details
+
+| Stage | Item | Status | Blocker Type | Description |
+|---|---|---|---|---|
+| Initial project foundation | Purpose and boundaries | In Progress | None | Define the project purpose, ownership boundaries, and first useful release. |
+| Initial project foundation | Unreviewed destructive operations | Prohibited | None | Destructive operations remain unavailable until a reviewed safety contract exists. |
+
 ## Current Priority
 
 1. Initial project foundation
