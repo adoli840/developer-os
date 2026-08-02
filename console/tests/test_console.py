@@ -79,6 +79,7 @@ class SettingsTests(unittest.TestCase):
                 settings = load_settings()
         btest = next(project for project in settings.projects if project.slug == "btest")
         self.assertTrue(btest.backup_expected)
+        self.assertEqual(btest.port, 8081)
 
 
 class ProjectStatusTests(unittest.TestCase):

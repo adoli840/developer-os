@@ -12,7 +12,7 @@
       "name": "bTest",
       "path": "{workspace}/bTest",
       "compose_project": "btest",
-      "port": 8080,
+      "port": 8081,
       "backup_expected": true
     },
     {
