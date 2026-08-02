@@ -24,6 +24,11 @@ def _month_start(now: datetime) -> datetime:
     return current.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 
+def _day_start(now: datetime) -> datetime:
+    current = now.astimezone(timezone.utc)
+    return current.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
 def _decimal(value: Any) -> Decimal | None:
     if value is None:
         return None
@@ -58,10 +63,14 @@ def fetch_monthly_costs(
     now: datetime,
     details_factory: Callable[..., Any],
 ) -> tuple[Decimal, str, list[dict[str, Any]]]:
+    period_start = _month_start(now)
+    period_end = _day_start(now)
+    if period_end <= period_start:
+        return Decimal("0"), "USD", []
     details = details_factory(
         tenant_id=tenant_id,
-        time_usage_started=_month_start(now),
-        time_usage_ended=now.astimezone(timezone.utc),
+        time_usage_started=period_start,
+        time_usage_ended=period_end,
         granularity="DAILY",
         query_type="COST",
         group_by=["service", "currency"],

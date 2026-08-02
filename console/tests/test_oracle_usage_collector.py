@@ -74,6 +74,29 @@ class OracleUsageCollectorTests(unittest.TestCase):
         details = calls[0]["request_summarized_usages_details"]
         self.assertEqual(details["query_type"], "COST")
         self.assertEqual(details["group_by"], ["service", "currency"])
+        self.assertEqual(details["granularity"], "DAILY")
+        self.assertEqual(
+            details["time_usage_started"],
+            datetime(2026, 8, 1, tzinfo=timezone.utc),
+        )
+        self.assertEqual(
+            details["time_usage_ended"],
+            datetime(2026, 8, 2, tzinfo=timezone.utc),
+        )
+
+    def test_first_day_of_month_skips_an_empty_cost_period(self) -> None:
+        class Client:
+            def request_summarized_usages(self, **kwargs):
+                raise AssertionError("Usage API should not be called for an empty period.")
+
+        result = fetch_monthly_costs(
+            Client(),
+            "ocid1.tenancy.example",
+            now=datetime(2026, 8, 1, 12, tzinfo=timezone.utc),
+            details_factory=lambda **kwargs: kwargs,
+        )
+
+        self.assertEqual(result, (Decimal("0"), "USD", []))
 
     def test_account_resources_use_provider_reported_capacity(self) -> None:
         values = [
