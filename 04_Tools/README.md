@@ -51,11 +51,32 @@ make b-run
 make down
 make dh-b-push
 make dh-pull
+make sync
+make deploy
 ```
 
 `make run` and `make up` always reuse existing images. `make b-run` performs one
 cached build and then starts with `--no-build`. The complete policy lives in
 `00_Master/DockerImageBuildPolicy.md`.
+
+`make sync` is a fixed local-to-server facade and delegates only to a
+project-configured data-publish target. `make deploy` pushes already committed
+work, verifies the exact upstream revision, calls the configured project
+deployment target, and performs post-deployment synchronization only after an
+explicit project opt-in. Neither command invents a commit or selects database
+content on the project's behalf.
+
+Projects connect private hooks through `docker-config`:
+
+```make
+DEVOS_DEPLOY_TARGET=project-deploy
+DEVOS_SYNC_PUSH_TARGET=sync-push
+DEVOS_DEPLOY_SYNC=after-deploy
+```
+
+Omit `DEVOS_SYNC_PUSH_TARGET` when the project owns no approved synchronized
+data. Keep `DEVOS_DEPLOY_SYNC=none` unless the project contract explicitly
+allows a verified data publish after a successful code deployment.
 
 Verify DeveloperOS, OA, Gaia, and bTest against the shared contract:
 

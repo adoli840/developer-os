@@ -65,6 +65,7 @@ direction, priority, dependency, milestone, or release state also changed.
 | Coding task | `00_Master/CodingStandards.md`, `02_AI/AI_Workflow_Safety_Policy.md`, `02_AI/AI_Collaboration.md` |
 | Bug fix | `00_Master/CodingStandards.md`, `02_AI/Review.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
 | Docker, Compose, image, or container lifecycle | `00_Master/DockerImageBuildPolicy.md`, `00_Master/CodingStandards.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
+| Dataset, database, model, or artifact synchronization | `00_Master/DataSynchronizationPolicy.md`, `00_Master/Architecture.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
 | Architecture task | `00_Master/Architecture.md`, `00_Master/Decisions.md`, `02_AI/AI_Collaboration.md` |
 | Architecture review | `00_Master/ArchitectureReview.md`, `00_Master/Architecture.md`, `00_Master/Decisions.md` |
 | Documentation task | `02_AI/LanguagePolicy.md`, `02_AI/Prompts.md`, `00_Master/GovernanceModel.md` |

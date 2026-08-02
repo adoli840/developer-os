@@ -2,6 +2,7 @@ PYTHON ?= python
 CONSOLE_SERVER ?= opc@168.107.18.16
 CONSOLE_SSH_KEY ?= X:/Settings/ssh/ssh-key-ops.key
 DEVOS_OPENAI_ENV ?= X:/Settings/env/developer-os.env
+DEVOS_DEPLOY_TARGET := console-deploy
 
 .PHONY: self-enable self-check make-check docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel-install terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-install workstation-home-report
 

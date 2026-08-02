@@ -37,6 +37,10 @@ not the DeveloperOS deployment source. DeveloperOS uses
 `deployment/console/Manage-DeveloperOSConsole.ps1` and the `console-*` Make
 targets because its server runtime is a specialized systemd deployment.
 
+The shared `make deploy` facade delegates to `console-deploy`. DeveloperOS has
+no data synchronization target, so `make sync` and post-deployment sync are
+explicit no-ops.
+
 The same clean-branch, pushed-revision, verification, and audit expectations
 still apply.
 

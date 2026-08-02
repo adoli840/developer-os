@@ -12,6 +12,7 @@ __pycache__/
 *.py[cod]
 
 # AI snapshots
+.codex-remote-attachments/
 04_Tools/snapshots/
 05_Snapshots/*
 !05_Snapshots/README.md

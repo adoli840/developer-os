@@ -28,7 +28,13 @@ DEVOS_IMAGE_BUILD_COMPOSE = $(strip docker compose $(DEVOS_COMPOSE_ENV) $(if $(D
 DEVOS_IMAGE_PUSH_TARGET ?= developeros-image-push
 DEVOS_PULL_IMAGE ?= $(DOCKERHUB_USERNAME)/$(DOCKERHUB_IMAGE):$(DOCKERHUB_TAG)
 DEVOS_PULL_LOCAL_IMAGE ?=
+DEVOS_DEPLOY_TARGET ?=
+DEVOS_SYNC_PUSH_TARGET ?=
+DEVOS_DEPLOY_SYNC ?= none
+DEVOS_DEPLOY_GIT_REMOTE ?= origin
+DEVOS_DEPLOY_GIT_BRANCH ?= main
 DEVELOPEROS_GIT_DASHBOARD ?= X:/Projects/DeveloperOS/04_Tools/git/Invoke-GitDashboard.ps1
+DEVELOPEROS_DEPLOY_GIT ?= X:/Projects/DeveloperOS/04_Tools/make/Invoke-DeveloperOSDeployGit.ps1
 
 define DEVELOPEROS_REQUIRE_COMPOSE
 $(if $(DEVOS_COMPOSE_FILE),,$(error No Docker Compose file configured in $(CURDIR). Add a standard Compose file or set DEVOS_COMPOSE_FILE in docker-config))
@@ -42,12 +48,23 @@ define DEVELOPEROS_REQUIRE_IMAGE_BUILD_COMPOSE
 $(if $(DEVOS_IMAGE_BUILD_COMPOSE_FILE),,$(error No image build Compose file configured in $(CURDIR). Set DEVOS_IMAGE_BUILD_COMPOSE_FILE in docker-config))
 endef
 
+define DEVELOPEROS_REQUIRE_DEPLOY_TARGET
+$(if $(strip $(DEVOS_DEPLOY_TARGET)),,$(error Deployment is not configured in $(CURDIR). Set DEVOS_DEPLOY_TARGET to a project-owned deployment target))
+$(if $(filter deploy,$(strip $(DEVOS_DEPLOY_TARGET))),$(error DEVOS_DEPLOY_TARGET must not point to the shared deploy target),)
+$(if $(filter none after-deploy,$(strip $(DEVOS_DEPLOY_SYNC))),,$(error DEVOS_DEPLOY_SYNC must be none or after-deploy))
+$(if $(and $(filter after-deploy,$(strip $(DEVOS_DEPLOY_SYNC))),$(strip $(DEVOS_SYNC_PUSH_TARGET))),,$(if $(filter after-deploy,$(strip $(DEVOS_DEPLOY_SYNC))),$(error DEVOS_DEPLOY_SYNC=after-deploy requires DEVOS_SYNC_PUSH_TARGET),))
+endef
+
+define DEVELOPEROS_REQUIRE_SYNC_TARGET
+$(if $(filter sync,$(strip $(DEVOS_SYNC_PUSH_TARGET))),$(error DEVOS_SYNC_PUSH_TARGET must not point to the shared sync target),)
+endef
+
 .PHONY: git-check
 
 git-check:
 	@powershell -NoProfile -ExecutionPolicy Bypass -File "$(DEVELOPEROS_GIT_DASHBOARD)"
 
-.PHONY: developeros-help run b-run run-b up down logs docker-build docker-stop docker-logs docker-clean rebuild dh-tag dh-push dh-pull dh-b-push developeros-image-build developeros-image-push server-deploy db-%
+.PHONY: developeros-help run b-run run-b up down logs docker-build docker-stop docker-logs docker-clean rebuild dh-tag dh-push dh-pull dh-b-push developeros-image-build developeros-image-push server-deploy sync deploy db-%
 
 developeros-help:
 	@echo "DeveloperOS shared Docker targets"
@@ -62,6 +79,8 @@ developeros-help:
 	@echo "  make rebuild        Stop, build once, and start services"
 	@echo "  make dh-b-push      Build, tag, and push Docker Hub image"
 	@echo "  make dh-pull        Pull Docker Hub image"
+	@echo "  make sync           Push an explicitly configured data set to the server"
+	@echo "  make deploy         Push committed Git work, deploy, then optionally sync"
 
 run:
 	$(DEVELOPEROS_REQUIRE_COMPOSE)
@@ -123,6 +142,16 @@ dh-b-push:
 	$(MAKE) --no-print-directory $(DEVOS_IMAGE_PUSH_TARGET)
 
 server-deploy: dh-pull up
+
+sync:
+	$(DEVELOPEROS_REQUIRE_SYNC_TARGET)
+	$(if $(strip $(DEVOS_SYNC_PUSH_TARGET)),$(MAKE) --no-print-directory $(DEVOS_SYNC_PUSH_TARGET),@echo "Data synchronization is not configured for this project; skipped.")
+
+deploy:
+	$(DEVELOPEROS_REQUIRE_DEPLOY_TARGET)
+	@powershell -NoProfile -ExecutionPolicy Bypass -File "$(DEVELOPEROS_DEPLOY_GIT)" -Remote "$(DEVOS_DEPLOY_GIT_REMOTE)" -Branch "$(DEVOS_DEPLOY_GIT_BRANCH)"
+	$(MAKE) --no-print-directory $(DEVOS_DEPLOY_TARGET)
+	$(if $(filter after-deploy,$(strip $(DEVOS_DEPLOY_SYNC))),$(MAKE) --no-print-directory sync,@echo "Post-deploy data synchronization is not enabled; skipped.")
 
 db-%:
 	docker exec -it $(DB_CONTAINER) psql -U $(POSTGRES_USER) -d $*

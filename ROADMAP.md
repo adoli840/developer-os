@@ -25,21 +25,27 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Roadmap web publication | Done | Single and multi-track formats, validated public fields, and DeveloperOS `/roadmap` view are implemented and tested | Monitor adapters without duplicating project state |
 | Managed project roadmap adoption | Done | OA, Gaia, and bTest expose canonical overall and track fields at their own `/roadmap` routes | Maintain each track at status boundaries |
 | Docker image build minimization | Done | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Monitor lifecycle and deployment commands for regressions |
+| Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
+| Workspace release commands | Done | Shared deploy and local-to-server sync facades delegate only to explicit project-owned hooks and preserve Git revision identity | Add project hooks only after their deployment or data contracts are verified |
 | Snapshot Manager | Planned | Create and restore tooling protects risky AI work without Git noise | Move to In Progress after workspace foundation stabilizes |
 
 ## Current Priority
 
 1. Observe the first ordinary status-boundary update in each new project track.
 2. Keep overall roadmaps limited to cross-track priority and release state.
-3. Define Snapshot Manager scope before moving its topic to `In Progress`.
+3. Apply data synchronization first as read-only manifest comparison when a
+   project explicitly adopts a contract.
+4. Keep bTest deployment unavailable until its current runtime migration owns a
+   verified production deployment target.
+5. Define Snapshot Manager scope before moving its topic to `In Progress`.
 
 ## Latest Status Change
 
-- Topic: Docker image build minimization
-- Change: Added -> Done
-- Evidence or reason: The global policy, shared no-build Make lifecycle,
-  project-specific command alignment, deployment no-build starts, user-facing
-  guidance, and cross-project static checks are implemented and passing.
+- Topic: Workspace release commands
+- Change: Added as Done
+- Evidence or reason: Shared `make deploy` and fixed-direction `make sync`
+  facades now require explicit project hooks; automatic commit creation and
+  implicit database selection remain prohibited.
 
 ## Next Status Transitions
 
@@ -52,6 +58,9 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 4. Update an individual project track without changing its overall roadmap
    unless a cross-track milestone, priority, dependency, or release boundary
    also changes.
+5. Reopen `Project data synchronization governance` only if a project cannot
+   express its identity, authority, conflict, verification, or promotion
+   boundary through the standard contract.
 
 ## Risks And Blockers
 
@@ -62,6 +71,8 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
   routine self-check accepts an active process registration.
 - Newly split tracks need ordinary project work to demonstrate that future
   status transitions stay concise and do not drift back into duplicate logs.
+- Bidirectional transfer remains unsafe for any data set that lacks immutable
+  payloads, stable identities, content checksums, and hard conflict detection.
 - No active blocker is known for new project sessions.
 
 ## Version Plan

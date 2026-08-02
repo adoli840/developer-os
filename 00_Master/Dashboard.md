@@ -66,3 +66,19 @@ The project index should stay lightweight. It may point to active project reposi
 
 - `GitDashboard.md`: end-of-day Git status dashboard for DeveloperOS, Gaia Project, bTest, and OA
 
+## Synchronization Visibility
+
+Git synchronization and project data synchronization must be shown as separate
+concepts. Git reports source revision and working-tree state. A project data
+contract may additionally report derived synchronization evidence:
+
+- Synchronization set and mode
+- Authority or merge-safe classification
+- Local-only, remote-only, and conflict counts
+- Last verified manifest identity and time
+- Last transfer direction and result
+
+DeveloperOS must not copy project payloads, expose credentials or private paths,
+or provide unrestricted public transfer controls. Projects without an explicit
+data synchronization contract show no data synchronization state.
+

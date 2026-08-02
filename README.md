@@ -50,6 +50,7 @@ DeveloperOS
 - Projects own their own README, TODO, roadmap, implementation state, and current architecture.
 - Every meaningful work unit evaluates roadmap transitions; the canonical roadmap changes only when a topic's status or other material planning state changes.
 - Routine Docker lifecycle commands reuse existing images; builds occur only at explicit build or release boundaries.
+- Source code uses Git; non-source data synchronization uses explicit project-owned authority, identity, conflict, and verification contracts.
 - GPT handles thinking; Codex handles implementation.
 - Codex treats existing design documents as implementation specifications.
 - Git is for meaningful final history; snapshots are for short-term AI recovery.
@@ -97,6 +98,8 @@ make b-run
 make down
 make dh-b-push
 make dh-pull
+make sync
+make deploy
 ```
 
 `make run` and `make up` use `--no-build`. `make b-run` builds once with the
@@ -106,6 +109,11 @@ normal Docker cache and then starts without requesting another build. See
 The Docker targets auto-detect `docker-compose.yml`, `compose.yml`, `docker-compose.yaml`, or `compose.yaml` in the current project directory.
 Projects configure exceptional Compose filenames and image workflows through
 `docker-config`; project Makefiles must not redefine the shared public targets.
+`make sync` has one direction, local to server, and changes nothing unless the
+project explicitly configures a data-publish target. `make deploy` requires a
+clean Git work tree, pushes existing commits, verifies the upstream revision,
+and delegates to the project's deployment target. Commit selection and commit
+messages remain a Codex or developer decision.
 
 Verify the shared contract across DeveloperOS, OA, Gaia, and bTest:
 
@@ -131,6 +139,27 @@ X:\Projects\DeveloperOS\04_Tools\bin\devos.cmd git-check
 ```
 
 The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, Gaia Project, bTest, and OA.
+
+## Project Data Synchronization
+
+DeveloperOS separates Git synchronization from datasets, database records,
+learning artifacts, models, and checkpoints. Projects that need non-source
+synchronization define a project-owned `DATA_SYNC.md` contract from the optional
+blueprint in `03_Blueprints/Project`.
+
+The global policy permits bidirectional set-union synchronization only for
+immutable records with stable unique identities, content checksums, idempotent
+imports, and explicit conflict handling. Mutable databases, active models,
+checkpoints, and aggregate state require one authority and directed transfer.
+Database synchronization is default-deny: each project allowlists the exact
+tables, export queries, and row scope worth transferring, while every omitted
+database object remains local.
+
+Projects may connect their reviewed local-to-server implementation to the
+shared `make sync` facade. Deployment-time synchronization remains disabled
+unless the project explicitly selects `after-deploy`.
+
+See `00_Master/DataSynchronizationPolicy.md`.
 
 ## Deployment Standard Manager
 
@@ -175,8 +204,7 @@ Deploy the public read-only console to the Oracle server:
 ```powershell
 git add <files>
 git commit -m "<message>"
-git push origin main
-make console-deploy
+make deploy
 ```
 
 Deployment is accepted only from a clean `main` branch that exactly matches

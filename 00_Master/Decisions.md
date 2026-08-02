@@ -528,3 +528,79 @@ Impact:
 Make contract enforces no-build starts, `make docker-policy-check` audits all
 managed projects, and DeveloperOS applies the policy as a non-containerized
 console with zero routine image builds.
+
+## 2026-08-02 - Separate Source And Project Data Synchronization
+
+Status: Accepted
+
+Context:
+
+Projects may generate valuable state outside Git on more than one computer.
+Examples include immutable learning observations, replay shards, model bundles,
+learner checkpoints, and selected database records. Treating all of this as a
+database copy problem either prevents useful exchange or creates unsafe
+bidirectional mutation.
+
+Decision:
+
+Keep Git as the source synchronization system and define a separate project data
+synchronization contract. Permit bidirectional set-union transfer only for
+immutable records with stable globally unique identities, content checksums,
+idempotent imports, compatible schemas, and hard conflict detection. Require one
+authority and directed transfer for mutable databases, aggregate state, active
+models, and checkpoints. Keep synchronization separate from backup, model
+promotion, and production deployment.
+
+Reason:
+
+Unique identities make missing-set comparison efficient, but identity alone
+does not resolve divergent content, deletion, concurrent mutation, or schema
+drift. Classifying data by merge semantics allows safe bidirectional exchange
+where it is mathematically valid without weakening production boundaries.
+
+Impact:
+
+`00_Master/DataSynchronizationPolicy.md` defines the global rules and the
+optional `03_Blueprints/Project/DATA_SYNC.md` captures project-specific stores,
+directions, identities, conflicts, and verification. Projects adopt status-only
+comparison before transfer automation. DeveloperOS may display derived evidence
+but does not store payloads or become a transfer proxy. Database selection is
+default-deny: each project owns an explicit allowlist of logical tables, export
+queries, row scopes, and dependency closure. Enabling one set never authorizes
+whole-database synchronization.
+
+## 2026-08-02 - Standardize Deployment And Data-Publish Make Facades
+
+Status: Accepted
+
+Context:
+
+Application projects had different local deployment target names, while data
+synchronization needed a simple command without allowing DeveloperOS to infer
+which database content should move. Automatically committing an entire working
+tree from Make would also bypass meaningful commit selection and could publish
+unrelated or sensitive files.
+
+Decision:
+
+Reserve `make deploy` and `make sync` in the shared DeveloperOS Make contract.
+`make deploy` accepts only a clean branch, pushes already reviewed commits,
+verifies the exact upstream revision, and delegates to a project-owned deploy
+target. `make sync` has the fixed meaning local-to-server and delegates only to
+an explicitly configured project-owned data-publish target. Deployment-time
+sync is disabled unless a project selects `after-deploy`.
+
+Reason:
+
+One public vocabulary reduces operator memory while project-owned hooks retain
+the deployment and data semantics that cannot be inferred globally. Keeping
+commit judgment outside Make preserves coherent history and ensures every
+deployed revision can be identified and rolled back through Git.
+
+Impact:
+
+DeveloperOS, OA, and Gaia route their existing deployments through the shared
+facade. Projects without a production deploy target fail clearly. Projects
+without a synchronization target report a no-op. A future project may opt into
+post-deploy sync only after its `DATA_SYNC.md` allowlist and directional push
+implementation are verified.

@@ -76,6 +76,12 @@ exists. Compose must deploy the selected image with `--no-build`; databases and
 other durable services must not be rebuilt merely because the application is
 released.
 
+The shared `make deploy` facade pushes already committed work, verifies that
+the local branch and upstream resolve to the same revision, and then delegates
+to the project's configured deployment target. It never creates a commit from
+an unreviewed working tree. Optional post-deployment data synchronization is a
+separate project opt-in governed by `DataSynchronizationPolicy.md`.
+
 ## Enforcement
 
 `04_Tools/make/DeveloperOS.mk` owns the shared lifecycle behavior.

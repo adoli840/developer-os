@@ -5,15 +5,15 @@ $workspaceRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..\..")).Path
 $developerOSPath = Join-Path $workspaceRoot "DeveloperOS"
 
 $projects = @(
-    @{ Name = "OA"; Path = (Join-Path $workspaceRoot "oa"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml" },
-    @{ Name = "Gaia"; Path = (Join-Path $workspaceRoot "gaia"); Compose = "docker-compose.dev.yml"; BuildCompose = "docker-compose.dev.yml" },
-    @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml" }
+    @{ Name = "OA"; Path = (Join-Path $workspaceRoot "oa"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = "project-deploy" },
+    @{ Name = "Gaia"; Path = (Join-Path $workspaceRoot "gaia"); Compose = "docker-compose.dev.yml"; BuildCompose = "docker-compose.dev.yml"; DeployTarget = "project-deploy" },
+    @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = $null }
 )
 
 $reservedTargets = @(
     "run", "run-b", "b-run", "up", "down", "logs", "docker-build",
     "docker-stop", "docker-logs", "docker-clean", "rebuild", "dh-tag",
-    "dh-push", "dh-pull", "dh-b-push", "server-deploy"
+    "dh-push", "dh-pull", "dh-b-push", "server-deploy", "sync", "deploy"
 )
 $targetPattern = "^(?:" + (($reservedTargets | ForEach-Object { [regex]::Escape($_) }) -join "|") + ")\s*:"
 $failed = $false
@@ -37,7 +37,7 @@ try {
         $developerOSFailed = $true
     }
 
-    foreach ($target in @("self-check", "console-run", "console-test", "console-deploy")) {
+    foreach ($target in @("self-check", "console-run", "console-test", "console-deploy", "sync", "deploy")) {
         $null = @(& make --no-print-directory -n $target -C $developerOSPath 2>&1)
         if ($LASTEXITCODE -ne 0) {
             Write-Host "FAIL DeveloperOS: make $target is unavailable."
@@ -131,6 +131,38 @@ try {
                 $failed = $true
                 $projectFailed = $true
                 break
+            }
+        }
+
+        if (-not $projectFailed) {
+            $syncOutput = @(& make --no-print-directory -n sync -C $project.Path 2>&1)
+            if ($LASTEXITCODE -ne 0 -or ($syncOutput -join "`n") -notmatch "not configured") {
+                Write-Host "FAIL $($project.Name): unconfigured make sync must be an explicit no-op."
+                $failed = $true
+                $projectFailed = $true
+            }
+        }
+
+        if (-not $projectFailed) {
+            $previousErrorActionPreference = $ErrorActionPreference
+            $ErrorActionPreference = "Continue"
+            try {
+                $deployOutput = @(& make --no-print-directory -n deploy -C $project.Path 2>&1)
+                $deployExitCode = $LASTEXITCODE
+            } finally {
+                $ErrorActionPreference = $previousErrorActionPreference
+            }
+            $deployText = $deployOutput -join "`n"
+            if ($null -ne $project.DeployTarget) {
+                if ($deployExitCode -ne 0 -or $deployText -notmatch "Invoke-DeveloperOSDeployGit.ps1" -or $deployText -notmatch [regex]::Escape($project.DeployTarget)) {
+                    Write-Host "FAIL $($project.Name): make deploy does not use the shared Git gate and configured deployment target."
+                    $failed = $true
+                    $projectFailed = $true
+                }
+            } elseif ($deployExitCode -eq 0 -or $deployText -notmatch "Deployment is not configured") {
+                Write-Host "FAIL $($project.Name): unconfigured deployment must fail clearly."
+                $failed = $true
+                $projectFailed = $true
             }
         }
 

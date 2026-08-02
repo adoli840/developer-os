@@ -37,6 +37,27 @@ Workspace
 - Track authentication, logging, configuration, deployment, and database patterns as long-term platform candidates.
 - Apply AI automation first to documentation, tests, review, and repetitive workflows.
 
+## State And Synchronization Architecture
+
+DeveloperOS distinguishes source state from operational and learning state.
+
+```text
+Git remote
+  <-> project source and reviewed metadata
+
+Project-owned data contract
+  <-> immutable datasets and artifacts through verified manifests
+   -> authoritative mutable state through directed transfer
+
+DeveloperOS
+  -> policy, blueprint, validation guidance, and derived status only
+```
+
+DeveloperOS does not hold project payloads or mediate transfers. Each project
+declares whether a synchronization set is an immutable merge-safe union, an
+authoritative directed flow, a published artifact, or state that must not be
+synchronized. See `DataSynchronizationPolicy.md`.
+
 ## Governance Architecture
 
 DeveloperOS is the global policy layer.
@@ -68,5 +89,6 @@ Review these candidates after inspecting active projects:
 - Shared API clients
 - Shared AI prompts and agent rules
 - Shared deployment blueprints
+- Shared data synchronization contracts and manifest validation
 
 
