@@ -4,7 +4,6 @@ const state = {
   trustedLocal: false,
   csrfToken: "",
   overview: null,
-  activeResourceMetric: "",
   refreshTimer: null,
 };
 
@@ -19,11 +18,7 @@ const elements = {
   refreshButton: document.querySelector("#refresh-button"),
   logoutButton: document.querySelector("#logout-button"),
   serverMetrics: document.querySelector("#server-metrics"),
-  overviewTime: document.querySelector("#overview-time"),
-  alertSummary: document.querySelector("#alert-summary"),
-  workstationSummary: document.querySelector("#workstation-summary"),
-  dockerSummary: document.querySelector("#docker-summary"),
-  activitySummary: document.querySelector("#activity-summary"),
+  resourceTime: document.querySelector("#resource-time"),
   workstationDetail: document.querySelector("#workstation-detail"),
   backupSummary: document.querySelector("#backup-summary"),
   timerSummary: document.querySelector("#timer-summary"),
@@ -168,20 +163,17 @@ async function refreshOverview() {
 function render() {
   if (!state.overview) return;
   renderMetrics(state.overview.system);
-  renderAlerts(state.overview.alerts || []);
   renderWorkstations(state.overview.workstations || []);
-  renderDocker(state.overview.system.docker);
-  renderActivity(state.overview.audit);
   renderRecovery(state.overview.backups);
   renderUsage(state.overview.usage);
   const collectedAt = state.overview.system.collected_at;
-  elements.overviewTime.textContent = collectedAt
+  elements.resourceTime.textContent = collectedAt
     ? `Collected ${new Date(collectedAt * 1000).toLocaleString()}`
     : "Collection time unavailable";
 }
 
 function tabFromPath() {
-  return "overview";
+  return "resources";
 }
 
 function selectPrimaryTab(tab, updateHistory = true) {
@@ -201,26 +193,21 @@ function renderMetrics(system) {
     {key: "memory", label: "Memory", value: formatBytes(system.memory.used), detail: `of ${formatBytes(system.memory.total)}`, percent: system.memory.percent || 0},
     {key: "disk", label: "Root disk", value: formatBytes(system.disk.used), detail: `${formatBytes(system.disk.free)} free`, percent: system.disk.percent || 0},
   ];
-  const activeMetric = metrics.find((metric) => metric.key === state.activeResourceMetric);
   elements.serverMetrics.innerHTML = `
     ${metrics.map((metric) => `
-      <button class="metric${activeMetric?.key === metric.key ? " active" : ""}" type="button" data-metric="${escapeHtml(metric.key)}" aria-expanded="${activeMetric?.key === metric.key}">
-        <span class="metric-label">${escapeHtml(metric.label)}</span>
-        <strong class="metric-value">${escapeHtml(metric.value)}</strong>
-        <span class="cell-detail">${escapeHtml(metric.detail || "")}</span>
-        <progress class="meter" max="100" value="${Math.max(0, Math.min(100, metric.percent))}">${metric.percent}%</progress>
-      </button>
+      <section class="resource-panel">
+        <div class="metric">
+          <div class="metric-reading">
+            <span class="metric-label">${escapeHtml(metric.label)}</span>
+            <strong class="metric-value">${escapeHtml(metric.value)}</strong>
+            <span class="cell-detail">${escapeHtml(metric.detail || "")}</span>
+          </div>
+          <progress class="meter" max="100" value="${Math.max(0, Math.min(100, metric.percent))}">${metric.percent}%</progress>
+        </div>
+        ${resourceBreakdown(metric.key, system.resources?.[metric.key] || [])}
+      </section>
     `).join("")}
-    ${activeMetric ? resourceBreakdown(activeMetric.key, system.resources?.[activeMetric.key] || []) : ""}
   `;
-  elements.serverMetrics.querySelectorAll("button[data-metric]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.activeResourceMetric = state.activeResourceMetric === button.dataset.metric
-        ? ""
-        : button.dataset.metric;
-      renderMetrics(system);
-    });
-  });
 }
 
 function resourceBreakdown(metric, rows) {
@@ -229,13 +216,35 @@ function resourceBreakdown(metric, rows) {
   return `
     <div class="resource-breakdown">
       ${rows.map((row) => `
-        <div class="resource-row">
+        <article class="resource-row${row.slug === "other" ? " residual" : ""}">
           <div class="resource-row-heading"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(formatValue(row.value))}</span></div>
-          <p>${(row.components || []).map((component) => `${escapeHtml(component.name)} ${escapeHtml(formatValue(component.value))}`).join(" / ")}</p>
-        </div>
+          <div class="resource-components">
+            ${(row.components || []).map((component) => `
+              <div class="resource-component">
+                <div class="resource-component-heading">
+                  <strong>${escapeHtml(component.name)}</strong>
+                  <span>${escapeHtml(formatValue(component.value))}</span>
+                </div>
+                ${component.disposition ? `<span class="resource-disposition ${escapeHtml(component.disposition)}">${escapeHtml(resourceDisposition(component.disposition))}</span>` : ""}
+                ${component.note ? `<p>${escapeHtml(component.note)}</p>` : ""}
+              </div>
+            `).join("") || `<p class="muted">No component detail available.</p>`}
+          </div>
+        </article>
       `).join("")}
     </div>
   `;
+}
+
+function resourceDisposition(value) {
+  return ({
+    baseline: "Required baseline",
+    service: "Required service",
+    shared: "Shared",
+    protected: "Protected",
+    reviewable: "Reviewable",
+    unattributed: "Needs attribution",
+  })[value] || value;
 }
 
 function repositoryStatus(project) {
@@ -257,27 +266,6 @@ function deploymentStatus(project) {
   return statusBadge("Unknown", "neutral");
 }
 
-function renderAlerts(alerts) {
-  const critical = alerts.filter((item) => item.severity === "critical").length;
-  const warning = alerts.filter((item) => item.severity === "warning").length;
-  const headingBadge = critical
-    ? statusBadge(`${critical} critical`, "bad")
-    : warning
-      ? statusBadge(`${warning} warnings`, "warn")
-      : statusBadge("No action required", "good");
-  elements.alertSummary.innerHTML = `
-    <div class="surface-heading"><div><h2>Actionable alerts</h2><p>Only conditions that affect delivery or recovery.</p></div>${headingBadge}</div>
-    <div class="alert-list">
-      ${alerts.length ? alerts.map((item) => `
-        <div class="alert-item ${escapeHtml(item.severity)}">
-          <span>${escapeHtml(item.source)}</span>
-          <strong>${escapeHtml(item.message)}</strong>
-        </div>
-      `).join("") : `<p class="muted">No operational alerts.</p>`}
-    </div>
-  `;
-}
-
 function workstationStatus(workstation) {
   if (workstation.status === "online") return statusBadge("Online", "good");
   if (workstation.status === "offline") return statusBadge("Offline", "neutral");
@@ -287,42 +275,9 @@ function workstationStatus(workstation) {
 
 function renderWorkstations(workstations) {
   if (!workstations.length) {
-    elements.workstationSummary.innerHTML = `
-      <section class="surface">
-        <div class="surface-heading"><div><h2>Workstations</h2><p>No workstation is configured.</p></div>${statusBadge("Not configured", "neutral")}</div>
-      </section>
-    `;
     elements.workstationDetail.innerHTML = "";
     return;
   }
-  elements.workstationSummary.innerHTML = workstations.map((workstation) => {
-    const lastReport = formatDate(workstation.last_report_at);
-    const staleReport = workstation.status === "offline";
-    const remoteUnverified = workstation.projects.some((project) => (
-      project.repository?.upstream && project.repository.remote_refresh_status !== "success"
-    ));
-    const summaryDescription = staleReport
-      ? "This snapshot is stale. Local and GitHub values are historical; comparisons are unavailable."
-      : remoteUnverified
-        ? "Live local state; one or more GitHub revisions could not be verified."
-        : "Local Git state reported while this computer is powered on.";
-    return `
-      <section class="surface">
-        <div class="surface-heading">
-          <div><h2>${escapeHtml(workstation.name)} computer</h2><p>${escapeHtml(summaryDescription)}</p></div>
-          ${workstationStatus(workstation)}
-        </div>
-        <div class="workstation-stats">
-          <div><span>Last report</span><strong>${escapeHtml(lastReport)}</strong></div>
-          <div><span>Repositories</span><strong>${escapeHtml(workstation.summary.available)}</strong></div>
-          <div><span>Dirty</span><strong>${escapeHtml(workstation.summary.dirty)}</strong></div>
-          <div><span>Not pushed</span><strong>${escapeHtml(staleReport || remoteUnverified ? "-" : workstation.summary.ahead)}</strong></div>
-          <div><span>Mismatches</span><strong>${escapeHtml(workstation.summary.mismatches ?? "-")}</strong></div>
-        </div>
-      </section>
-    `;
-  }).join("");
-
   elements.workstationDetail.innerHTML = workstations.map((workstation) => {
     const lastReport = formatDate(workstation.last_report_at);
     const staleReport = workstation.status === "offline";
@@ -393,30 +348,6 @@ function comparisonStatus(status) {
   if (status === "mismatch") return statusBadge("Mismatch", "bad");
   if (status === "stale") return statusBadge("Stale report", "neutral");
   return statusBadge("Unavailable", "neutral");
-}
-
-function renderDocker(docker) {
-  elements.dockerSummary.innerHTML = `
-    <div class="surface-heading"><div><h2>Docker engine</h2><p>Host container runtime.</p></div>${docker.available ? statusBadge("Available", "good") : statusBadge("Unavailable", "bad")}</div>
-    <div class="summary-body">
-      <dl class="summary-list">
-        <dt>Version</dt><dd>${escapeHtml(docker.version || "-")}</dd>
-        <dt>Containers</dt><dd>${escapeHtml(docker.containers ?? "-")}</dd>
-        <dt>Running</dt><dd>${escapeHtml(docker.running ?? "-")}</dd>
-        <dt>Unhealthy</dt><dd>${escapeHtml(docker.unhealthy ?? "-")}</dd>
-      </dl>
-    </div>
-  `;
-}
-
-function renderActivity(audit) {
-  const recent = audit.slice(0, 5);
-  elements.activitySummary.innerHTML = `
-    <div class="surface-heading"><div><h2>Recent activity</h2><p>Audited console session events.</p></div></div>
-    <div class="summary-body">
-      ${recent.length ? `<dl class="summary-list">${recent.map((item) => `<dt>${escapeHtml(item.event)}</dt><dd>${escapeHtml(item.project || new Date(item.at).toLocaleTimeString())}</dd>`).join("")}</dl>` : `<p class="muted">${state.publicReadOnly ? "Hidden on the public endpoint." : "No recorded operations."}</p>`}
-    </div>
-  `;
 }
 
 function backupStatus(backup) {

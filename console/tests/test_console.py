@@ -62,6 +62,19 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn("/api/actions", server)
         self.assertFalse(hasattr(ProjectService, "run_action"))
 
+    def test_resources_replace_overview_and_are_always_expanded(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
+        javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
+
+        self.assertIn('data-tab="resources"', html)
+        self.assertIn('id="tab-resources"', html)
+        self.assertNotIn('data-tab="overview"', html)
+        self.assertNotIn('id="alert-summary"', html)
+        self.assertNotIn('id="workstation-summary"', html)
+        self.assertNotIn('data-metric=', javascript)
+        self.assertIn("resourceBreakdown(metric.key", javascript)
+
 
 class OverviewCacheTests(unittest.TestCase):
     def test_repeated_overview_reads_reuse_an_isolated_cached_value(self) -> None:
@@ -347,6 +360,8 @@ class ResourceBreakdownTests(unittest.TestCase):
                     "Volumes": [
                         {"Labels": "com.docker.compose.project=oa", "Size": "1GB"}
                     ],
+                    "Images": [{"UniqueSize": "500MB", "Size": "800MB"}],
+                    "BuildCache": [{"Size": "250MB"}],
                 }
             ),
             "",
@@ -362,6 +377,17 @@ class ResourceBreakdownTests(unittest.TestCase):
             patch("console.devos_console.resources._directory_size", return_value=100_000_000),
             patch("console.devos_console.resources._cpu_ticks", return_value=None),
             patch("console.devos_console.resources._child_cpu_seconds", return_value=None),
+            patch("console.devos_console.resources._process_snapshot", return_value={}),
+            patch(
+                "console.devos_console.resources._host_disk_sizes",
+                return_value={
+                    "/usr": 900_000_000,
+                    "/boot": 80_000_000,
+                    "/etc": 20_000_000,
+                    "/var/log": 100_000_000,
+                    "/var/backups": 200_000_000,
+                },
+            ),
         ):
             result = collect_resource_breakdown((spec,), projects, system)
 
@@ -373,6 +399,21 @@ class ResourceBreakdownTests(unittest.TestCase):
             [item["name"] for item in result["disk"][0]["components"]],
             ["Docker volumes", "Project files", "Container writes"],
         )
+        server_disk = result["disk"][-1]
+        self.assertEqual(server_disk["name"], "Server & other")
+        self.assertEqual(
+            [item["name"] for item in server_disk["components"]],
+            [
+                "Shared Docker images",
+                "Docker build cache",
+                "System files & packages",
+                "System logs",
+                "Protected backups",
+                "Other host files",
+            ],
+        )
+        self.assertEqual(server_disk["components"][2]["disposition"], "baseline")
+        self.assertEqual(server_disk["components"][-1]["disposition"], "unattributed")
 
 
 class BackupStatusTests(unittest.TestCase):

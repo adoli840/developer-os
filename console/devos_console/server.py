@@ -63,6 +63,7 @@ class ConsoleApplication:
             self.settings.projects,
             projects,
             system,
+            backups,
         )
         attach_server_comparisons(workstations, projects)
         if public:

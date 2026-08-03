@@ -38,28 +38,22 @@
     </header>
 
     <aside class="sidebar" aria-label="Console sections">
-      <button class="nav-item active" data-tab="overview" type="button">Overview</button>
+      <button class="nav-item active" data-tab="resources" type="button">Resources</button>
       <button class="nav-item" data-tab="projects" type="button">Projects</button>
       <button class="nav-item" data-tab="recovery" type="button">Recovery</button>
       <button class="nav-item" data-tab="usage" type="button">Usage</button>
     </aside>
 
     <main class="workspace">
-      <section class="tab-view active" id="tab-overview">
+      <section class="tab-view active" id="tab-resources">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">LIVE WORKSPACE</p>
-            <h1>Overview</h1>
+            <p class="eyebrow">SERVER CAPACITY</p>
+            <h1>Resources</h1>
           </div>
-          <p class="timestamp" id="overview-time">Not collected</p>
+          <p class="timestamp" id="resource-time">Not collected</p>
         </div>
         <div class="metrics-grid" id="server-metrics"></div>
-        <section class="surface" id="alert-summary"></section>
-        <div class="workstation-grid" id="workstation-summary"></div>
-        <div class="two-column">
-          <section class="surface" id="docker-summary"></section>
-          <section class="surface" id="activity-summary"></section>
-        </div>
       </section>
 
       <section class="tab-view" id="tab-projects">

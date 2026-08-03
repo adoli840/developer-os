@@ -12,13 +12,18 @@ The console reads:
 - Git working-tree and upstream status from project repositories.
 - Docker Compose container state.
 - Repository HEAD compared with running Docker image revisions.
-- Project and workstation delivery alerts for uncommitted and unpushed changes.
 - Home and Office Git status reported separately over SSH while each computer is online.
-- Oracle Linux CPU, memory, disk, uptime, and Docker health.
+- Oracle Linux CPU, memory, and root-disk capacity with always-visible project and host attribution.
 - Daily database backup and weekly isolated restore-verification status.
-- Local actionable alerts for delivery and recovery conditions.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
 - A Recovery view limited to backup, restore-verification, and schedule evidence.
+
+The landing `Resources` view uses the full workspace for CPU, memory, and root
+disk details. Registered project usage is separated from host usage. The
+`Server & other` row further identifies required services, operating-system
+baseline, shared Docker data, protected backups, reviewable usage, and the
+remaining measurement or attribution boundary. Category values are bounded by
+the observed host total so a detailed estimate never exceeds actual usage.
 
 ## Security Model
 
@@ -150,7 +155,7 @@ The public console never receives a provider credential. A separate hardened
 oneshot service collects provider data and writes credential-free snapshots
 under `/var/lib/developer-os-console`.
 
-The browser overview keeps the latest complete server inspection in memory for
+The browser console keeps the latest complete server inspection in memory for
 60 seconds. Expired data is returned immediately while Git, Docker stats,
 container image, disk, and backup inspection refresh in the background. This
 keeps page reloads responsive without presenting partial project state.

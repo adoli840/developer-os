@@ -842,3 +842,39 @@ Impact:
 The primary console navigation is Overview, Projects, Recovery, and Usage.
 Roadmap standards remain shared, while roadmap content and web publication stay
 inside each project repository and application.
+
+## 2026-08-03 - Make Resources The Console Landing View
+
+Status: Accepted
+
+Context:
+
+The Overview landing view mixed server capacity with alerts, workstation
+summaries, Docker metadata, and recent activity. Those summaries repeated
+evidence available in Projects or Recovery while hiding the useful resource
+attribution behind one-at-a-time expansion controls. Its residual `Server &
+other` value also combined required operating-system usage with potentially
+reviewable data.
+
+Decision:
+
+Replace Overview with a resource-only `Resources` landing view. Show CPU,
+memory, and root-disk attribution simultaneously across the available page.
+Split residual host use into measured service, shared, protected, reviewable,
+baseline, and unattributed categories, and explain the reduction boundary for
+each category. Bound every residual component by the observed host total.
+
+Reason:
+
+The console should expose evidence that supports a concrete capacity decision,
+not accumulate low-value summaries. Always-visible attribution makes large
+residual usage inspectable and distinguishes safe investigation targets from
+usage that is required for the server to operate or recover.
+
+Impact:
+
+The primary console navigation is Resources, Projects, Recovery, and Usage.
+Projects retains workstation and repository comparisons; Recovery retains
+backup and schedule evidence. Resource collection adds aggregate host-process,
+shared-Docker, system-file, log, and backup attribution without exposing
+individual process command lines or filesystem paths in the public payload.
