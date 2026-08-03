@@ -3,8 +3,9 @@ CONSOLE_SERVER ?= opc@168.107.18.16
 CONSOLE_SSH_KEY ?= X:/Settings/ssh/ssh-key-ops.key
 DEVOS_OPENAI_ENV ?= X:/Settings/env/developer-os.env
 DEVOS_DEPLOY_TARGET := console-deploy
+WORKSTATION_REPORT_INTERVAL_MINUTES ?= 5
 
-.PHONY: self-enable self-check make-check docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report
+.PHONY: self-enable self-check make-check docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
 
 self-enable:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/self/Enable-DeveloperOSSelfApplication.ps1
@@ -83,3 +84,21 @@ workstation-home-report:
 
 workstation-office-report:
 	powershell -ExecutionPolicy Bypass -File deployment/workstations/Report-DeveloperOSGitStatus.ps1 -Workstation office -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
+
+workstation-home-auto-enable:
+	powershell -NoProfile -ExecutionPolicy Bypass -File deployment/workstations/Manage-DeveloperOSWorkstationReporter.ps1 -Action Install -Workstation home -IntervalMinutes "$(WORKSTATION_REPORT_INTERVAL_MINUTES)" -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
+
+workstation-home-auto-disable:
+	powershell -NoProfile -ExecutionPolicy Bypass -File deployment/workstations/Manage-DeveloperOSWorkstationReporter.ps1 -Action Remove -Workstation home
+
+workstation-home-auto-status:
+	powershell -NoProfile -ExecutionPolicy Bypass -File deployment/workstations/Manage-DeveloperOSWorkstationReporter.ps1 -Action Status -Workstation home
+
+workstation-office-auto-enable:
+	powershell -NoProfile -ExecutionPolicy Bypass -File deployment/workstations/Manage-DeveloperOSWorkstationReporter.ps1 -Action Install -Workstation office -IntervalMinutes "$(WORKSTATION_REPORT_INTERVAL_MINUTES)" -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
+
+workstation-office-auto-disable:
+	powershell -NoProfile -ExecutionPolicy Bypass -File deployment/workstations/Manage-DeveloperOSWorkstationReporter.ps1 -Action Remove -Workstation office
+
+workstation-office-auto-status:
+	powershell -NoProfile -ExecutionPolicy Bypass -File deployment/workstations/Manage-DeveloperOSWorkstationReporter.ps1 -Action Status -Workstation office

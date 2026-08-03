@@ -198,10 +198,20 @@ if ($terminalConfig.projects | Where-Object { $_.slug -eq "developer-os" } | Sel
 }
 
 $workstationReporter = Read-Text "deployment\workstations\Report-DeveloperOSGitStatus.ps1"
-if ($workstationReporter -and $workstationReporter.Contains('slug = "developer-os"')) {
-    Add-CheckResult PASS "Workstation reporting" "DeveloperOS Git state is included in workstation reports"
+$workstationManager = Read-Text "deployment\workstations\Manage-DeveloperOSWorkstationReporter.ps1"
+$workstationMakefile = Read-Text "Makefile"
+if (
+    $workstationReporter -and
+    $workstationReporter.Contains('slug = "developer-os"') -and
+    $workstationManager -and
+    $workstationManager.Contains('New-ScheduledTaskAction') -and
+    $workstationManager.Contains('-WindowStyle Hidden') -and
+    $workstationMakefile -match '(?m)^workstation-home-auto-enable:' -and
+    $workstationMakefile -match '(?m)^workstation-office-auto-enable:'
+) {
+    Add-CheckResult PASS "Workstation reporting" "DeveloperOS Git state supports manual and opt-in hidden scheduled reports"
 } else {
-    Add-CheckResult FAIL "Workstation reporting" "DeveloperOS is missing from workstation reports"
+    Add-CheckResult FAIL "Workstation reporting" "DeveloperOS workstation reporting or its hidden scheduler contract is incomplete"
 }
 
 $rootMakefile = Read-Text "Makefile"

@@ -239,18 +239,27 @@ make console-backup-verify
 ```
 
 The Home and Office computers report their local Git status to the server while
-powered on. Each report contains repository state only and is transferred
-through SSH:
+their Windows user session is active. Each report contains repository state
+only and is transferred through SSH. Reporting can be sent once manually:
 
 ```powershell
 make workstation-home-report
 make workstation-office-report
 ```
 
-Reporting is manual. DeveloperOS does not install a Windows Scheduled Task or
-start PowerShell periodically. The console preserves the last report and marks
-it offline after it becomes stale. Run each command only from its matching
-computer so Home and Office remain separate report sources.
+Or enable the opt-in hidden Windows Scheduled Task once on each matching
+computer:
+
+```powershell
+make workstation-home-auto-enable
+make workstation-office-auto-enable
+```
+
+The task runs the DeveloperOS reporter every five minutes without requiring
+Codex or a visible PowerShell window. Use the matching `-auto-status` and
+`-auto-disable` targets to inspect or remove it. The console preserves the last
+report and marks it offline after 15 minutes without a fresh report. Never
+install both workstation identities on the same computer.
 
 The server terminal is deliberately separate from the public console. It
 listens only on server loopback and is reached from the Home computer through
