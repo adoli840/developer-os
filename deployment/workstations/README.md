@@ -61,8 +61,9 @@ make terminal-tunnel
 ```
 
 The command maps `127.0.0.1:8092` on Home to the server-only terminal at
-`127.0.0.1:8022`. It runs only when explicitly requested; no scheduled tunnel
-maintenance is installed.
+`127.0.0.1:8022`. The Home automatic reporter also checks this tunnel every
+five minutes and restores it silently after login or a dropped SSH connection.
+The Office reporter does not create a terminal tunnel.
 
 No public terminal port is opened. The tunnel requires the existing
 `X:/Settings/ssh/ssh-key-ops.key`, and the browser endpoint is available only

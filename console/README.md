@@ -236,7 +236,7 @@ local systemd timer, service log, and snapshot presence directly.
 
 ## Private Server Terminal
 
-Start the Home SSH tunnel explicitly when it is needed:
+Start the Home SSH tunnel immediately when it is needed:
 
 ```powershell
 make terminal-tunnel
@@ -256,8 +256,10 @@ Bash commands in the selected allowlisted project directory as `opc`, limits
 each command to 120 seconds, caps returned output, and records only a command
 hash and result metadata in its audit log.
 
-DeveloperOS does not install a tunnel Scheduled Task. The tunnel remains a
-manual, user-initiated process.
+When Home automatic reporting is enabled, the same hidden task checks the
+tunnel every five minutes and restores it after login or a dropped SSH
+connection. Tunnel failure is logged separately and does not prevent the Git
+status report from being uploaded. Office reporting never creates this tunnel.
 
 This is a command-oriented shell rather than a full PTY. Interactive programs
 such as editors, password prompts, and `top` are not supported. Commands that

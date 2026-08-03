@@ -69,6 +69,7 @@ switch ($Action) {
       "-Server $(Quote-TaskArgument $Server)"
       "-SshKey $(Quote-TaskArgument $resolvedSshKey)"
       "-WorkspaceRoot $(Quote-TaskArgument $resolvedWorkspaceRoot)"
+      if ($Workstation -eq "home") { "-MaintainTerminalTunnel" }
     ) -join " "
 
     $scheduledAction = New-ScheduledTaskAction `
@@ -100,7 +101,11 @@ switch ($Action) {
       -Trigger $trigger `
       -Settings $settings `
       -Principal $principal `
-      -Description "Upload $workstationName DeveloperOS repository status every $IntervalMinutes minutes while the user session is active." `
+      -Description $(if ($Workstation -eq "home") {
+        "Upload Home DeveloperOS repository status and maintain its private terminal tunnel every $IntervalMinutes minutes while the user session is active."
+      } else {
+        "Upload Office DeveloperOS repository status every $IntervalMinutes minutes while the user session is active."
+      }) `
       -Force > $null
     Start-ScheduledTask -TaskName $taskName
     Write-Output "$taskName installed for $($identity.Name) and started."

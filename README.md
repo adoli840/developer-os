@@ -303,8 +303,9 @@ The Projects table Terminal heading opens the allowlisted Server context at
 `/home/opc`. It is a workspace-root convenience, not a privileged root shell;
 all commands continue to run as the `opc` service account.
 
-The tunnel is started only by an explicit command and is not maintained by a
-Windows Scheduled Task.
+The Home automatic workstation reporter maintains the tunnel silently every
+five minutes. `make terminal-tunnel` remains available for immediate manual
+startup. The Office reporter does not create a tunnel.
 
 The project `Terminal` links in the browser console open the same private
 endpoint at `http://127.0.0.1:8092`. No terminal port is opened in Oracle

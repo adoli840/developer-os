@@ -40,6 +40,23 @@ class TerminalSessionTests(unittest.TestCase):
             self.assertFalse(application.valid_session(session + "x"))
 
 
+class WorkstationTunnelContractTests(unittest.TestCase):
+    def test_home_reporter_maintains_terminal_tunnel_without_affecting_office(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        manager = (repository / "deployment" / "workstations" / "Manage-DeveloperOSWorkstationReporter.ps1").read_text(
+            encoding="utf-8"
+        )
+        reporter = (repository / "deployment" / "workstations" / "Report-DeveloperOSGitStatus.ps1").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn('if ($Workstation -eq "home") { "-MaintainTerminalTunnel" }', manager)
+        self.assertIn('[switch]$MaintainTerminalTunnel', reporter)
+        self.assertIn('$MaintainTerminalTunnel -and $Workstation -eq "home"', reporter)
+        self.assertIn('Ensure-DeveloperOSServerTerminalTunnel.ps1', reporter)
+        self.assertIn('WARNING terminal tunnel unavailable', reporter)
+
+
 class TerminalRunnerTests(unittest.TestCase):
     def test_command_runs_in_allowlisted_project_directory(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

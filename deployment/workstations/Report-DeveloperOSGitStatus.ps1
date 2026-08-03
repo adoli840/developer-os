@@ -4,7 +4,8 @@ param(
   [string]$Workstation = "home",
   [string]$Server = "opc@168.107.18.16",
   [string]$SshKey = "X:/Settings/ssh/ssh-key-ops.key",
-  [string]$WorkspaceRoot = "X:/Projects"
+  [string]$WorkspaceRoot = "X:/Projects",
+  [switch]$MaintainTerminalTunnel
 )
 
 $ErrorActionPreference = "Stop"
@@ -204,6 +205,19 @@ $runtimeDirectory = Join-Path $repositoryRoot ".console\workstation-reporter"
 New-Item -ItemType Directory -Force -Path $runtimeDirectory > $null
 $reportPath = Join-Path $runtimeDirectory "$Workstation.json"
 $logPath = Join-Path $runtimeDirectory "$Workstation.log"
+
+if ($MaintainTerminalTunnel -and $Workstation -eq "home") {
+  $ensureTunnelScript = Join-Path $PSScriptRoot "Ensure-DeveloperOSServerTerminalTunnel.ps1"
+  try {
+    & $ensureTunnelScript -Server $Server -SshKey $SshKey | Out-Null
+    "$(Get-Date -Format o) terminal tunnel ready" | Add-Content -LiteralPath $logPath -Encoding utf8
+  }
+  catch {
+    "$(Get-Date -Format o) WARNING terminal tunnel unavailable: $($_.Exception.Message)" |
+      Add-Content -LiteralPath $logPath -Encoding utf8
+  }
+}
+
 $ssh = Resolve-OpenSshTool -Name "ssh"
 $scp = Resolve-OpenSshTool -Name "scp"
 $projectDefinitions = @(
