@@ -17,7 +17,7 @@ The console reads:
 - Docker Compose container state.
 - Repository HEAD compared with running Docker image revisions.
 - End-of-work checks for uncommitted and unpushed changes.
-- Home-computer Git status reported over SSH while that computer is online.
+- Home and Office Git status reported separately over SSH while each computer is online.
 - Oracle Linux CPU, memory, disk, uptime, and Docker health.
 - Daily database backup and weekly isolated restore-verification status.
 - Local actionable alerts for delivery and recovery conditions.
@@ -122,21 +122,22 @@ make console-backup-verify
 make console-backup-status
 ```
 
-## Home Workstation Reporting
+## Workstation Reporting
 
-The Home workstation reporter executes read-only Git commands for
-DeveloperOS, OA, Gaia, and bTest. It sends a small JSON summary through SSH to
-the Oracle server only when explicitly requested.
+The Home and Office workstation reporters execute read-only Git commands for
+DeveloperOS, OA, Gaia, and bTest. Each sends a separate small JSON summary
+through SSH to the Oracle server only when explicitly requested.
 
 ```powershell
 make workstation-home-report
+make workstation-office-report
 ```
 
 The public console does not expose local paths or the Windows hostname. A
-report older than 15 minutes is displayed as offline. Office is not registered
-from the Home computer. Local revisions are compared directly with the server
-checkout and the running deployment image. No Windows Scheduled Task is
-installed, so reporting never starts PowerShell periodically.
+report older than 15 minutes is displayed as offline. Run each report command
+only from its matching computer. Local revisions are compared directly with
+the server checkout and the running deployment image. No Windows Scheduled
+Task is installed, so reporting never starts PowerShell periodically.
 
 When a report becomes offline, its revision values remain visible as historical
 context, but GitHub and server comparisons are labeled stale and excluded from

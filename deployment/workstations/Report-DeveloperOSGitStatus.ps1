@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet("home")]
+  [ValidateSet("home", "office")]
   [string]$Workstation = "home",
   [string]$Server = "opc@168.107.18.16",
   [string]$SshKey = "X:/Settings/ssh/ssh-key-ops.key",
@@ -8,6 +8,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$workstationNames = @{
+  home = "Home"
+  office = "Office"
+}
+$workstationName = $workstationNames[$Workstation]
 
 function Resolve-OpenSshTool {
   param([Parameter(Mandatory = $true)][string]$Name)
@@ -145,7 +150,7 @@ try {
   $report = [ordered]@{
     schema_version = 1
     workstation = $Workstation
-    name = "Home"
+    name = $workstationName
     hostname = $env:COMPUTERNAME
     generated_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
     projects = $projects
@@ -191,7 +196,7 @@ rm -f "$temporary"
     throw "The server rejected the workstation report."
   }
   "$(Get-Date -Format o) report uploaded" | Add-Content -LiteralPath $logPath -Encoding utf8
-  Write-Output "Home Git status uploaded at $($report.generated_at)."
+  Write-Output "$workstationName Git status uploaded at $($report.generated_at)."
 }
 catch {
   "$(Get-Date -Format o) ERROR $($_.Exception.Message)" | Add-Content -LiteralPath $logPath -Encoding utf8

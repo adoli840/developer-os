@@ -215,6 +215,20 @@ class LocalSessionTests(unittest.TestCase):
         self.assertTrue(payload["trusted_local"])
         self.assertTrue(payload["csrf_token"])
 
+    def test_default_workstations_include_home_and_office(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_CONSOLE_TOKEN": "test-token",
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings()
+        self.assertEqual(
+            [workstation.workstation_id for workstation in settings.workstations],
+            ["home", "office"],
+        )
+
 
 class ProjectStatusTests(unittest.TestCase):
     def test_status_counts_distinguish_worktree_states(self) -> None:
@@ -412,6 +426,26 @@ class WorkstationStatusTests(unittest.TestCase):
             result["projects"][0]["repository"]["remote_revision"],
             "abc123456789",
         )
+
+    def test_recent_office_report_is_online(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            status_dir = Path(directory)
+            (status_dir / "office.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "workstation": "office",
+                        "generated_at": datetime.now(timezone.utc).isoformat(),
+                        "hostname": "OFFICE-PC",
+                        "projects": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            spec = WorkstationSpec("office", "Office", 900)
+            result = collect_workstations((spec,), status_dir)[0]
+        self.assertEqual(result["name"], "Office")
+        self.assertTrue(result["online"])
 
     def test_missing_home_report_is_not_connected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

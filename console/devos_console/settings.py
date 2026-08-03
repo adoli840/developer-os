@@ -52,6 +52,7 @@ DEFAULT_PROJECTS = (
 
 DEFAULT_WORKSTATIONS = (
     {"id": "home", "name": "Home", "offline_after_seconds": 900},
+    {"id": "office", "name": "Office", "offline_after_seconds": 900},
 )
 
 

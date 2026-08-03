@@ -4,7 +4,7 @@ CONSOLE_SSH_KEY ?= X:/Settings/ssh/ssh-key-ops.key
 DEVOS_OPENAI_ENV ?= X:/Settings/env/developer-os.env
 DEVOS_DEPLOY_TARGET := console-deploy
 
-.PHONY: self-enable self-check make-check docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report
+.PHONY: self-enable self-check make-check docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report
 
 self-enable:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/self/Enable-DeveloperOSSelfApplication.ps1
@@ -80,3 +80,6 @@ terminal-close:
 
 workstation-home-report:
 	powershell -ExecutionPolicy Bypass -File deployment/workstations/Report-DeveloperOSGitStatus.ps1 -Workstation home -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
+
+workstation-office-report:
+	powershell -ExecutionPolicy Bypass -File deployment/workstations/Report-DeveloperOSGitStatus.ps1 -Workstation office -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"

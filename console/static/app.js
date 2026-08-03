@@ -398,60 +398,75 @@ function workstationStatus(workstation) {
 }
 
 function renderWorkstations(workstations) {
-  const home = workstations.find((item) => item.id === "home");
-  if (!home) {
+  if (!workstations.length) {
     elements.workstationSummary.innerHTML = `
-      <div class="surface-heading"><div><h2>Home computer</h2><p>No Home workstation is configured.</p></div>${statusBadge("Not configured", "neutral")}</div>
+      <section class="surface">
+        <div class="surface-heading"><div><h2>Workstations</h2><p>No workstation is configured.</p></div>${statusBadge("Not configured", "neutral")}</div>
+      </section>
     `;
     elements.workstationDetail.innerHTML = "";
     return;
   }
-  const lastReport = formatDate(home.last_report_at);
-  const staleReport = home.status === "offline";
-  const summaryDescription = staleReport
-    ? "This snapshot is stale. Local and GitHub values are historical; comparisons are unavailable."
-    : "Local Git state reported while the computer is powered on.";
-  const detailDescription = staleReport
-    ? `Stale snapshot from ${lastReport}. Local and GitHub values are historical; comparisons are unavailable.`
-    : (home.online ? "Live local state." : `Last known state from ${lastReport}.`);
-  elements.workstationSummary.innerHTML = `
-    <div class="surface-heading">
-      <div><h2>Home computer</h2><p>${escapeHtml(summaryDescription)}</p></div>
-      ${workstationStatus(home)}
-    </div>
-    <div class="workstation-stats">
-      <div><span>Last report</span><strong>${escapeHtml(lastReport)}</strong></div>
-      <div><span>Repositories</span><strong>${escapeHtml(home.summary.available)}</strong></div>
-      <div><span>Dirty</span><strong>${escapeHtml(home.summary.dirty)}</strong></div>
-      <div><span>Not pushed</span><strong>${escapeHtml(home.summary.ahead)}</strong></div>
-      <div><span>Mismatches</span><strong>${escapeHtml(home.summary.mismatches ?? "-")}</strong></div>
-    </div>
-  `;
+  elements.workstationSummary.innerHTML = workstations.map((workstation) => {
+    const lastReport = formatDate(workstation.last_report_at);
+    const staleReport = workstation.status === "offline";
+    const summaryDescription = staleReport
+      ? "This snapshot is stale. Local and GitHub values are historical; comparisons are unavailable."
+      : "Local Git state reported while this computer is powered on.";
+    return `
+      <section class="surface">
+        <div class="surface-heading">
+          <div><h2>${escapeHtml(workstation.name)} computer</h2><p>${escapeHtml(summaryDescription)}</p></div>
+          ${workstationStatus(workstation)}
+        </div>
+        <div class="workstation-stats">
+          <div><span>Last report</span><strong>${escapeHtml(lastReport)}</strong></div>
+          <div><span>Repositories</span><strong>${escapeHtml(workstation.summary.available)}</strong></div>
+          <div><span>Dirty</span><strong>${escapeHtml(workstation.summary.dirty)}</strong></div>
+          <div><span>Not pushed</span><strong>${escapeHtml(workstation.summary.ahead)}</strong></div>
+          <div><span>Mismatches</span><strong>${escapeHtml(workstation.summary.mismatches ?? "-")}</strong></div>
+        </div>
+      </section>
+    `;
+  }).join("");
 
-  elements.workstationDetail.innerHTML = `
-    <div class="surface-heading">
-      <div><h2>Home repositories</h2><p>${escapeHtml(detailDescription)}</p></div>
-      ${workstationStatus(home)}
-    </div>
-    <div class="table-wrap">
-      <table class="project-comparison-table">
-        <thead><tr><th>Project</th><th>Local</th><th>GitHub</th><th>Server</th><th>Service</th><th>Port</th><th>Terminal</th></tr></thead>
-        <tbody>
-          ${home.projects.length ? home.projects.map((project) => `
-            <tr>
-              <td><strong>${escapeHtml(project.name)}</strong><div class="mobile-terminal">${terminalLink(project)}</div></td>
-              <td>${repositoryStatus(project)}<div class="cell-detail">${escapeHtml(shortRevision(project.repository?.revision))}</div></td>
-              <td>${githubStatus(project.repository, project.comparison?.fresh)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div></td>
-              <td>${comparisonStatus(project.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(project.comparison?.deployed_revisions))}</div></td>
-              <td>${serviceStatus(project.comparison?.service_status)}</td>
-              <td><strong>${project.port ? escapeHtml(project.port) : "-"}</strong></td>
-              <td class="terminal-cell">${terminalLink(project)}</td>
-            </tr>
-          `).join("") : `<tr><td colspan="7" class="muted">No Home report has been received yet.</td></tr>`}
-        </tbody>
-      </table>
-    </div>
-  `;
+  elements.workstationDetail.innerHTML = workstations.map((workstation) => {
+    const lastReport = formatDate(workstation.last_report_at);
+    const staleReport = workstation.status === "offline";
+    const detailDescription = staleReport
+      ? `Stale snapshot from ${lastReport}. Local and GitHub values are historical; comparisons are unavailable.`
+      : workstation.online
+        ? "Live local state."
+        : workstation.last_report_at
+          ? `Last known state from ${lastReport}.`
+          : "No report has been received yet.";
+    return `
+      <section class="surface">
+        <div class="surface-heading">
+          <div><h2>${escapeHtml(workstation.name)} repositories</h2><p>${escapeHtml(detailDescription)}</p></div>
+          ${workstationStatus(workstation)}
+        </div>
+        <div class="table-wrap">
+          <table class="project-comparison-table">
+            <thead><tr><th>Project</th><th>Local</th><th>GitHub</th><th>Server</th><th>Service</th><th>Port</th><th>Terminal</th></tr></thead>
+            <tbody>
+              ${workstation.projects.length ? workstation.projects.map((project) => `
+                <tr>
+                  <td><strong>${escapeHtml(project.name)}</strong><div class="mobile-terminal">${terminalLink(project)}</div></td>
+                  <td>${repositoryStatus(project)}<div class="cell-detail">${escapeHtml(shortRevision(project.repository?.revision))}</div></td>
+                  <td>${githubStatus(project.repository, project.comparison?.fresh)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div></td>
+                  <td>${comparisonStatus(project.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(project.comparison?.deployed_revisions))}</div></td>
+                  <td>${serviceStatus(project.comparison?.service_status)}</td>
+                  <td><strong>${project.port ? escapeHtml(project.port) : "-"}</strong></td>
+                  <td class="terminal-cell">${terminalLink(project)}</td>
+                </tr>
+              `).join("") : `<tr><td colspan="7" class="muted">No ${escapeHtml(workstation.name)} report has been received yet.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }).join("");
 }
 
 function githubStatus(repository, fresh = true) {

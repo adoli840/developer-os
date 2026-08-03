@@ -199,7 +199,8 @@ try {
     {"slug":"gaia","name":"Gaia","path":"/home/opc/gaia","compose_project":"gaia","port":8083,"backup_expected":true}
   ],
   "workstations": [
-    {"id":"home","name":"Home","offline_after_seconds":900}
+    {"id":"home","name":"Home","offline_after_seconds":900},
+    {"id":"office","name":"Office","offline_after_seconds":900}
   ]
 }
 "@
