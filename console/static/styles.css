@@ -506,6 +506,11 @@ tbody tr:last-child td {
   background: var(--blue-soft);
 }
 
+.status.behind {
+  color: var(--muted);
+  background: var(--line);
+}
+
 .two-column {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);

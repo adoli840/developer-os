@@ -452,7 +452,7 @@ class RoadmapRouteTests(unittest.TestCase):
         self.assertNotIn('id="roadmap-time"', page)
         self.assertIn('src="/roadmap-assets/roadmap-view.js?v=3.0.2"', page)
         self.assertIn('href="/roadmap-assets/roadmap-view.css?v=3.0.2"', page)
-        self.assertIn('src="/app.js?v=3"', page)
+        self.assertIn('src="/app.js?v=4"', page)
         self.assertIn("DeveloperOSRoadmapView", renderer)
         self.assertIn('const VERSION = "3.0.2"', renderer)
         self.assertIn("grid-auto-columns: minmax(218px, 1fr)", renderer_css)

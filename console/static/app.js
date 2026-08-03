@@ -375,7 +375,7 @@ function repositoryStatus(project) {
   if (!project.repository) return statusBadge("Not Git", "neutral");
   const repo = project.repository;
   if (repo.modified > 0) return statusBadge(`${repo.modified} modified`, "warn");
-  if (repo.behind > 0) return statusBadge(`${repo.behind} behind`, "warn");
+  if (repo.behind > 0) return statusBadge(`${repo.behind} behind`, "behind");
   if (repo.ahead > 0) return statusBadge(`${repo.ahead} ahead`, "neutral");
   return statusBadge("Clean", "good");
 }
