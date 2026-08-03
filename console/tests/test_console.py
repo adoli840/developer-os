@@ -42,6 +42,22 @@ class SessionStoreTests(unittest.TestCase):
         self.assertEqual(store.from_cookie(store.cookie_header(session)), session)
 
 
+class ConsoleSurfaceTests(unittest.TestCase):
+    def test_recovery_replaces_operations_and_browser_commands(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
+        javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
+        server = (repository / "console" / "devos_console" / "server.py").read_text(encoding="utf-8")
+
+        self.assertIn('data-tab="recovery"', html)
+        self.assertIn('id="tab-recovery"', html)
+        self.assertNotIn('data-tab="operations"', html)
+        self.assertNotIn('data-tab="commands"', html)
+        self.assertNotIn("/api/actions", javascript)
+        self.assertNotIn("/api/actions", server)
+        self.assertFalse(hasattr(ProjectService, "run_action"))
+
+
 class OverviewCacheTests(unittest.TestCase):
     def test_repeated_overview_reads_reuse_an_isolated_cached_value(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

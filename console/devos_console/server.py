@@ -37,7 +37,7 @@ class ConsoleApplication:
         self.settings = settings
         self.audit = AuditLog(settings.runtime_dir / "audit.jsonl")
         self.sessions = SessionStore(settings.access_token, secure_cookie=settings.secure_cookie)
-        self.projects = ProjectService(settings.projects, self.audit)
+        self.projects = ProjectService(settings.projects)
         self._overview_cache: dict[bool, tuple[float, dict[str, Any]]] = {}
         self._overview_refreshing: set[bool] = set()
         self._overview_lock = Lock()
@@ -69,7 +69,6 @@ class ConsoleApplication:
         if public:
             for project in projects:
                 project.pop("path", None)
-                project["actions"] = []
             for workstation in workstations:
                 workstation.pop("hostname", None)
         alerts = build_alerts(
@@ -317,22 +316,6 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 {"authenticated": False},
                 cookie=self.application.sessions.expired_cookie_header(),
             )
-            return
-        if parsed.path == "/api/actions":
-            try:
-                body = self._body()
-                result = self.application.projects.run_action(
-                    str(body.get("project", "")),
-                    str(body.get("action", "")),
-                    str(body.get("confirmation", "")),
-                    self.client_address[0],
-                )
-                self._json(HTTPStatus.OK if result["ok"] else HTTPStatus.CONFLICT, result)
-            except (ValueError, RuntimeError) as error:
-                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
-            except Exception:
-                self.application.audit.write("action_error", remote=self.client_address[0])
-                self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "The action could not be completed."})
             return
         self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
 

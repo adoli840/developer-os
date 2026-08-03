@@ -238,8 +238,7 @@ button {
   color: var(--muted);
 }
 
-.surface-heading h2,
-.dialog-panel h2 {
+.surface-heading h2 {
   margin: 0 0 4px;
   font-size: 17px;
 }
@@ -671,57 +670,6 @@ tbody tr:last-child td {
   text-align: right;
 }
 
-.closeout-row {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  gap: 18px;
-  padding: 15px 18px;
-  border-bottom: 1px solid var(--line);
-}
-
-.closeout-row:last-child {
-  border-bottom: 0;
-}
-
-.closeout-row h3 {
-  margin: 0 0 6px;
-  font-size: 15px;
-}
-
-.check-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.check {
-  padding: 5px 7px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-  font-size: 11px;
-}
-
-.check.good {
-  color: var(--green);
-  background: var(--green-soft);
-}
-
-.check.warn,
-.check.bad {
-  color: var(--amber);
-  background: var(--amber-soft);
-}
-
-.check.bad {
-  color: var(--red);
-  background: var(--red-soft);
-}
-
-.check.neutral {
-  color: var(--blue);
-  background: var(--blue-soft);
-}
-
 .container-list {
   display: flex;
   flex-wrap: wrap;
@@ -762,21 +710,9 @@ tbody tr:last-child td {
   background: transparent;
 }
 
-.button.danger {
-  border-color: var(--red);
-  color: white;
-  background: var(--red);
-}
-
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
-}
-
-.command-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
 }
 
 .mode-badge,
@@ -907,60 +843,6 @@ tbody tr:last-child td {
   display: block;
   margin-top: 7px;
   font-size: 23px;
-}
-
-dialog {
-  width: min(560px, calc(100% - 32px));
-  padding: 0;
-  border: 1px solid var(--line-strong);
-  border-radius: 7px;
-  color: var(--ink);
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-dialog::backdrop {
-  background: rgba(0, 0, 0, 0.72);
-}
-
-.dialog-panel {
-  padding: 22px;
-}
-
-.dialog-panel > p:not(.eyebrow) {
-  color: var(--muted);
-}
-
-pre {
-  max-width: 100%;
-  padding: 13px;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-  color: #dce5e1;
-  background: #0c1013;
-  overflow: auto;
-  font: 12px/1.55 Consolas, "Courier New", monospace;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 18px;
-}
-
-.output-panel {
-  padding: 0;
-}
-
-.output-panel > pre {
-  min-height: 250px;
-  max-height: 60vh;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
 }
 
 .toast {
@@ -1195,8 +1077,7 @@ pre {
     border-bottom: 0;
   }
 
-  .alert-item,
-  .closeout-row {
+  .alert-item {
     grid-template-columns: 1fr;
     gap: 6px;
   }

@@ -20,25 +20,24 @@ The console reads:
 - Git working-tree and upstream status from project repositories.
 - Docker Compose container state.
 - Repository HEAD compared with running Docker image revisions.
-- End-of-work checks for uncommitted and unpushed changes.
+- Project and workstation delivery alerts for uncommitted and unpushed changes.
 - Home and Office Git status reported separately over SSH while each computer is online.
 - Oracle Linux CPU, memory, disk, uptime, and Docker health.
 - Daily database backup and weekly isolated restore-verification status.
 - Local actionable alerts for delivery and recovery conditions.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
-- A local audit log for allowlisted management commands.
+- A Recovery view limited to backup, restore-verification, and schedule evidence.
 - Standard roadmap fields for configured projects, without raw files or source
   paths.
 
 ## Security Model
 
 - Production requires `DEVOS_CONSOLE_TOKEN`.
-- Browser mutations require an authenticated session and CSRF token.
-- The public console never accepts arbitrary shell input.
-- Only fixed `git pull --ff-only`, Compose start, restart, and stop actions are
-  available on the authenticated console API.
+- The browser console has no project mutation or shell-command API.
+- Project commands use the separate loopback terminal reached through an
+  authenticated SSH local-forward.
 - The direct public HTTP deployment uses `DEVOS_PUBLIC_READ_ONLY=1`; it hides
-  project paths and audit history and disables login and commands.
+  project paths and audit history and disables login.
 - The public roadmap API returns only parsed standard fields. It does not return
   raw Markdown, source paths, or parser diagnostics.
 - A separate command console binds to server loopback only and is reachable

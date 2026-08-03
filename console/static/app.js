@@ -8,7 +8,6 @@ const state = {
   activeRoadmap: "",
   activeRoadmapTrack: "overall",
   activeResourceMetric: "",
-  pendingAction: null,
   refreshTimer: null,
 };
 
@@ -34,19 +33,7 @@ const elements = {
   roadmapDetail: document.querySelector("#roadmap-detail"),
   backupSummary: document.querySelector("#backup-summary"),
   timerSummary: document.querySelector("#timer-summary"),
-  deploymentList: document.querySelector("#deployment-list"),
-  closeoutList: document.querySelector("#closeout-list"),
-  commandList: document.querySelector("#command-list"),
-  commandNotice: document.querySelector("#command-notice"),
   usagePanel: document.querySelector("#usage-panel"),
-  actionDialog: document.querySelector("#action-dialog"),
-  dialogTitle: document.querySelector("#dialog-title"),
-  dialogDescription: document.querySelector("#dialog-description"),
-  dialogCommand: document.querySelector("#dialog-command"),
-  dialogConfirm: document.querySelector("#dialog-confirm"),
-  outputDialog: document.querySelector("#output-dialog"),
-  outputTitle: document.querySelector("#output-title"),
-  outputContent: document.querySelector("#output-content"),
   toast: document.querySelector("#toast"),
 };
 
@@ -193,8 +180,7 @@ function render() {
   renderDocker(state.overview.system.docker);
   renderActivity(state.overview.audit);
   renderRoadmaps(state.roadmaps);
-  renderOperations(state.overview.projects, state.overview.backups);
-  renderCommands(state.overview.projects);
+  renderRecovery(state.overview.backups);
   renderUsage(state.overview.usage);
   const collectedAt = state.overview.system.collected_at;
   elements.overviewTime.textContent = collectedAt
@@ -506,7 +492,7 @@ function renderDocker(docker) {
 function renderActivity(audit) {
   const recent = audit.slice(0, 5);
   elements.activitySummary.innerHTML = `
-    <div class="surface-heading"><div><h2>Recent activity</h2><p>Allowlisted console operations.</p></div></div>
+    <div class="surface-heading"><div><h2>Recent activity</h2><p>Audited console session events.</p></div></div>
     <div class="summary-body">
       ${recent.length ? `<dl class="summary-list">${recent.map((item) => `<dt>${escapeHtml(item.event)}</dt><dd>${escapeHtml(item.project || new Date(item.at).toLocaleTimeString())}</dd>`).join("")}</dl>` : `<p class="muted">${state.publicReadOnly ? "Hidden on the public endpoint." : "No recorded operations."}</p>`}
     </div>
@@ -520,7 +506,7 @@ function backupStatus(backup) {
   return statusBadge("Needs verification", "warn");
 }
 
-function renderOperations(projects, backups) {
+function renderRecovery(backups) {
   const backupItems = backups?.items || [];
   elements.backupSummary.innerHTML = `
     <div class="surface-heading"><div><h2>Database protection</h2><p>Daily dumps with isolated restore verification.</p></div></div>
@@ -553,43 +539,6 @@ function renderOperations(projects, backups) {
     </div>
   `;
 
-  elements.deploymentList.innerHTML = projects.map((project) => {
-    const deployment = project.deployment || {};
-    const image = deployment.images?.[0];
-    return `
-      <tr>
-        <td><strong>${escapeHtml(project.name)}</strong><div>${deploymentStatus(project)}</div></td>
-        <td>${escapeHtml(project.repository?.revision || "-")}</td>
-        <td>${escapeHtml(deployment.deployed_revisions?.join(", ") || "-")}</td>
-        <td><strong>${escapeHtml(image?.name || deployment.mode || "-")}</strong><div class="cell-detail">${escapeHtml(image?.id || "")}</div></td>
-        <td>${escapeHtml(formatDate(deployment.deployed_at))}</td>
-      </tr>
-    `;
-  }).join("");
-
-  elements.closeoutList.innerHTML = projects.map((project) => `
-    <article class="closeout-row">
-      <div><h3>${escapeHtml(project.name)}</h3>${project.work_end?.ready ? statusBadge("Ready", "good") : statusBadge(`${project.work_end?.blocking || 0} items`, "warn")}</div>
-      <div class="check-list">
-        ${(project.work_end?.checks || []).map((check) => `<span class="check ${escapeHtml(check.status)}">${escapeHtml(check.label)}</span>`).join("")}
-      </div>
-    </article>
-  `).join("");
-}
-
-function renderCommands(projects) {
-  elements.commandNotice.textContent = state.publicReadOnly
-    ? "This public HTTP endpoint is read-only. Server shell access uses the private SSH-tunneled Terminal link on each project."
-    : "Fixed project commands are available here. The private Terminal is isolated behind an SSH tunnel.";
-  elements.commandList.innerHTML = projects.map((project) => {
-    const buttons = project.actions.length
-      ? project.actions.map((action) => `<button class="button" data-project="${escapeHtml(project.slug)}" data-action="${escapeHtml(action.id)}" data-label="${escapeHtml(action.label)}" type="button">${escapeHtml(action.label)}</button>`).join("")
-      : `<span class="muted">${state.publicReadOnly ? "Disabled on public HTTP" : "No commands available"}</span>`;
-    return `<tr><td><strong>${escapeHtml(project.name)}</strong></td><td><div class="command-buttons">${buttons}</div></td></tr>`;
-  }).join("");
-  elements.commandList.querySelectorAll("button[data-action]").forEach((button) => {
-    button.addEventListener("click", () => openActionDialog(button.dataset.project, button.dataset.action, button.dataset.label));
-  });
 }
 
 function renderOpenAIUsage(usage) {
@@ -669,40 +618,6 @@ function renderUsage(usage) {
   )).join("");
 }
 
-function openActionDialog(project, action, label) {
-  state.pendingAction = {project, action, label};
-  elements.dialogTitle.textContent = label;
-  elements.dialogDescription.textContent = "The server will run this fixed command for the selected project.";
-  elements.dialogCommand.textContent = `${project}:${action}`;
-  elements.actionDialog.showModal();
-}
-
-async function runPendingAction() {
-  const action = state.pendingAction;
-  if (!action) return;
-  elements.dialogConfirm.disabled = true;
-  try {
-    const result = await request("/api/actions", {
-      method: "POST",
-      body: JSON.stringify({
-        project: action.project,
-        action: action.action,
-        confirmation: `${action.project}:${action.action}`,
-      }),
-    });
-    elements.outputTitle.textContent = `${action.label} result`;
-    elements.outputContent.textContent = [result.stdout, result.stderr].filter(Boolean).join("\n") || "Command completed without output.";
-    elements.outputDialog.showModal();
-    showToast("Command completed.");
-    await refreshOverview();
-  } catch (error) {
-    showToast(error.message);
-  } finally {
-    elements.dialogConfirm.disabled = false;
-    state.pendingAction = null;
-  }
-}
-
 elements.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   elements.loginError.textContent = "";
@@ -730,12 +645,6 @@ elements.logoutButton.addEventListener("click", async () => {
     state.csrfToken = "";
     showLogin();
   }
-});
-
-elements.dialogConfirm.addEventListener("click", (event) => {
-  event.preventDefault();
-  elements.actionDialog.close();
-  runPendingAction();
 });
 
 document.querySelectorAll(".nav-item").forEach((button) => {

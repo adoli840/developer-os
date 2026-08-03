@@ -780,3 +780,35 @@ indexer, tests, shared Make command, startup guidance, and self-check. OA, Gaia,
 and bTest must define their own real areas and focused tests in project-local
 tasks. The index remains advisory; source code and explicit project rules are
 still authoritative.
+
+## 2026-08-03 - Narrow The Browser Console To Evidence
+
+Status: Accepted
+
+Context:
+
+The browser console exposed a Commands section whose project controls were
+disabled on the public deployment and duplicated the safer SSH-tunneled
+terminal. Its Operations section also repeated deployment and end-of-work
+state already available in Projects and Overview.
+
+Decision:
+
+Remove browser project-command controls and their API. Replace Operations with
+a Recovery view limited to database backup, isolated restore-verification, and
+automation-schedule evidence. Keep project commands behind the separate
+loopback terminal reached through SSH. This decision supersedes the browser
+command portion of the 2026-07-28 operations-console decision.
+
+Reason:
+
+A smaller read-only surface makes the security boundary and ownership clearer,
+removes duplicated status, and follows the principle that DeveloperOS should
+become quieter as its contracts mature.
+
+Impact:
+
+The primary navigation is Overview, Projects, Roadmap, Recovery, and Usage.
+Deployment and delivery signals remain derived in their existing views, while
+recoverability evidence retains a dedicated view. The console no longer emits
+project actions or accepts `/api/actions` requests.

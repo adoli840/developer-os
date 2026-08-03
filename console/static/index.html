@@ -27,7 +27,7 @@
         <span class="brand-mark small">D</span>
         <div>
           <strong>DeveloperOS</strong>
-          <span>Operations Console</span>
+          <span>Engineering Console</span>
         </div>
       </div>
       <div class="topbar-actions">
@@ -42,8 +42,7 @@
       <button class="nav-item active" data-tab="overview" type="button">Overview</button>
       <button class="nav-item" data-tab="projects" type="button">Projects</button>
       <button class="nav-item" data-tab="roadmap" type="button">Roadmap</button>
-      <button class="nav-item" data-tab="operations" type="button">Operations</button>
-      <button class="nav-item" data-tab="commands" type="button">Commands</button>
+      <button class="nav-item" data-tab="recovery" type="button">Recovery</button>
       <button class="nav-item" data-tab="usage" type="button">Usage</button>
     </aside>
 
@@ -81,71 +80,17 @@
         <div class="roadmap-detail" id="roadmap-detail" role="tabpanel" aria-live="polite"></div>
       </section>
 
-      <section class="tab-view" id="tab-operations">
+      <section class="tab-view" id="tab-recovery">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">RECOVERY AND DELIVERY</p>
-            <h1>Operations</h1>
+            <p class="eyebrow">RECOVERY EVIDENCE</p>
+            <h1>Recovery</h1>
           </div>
         </div>
         <div class="two-column">
           <section class="surface" id="backup-summary"></section>
           <section class="surface" id="timer-summary"></section>
         </div>
-        <section class="surface">
-          <div class="surface-heading">
-            <div>
-              <h2>Deployment state</h2>
-              <p>Repository revisions compared with running images.</p>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Project</th>
-                  <th>Repository</th>
-                  <th>Deployed</th>
-                  <th>Image</th>
-                  <th>Started</th>
-                </tr>
-              </thead>
-              <tbody id="deployment-list"></tbody>
-            </table>
-          </div>
-        </section>
-        <section class="surface">
-          <div class="surface-heading">
-            <div>
-              <h2>End-of-work checks</h2>
-              <p>Live checks derived from Git, containers, and deployment state.</p>
-            </div>
-          </div>
-          <div id="closeout-list"></div>
-        </section>
-      </section>
-
-      <section class="tab-view" id="tab-commands">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">ALLOWLISTED OPERATIONS</p>
-            <h1>Commands</h1>
-          </div>
-        </div>
-        <section class="notice" id="command-notice"></section>
-        <section class="surface">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Project</th>
-                  <th>Available commands</th>
-                </tr>
-              </thead>
-              <tbody id="command-list"></tbody>
-            </table>
-          </div>
-        </section>
       </section>
 
       <section class="tab-view" id="tab-usage">
@@ -159,32 +104,6 @@
       </section>
     </main>
   </div>
-
-  <dialog id="action-dialog">
-    <form method="dialog" class="dialog-panel">
-      <p class="eyebrow">CONFIRM COMMAND</p>
-      <h2 id="dialog-title">Run command</h2>
-      <p id="dialog-description"></p>
-      <pre id="dialog-command"></pre>
-      <div class="dialog-actions">
-        <button class="button quiet" value="cancel">Cancel</button>
-        <button class="button danger" id="dialog-confirm" value="confirm">Run command</button>
-      </div>
-    </form>
-  </dialog>
-
-  <dialog id="output-dialog">
-    <form method="dialog" class="dialog-panel output-panel">
-      <div class="surface-heading">
-        <div>
-          <p class="eyebrow">COMMAND OUTPUT</p>
-          <h2 id="output-title">Result</h2>
-        </div>
-        <button class="button quiet" value="close">Close</button>
-      </div>
-      <pre id="output-content"></pre>
-    </form>
-  </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/roadmap-assets/roadmap-view.js" defer></script>

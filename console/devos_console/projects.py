@@ -4,10 +4,8 @@ import json
 import re
 import time
 from pathlib import Path
-from threading import Lock
 from typing import Any
 
-from .audit import AuditLog
 from .runner import CommandResult, run_command, run_docker
 from .settings import ProjectSpec
 
@@ -20,21 +18,12 @@ COMPOSE_FILES = (
     "compose.yaml",
 )
 
-ACTION_LABELS = {
-    "git-pull": "Fast-forward Git pull",
-    "start": "Start containers",
-    "restart": "Restart containers",
-    "stop": "Stop containers",
-}
-
 HEX_REVISION = re.compile(r"^[0-9a-f]{7,64}$", re.IGNORECASE)
 
 
 class ProjectService:
-    def __init__(self, projects: tuple[ProjectSpec, ...], audit: AuditLog) -> None:
+    def __init__(self, projects: tuple[ProjectSpec, ...]) -> None:
         self._projects = {project.slug: project for project in projects}
-        self._audit = audit
-        self._locks = {project.slug: Lock() for project in projects}
 
     def project(self, slug: str) -> ProjectSpec | None:
         return self._projects.get(slug)
@@ -323,7 +312,6 @@ class ProjectService:
                 "containers": containers,
                 "deployment": deployment,
                 "work_end": self._work_end_checks(False, None, containers, deployment),
-                "actions": [],
             }
 
         git_repo = self._git(project, "rev-parse", "--is-inside-work-tree")
@@ -368,9 +356,6 @@ class ProjectService:
 
         deployment = self._deployment(project, repository, containers)
         compose_file = self._compose_file(project)
-        actions = ["git-pull"] if repository else []
-        if compose_file:
-            actions.extend(("start", "restart", "stop"))
         return {
             "slug": project.slug,
             "name": project.name,
@@ -382,60 +367,10 @@ class ProjectService:
             "containers": containers,
             "deployment": deployment,
             "work_end": self._work_end_checks(True, repository, containers, deployment),
-            "actions": [{"id": action, "label": ACTION_LABELS[action]} for action in actions],
         }
 
     def collect_all(self) -> list[dict[str, Any]]:
         return [self.collect(project) for project in self._projects.values()]
-
-    def run_action(self, slug: str, action: str, confirmation: str, remote: str) -> dict[str, Any]:
-        project = self.project(slug)
-        if project is None:
-            raise ValueError("Unknown project.")
-        if action not in ACTION_LABELS:
-            raise ValueError("Unsupported action.")
-        if confirmation != f"{slug}:{action}":
-            raise ValueError("Action confirmation does not match.")
-        if not project.path.is_dir():
-            raise ValueError("Project directory is missing.")
-
-        lock = self._locks[slug]
-        if not lock.acquire(blocking=False):
-            raise RuntimeError("Another project action is already running.")
-        try:
-            self._audit.write("action_started", project=slug, action=action, remote=remote)
-            if action == "git-pull":
-                status = self._git(project, "status", "--porcelain")
-                if not status.ok or status.stdout.strip():
-                    raise RuntimeError("Git pull requires a clean working tree.")
-                result = self._git(project, "pull", "--ff-only", timeout=90)
-            else:
-                compose_file = self._compose_file(project)
-                if compose_file is None:
-                    raise RuntimeError("No supported Compose file was found.")
-                compose_args = ("compose", "-f", str(compose_file))
-                if action == "start":
-                    result = run_docker((*compose_args, "up", "-d"), timeout=120)
-                elif action == "restart":
-                    result = run_docker((*compose_args, "restart"), timeout=120)
-                else:
-                    result = run_docker((*compose_args, "stop"), timeout=120)
-            self._audit.write(
-                "action_finished",
-                project=slug,
-                action=action,
-                remote=remote,
-                ok=result.ok,
-                returncode=result.returncode,
-            )
-            return {
-                "ok": result.ok,
-                "returncode": result.returncode,
-                "stdout": result.stdout[-12_000:],
-                "stderr": result.stderr[-12_000:],
-            }
-        finally:
-            lock.release()
 
     def logs(self, slug: str, lines: int) -> dict[str, Any]:
         project = self.project(slug)

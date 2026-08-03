@@ -239,7 +239,8 @@ from uncommitted local files.
 
 The deployed service listens on port `8080`; append `/roadmap` to that access
 address for the roadmap view. See `console/README.md` for its security boundary,
-management command allowlist, and provider usage snapshot behavior.
+recovery evidence, private-terminal boundary, and provider usage snapshot
+behavior.
 
 OpenAI organization costs and Oracle Cloud costs plus Ampere A1 monthly free
 usage are collected by a separate hourly server service. Oracle usage is shown
