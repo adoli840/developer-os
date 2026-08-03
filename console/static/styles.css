@@ -199,9 +199,19 @@ button {
   padding: 28px clamp(18px, 3vw, 42px) 48px;
 }
 
-.workspace.projects-workspace {
+.workspace.full-width-workspace {
   max-width: none;
   padding: 0;
+}
+
+.full-width-workspace #tab-resources .metrics-grid {
+  gap: 0;
+  margin: 0;
+}
+
+.full-width-workspace #tab-resources .resource-panel {
+  border-width: 0 0 1px;
+  border-radius: 0;
 }
 
 .tab-view {
@@ -598,6 +608,104 @@ tbody tr:last-child td {
   box-shadow: 0 0 0 3px rgba(74, 214, 154, 0.12);
 }
 
+.project-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: transparent;
+  font-weight: 750;
+  text-align: left;
+}
+
+.project-toggle:hover,
+.project-toggle:focus-visible {
+  color: var(--green);
+}
+
+.project-toggle-mark {
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  color: var(--green);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.terminal-root-link {
+  min-height: 28px;
+  padding: 5px 9px;
+  text-transform: none;
+}
+
+.project-container-row td {
+  padding: 0;
+  border-bottom: 1px solid var(--line-strong);
+  background: #11161b;
+}
+
+.project-container-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1px;
+  padding: 1px 0 0;
+  background: var(--line);
+}
+
+.project-container-card {
+  min-width: 0;
+  padding: 14px 16px;
+  background: #11161b;
+}
+
+.project-container-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.project-container-heading > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.project-container-heading span,
+.project-container-empty {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.project-container-card dl {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 12px;
+  margin: 13px 0 0;
+  font-size: 11px;
+}
+
+.project-container-card dt {
+  color: var(--muted);
+}
+
+.project-container-card dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.project-container-empty {
+  padding: 18px 16px;
+}
+
 .backup-list {
   display: grid;
 }
@@ -930,7 +1038,7 @@ tbody tr:last-child td {
     white-space: nowrap;
   }
 
-  .workspace:not(.projects-workspace) {
+  .workspace:not(.full-width-workspace) {
     padding: 20px 12px 40px;
   }
 

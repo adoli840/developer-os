@@ -299,6 +299,10 @@ make terminal-oa
 make terminal-gaia
 ```
 
+The Projects table Terminal heading opens the allowlisted Server context at
+`/home/opc`. It is a workspace-root convenience, not a privileged root shell;
+all commands continue to run as the `opc` service account.
+
 The tunnel is started only by an explicit command and is not maintained by a
 Windows Scheduled Task.
 

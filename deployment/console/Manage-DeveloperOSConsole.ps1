@@ -208,6 +208,7 @@ try {
   $terminalProjectConfig = @"
 {
   "projects": [
+    {"slug":"server","name":"Server","path":"/home/opc"},
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current"},
     {"slug":"btest","name":"bTest","path":"/home/opc/bTest"},
     {"slug":"oa","name":"OA","path":"/home/opc/oa"},

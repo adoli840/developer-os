@@ -39,6 +39,11 @@ The `Projects` view is a single full-width comparison table. Project identity,
 GitHub state, server state, service health, port, and terminal are shared columns;
 Home and Office each contribute only their Local state. A green or red light
 beside each workstation name replaces the repeated status cards and headings.
+Project names expand an inline server-container view with runtime status, image,
+ports, and start time. The Terminal column heading opens the private terminal's
+Server context rooted at `/home/opc`; commands still run as `opc`, never as root.
+The `Resources` view uses the same edge-to-edge workspace without a repeated
+page title or outer padding.
 
 ## Security Model
 

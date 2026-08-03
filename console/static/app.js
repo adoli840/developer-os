@@ -22,7 +22,6 @@ const elements = {
   refreshButton: document.querySelector("#refresh-button"),
   logoutButton: document.querySelector("#logout-button"),
   serverMetrics: document.querySelector("#server-metrics"),
-  resourceTime: document.querySelector("#resource-time"),
   workstationDetail: document.querySelector("#workstation-detail"),
   roadmapTabs: document.querySelector("#roadmap-tabs"),
   roadmapTrackTabs: document.querySelector("#roadmap-track-tabs"),
@@ -171,14 +170,10 @@ async function refreshOverview() {
 function render() {
   if (!state.overview) return;
   renderMetrics(state.overview.system);
-  renderWorkstations(state.overview.workstations || []);
+  renderWorkstations(state.overview.workstations || [], state.overview.projects || []);
   renderRoadmaps(state.roadmaps);
   renderRecovery(state.overview.backups);
   renderUsage(state.overview.usage);
-  const collectedAt = state.overview.system.collected_at;
-  elements.resourceTime.textContent = collectedAt
-    ? `Collected ${new Date(collectedAt * 1000).toLocaleString()}`
-    : "Collection time unavailable";
 }
 
 async function refreshRoadmaps() {
@@ -254,7 +249,7 @@ function renderRoadmapDetail(project) {
 }
 
 function tabFromPath() {
-  return window.location.pathname.replace(/\/$/, "") === "/roadmap" ? "roadmap" : "resources";
+  return window.location.pathname.replace(/\/$/, "") === "/roadmap" ? "roadmap" : "projects";
 }
 
 function selectPrimaryTab(tab, updateHistory = true) {
@@ -262,7 +257,7 @@ function selectPrimaryTab(tab, updateHistory = true) {
   if (!button) return;
   document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
   document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${tab}`));
-  elements.workspace.classList.toggle("projects-workspace", tab === "projects");
+  elements.workspace.classList.toggle("full-width-workspace", ["projects", "resources"].includes(tab));
   if (updateHistory) {
     const nextPath = tab === "roadmap" ? "/roadmap" : "/";
     if (window.location.pathname !== nextPath) window.history.pushState({tab}, "", nextPath);
@@ -366,13 +361,51 @@ function workstationRepositoryCell(project, kind) {
   return `${githubStatus(project.repository, project.comparison?.fresh)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div>`;
 }
 
-function renderWorkstations(workstations) {
+function containerStateBadge(container) {
+  const stateValue = String(container?.state || "").toLowerCase();
+  const statusValue = String(container?.status || "").toLowerCase();
+  if (statusValue.includes("unhealthy")) return statusBadge("Unhealthy", "bad");
+  if (stateValue === "running") return statusBadge("Running", "good");
+  if (stateValue) return statusBadge(container.state, "bad");
+  return statusBadge("Unknown", "neutral");
+}
+
+function renderProjectContainers(project) {
+  const containers = project?.containers || [];
+  if (!containers.length) {
+    const message = project?.deployment?.mode === "systemd"
+      ? "No Docker containers. This project runs as managed systemd services."
+      : "No containers are registered for this project.";
+    return `<div class="project-container-empty">${escapeHtml(message)}</div>`;
+  }
+  return `
+    <div class="project-container-grid">
+      ${containers.map((container) => `
+        <article class="project-container-card">
+          <div class="project-container-heading">
+            <div><strong>${escapeHtml(container.service || container.name || "Container")}</strong><span>${escapeHtml(container.name || "-")}</span></div>
+            ${containerStateBadge(container)}
+          </div>
+          <dl>
+            <dt>Status</dt><dd>${escapeHtml(container.status || container.state || "Unavailable")}</dd>
+            <dt>Image</dt><dd>${escapeHtml(container.image || "Unavailable")}</dd>
+            <dt>Ports</dt><dd>${escapeHtml(container.ports || "None exposed")}</dd>
+            <dt>Started</dt><dd>${escapeHtml(formatDate(container.started_at))}</dd>
+          </dl>
+        </article>
+      `).join("")}
+    </div>
+  `;
+}
+
+function renderWorkstations(workstations, serverProjects) {
   if (!workstations.length) {
     elements.workstationDetail.innerHTML = "";
     return;
   }
   const home = workstations.find((workstation) => workstation.id === "home") || {name: "Home", status: "never_reported", projects: []};
   const office = workstations.find((workstation) => workstation.id === "office") || {name: "Office", status: "never_reported", projects: []};
+  const serverProjectMap = new Map(serverProjects.map((project) => [project.slug, project]));
   const projects = new Map();
   for (const workstation of [home, office]) {
     for (const project of workstation.projects || []) {
@@ -396,7 +429,7 @@ function renderWorkstations(workstations) {
             <th>Server</th>
             <th>Service</th>
             <th>Port</th>
-            <th class="terminal-heading">Terminal</th>
+            <th class="terminal-heading"><a class="terminal-link terminal-root-link" href="http://127.0.0.1:8092/?project=server" target="_blank" rel="noopener">Terminal</a></th>
           </tr>
         </thead>
         <tbody>
@@ -404,27 +437,41 @@ function renderWorkstations(workstations) {
             const homeProject = workstationProject(home, sharedProject.slug);
             const officeProject = workstationProject(office, sharedProject.slug);
             const commonProject = homeProject || officeProject || sharedProject;
+            const serverProject = serverProjectMap.get(sharedProject.slug);
+            const displayProject = serverProject || commonProject;
+            const detailId = `project-containers-${sharedProject.slug}`;
             const commonStatusProject = [homeProject, officeProject].find((project) => project?.repository?.remote_refresh_status === "success" && project?.comparison?.fresh)
               || [homeProject, officeProject].find((project) => project?.comparison?.fresh)
               || homeProject
               || officeProject;
             return `
-              <tr>
-                <td class="project-cell"><strong>${escapeHtml(commonProject.name)}</strong><div class="mobile-terminal">${terminalLink(commonProject)}</div></td>
+              <tr class="project-summary-row">
+                <td class="project-cell"><button class="project-toggle" type="button" data-project-toggle="${escapeHtml(sharedProject.slug)}" aria-expanded="false" aria-controls="${escapeHtml(detailId)}"><span>${escapeHtml(displayProject.name)}</span><span class="project-toggle-mark" aria-hidden="true">+</span></button><div class="mobile-terminal">${terminalLink(displayProject)}</div></td>
                 <td>${workstationRepositoryCell(homeProject, "local")}</td>
                 <td>${workstationRepositoryCell(officeProject, "local")}</td>
                 <td>${workstationRepositoryCell(commonStatusProject, "github")}</td>
                 <td>${comparisonStatus(commonStatusProject?.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(commonStatusProject?.comparison?.deployed_revisions))}</div></td>
                 <td>${serviceStatus(commonStatusProject?.comparison?.service_status)}</td>
-                <td><strong>${commonProject.port ? escapeHtml(commonProject.port) : "-"}</strong></td>
-                <td class="terminal-cell">${terminalLink(commonProject)}</td>
+                <td><strong>${displayProject.port ? escapeHtml(displayProject.port) : "-"}</strong></td>
+                <td class="terminal-cell">${terminalLink(displayProject)}</td>
               </tr>
+              <tr class="project-container-row" id="${escapeHtml(detailId)}" hidden><td colspan="8">${renderProjectContainers(serverProject)}</td></tr>
             `;
           }).join("") : `<tr><td colspan="8" class="muted">No workstation reports have been received yet.</td></tr>`}
         </tbody>
       </table>
     </div>
   `;
+  elements.workstationDetail.querySelectorAll("button[data-project-toggle]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const row = document.getElementById(`project-containers-${button.dataset.projectToggle}`);
+      if (!row) return;
+      const expanded = button.getAttribute("aria-expanded") === "true";
+      button.setAttribute("aria-expanded", String(!expanded));
+      button.querySelector(".project-toggle-mark").textContent = expanded ? "+" : "−";
+      row.hidden = expanded;
+    });
+  });
 }
 
 function githubStatus(repository, fresh = true) {

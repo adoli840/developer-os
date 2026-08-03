@@ -39,26 +39,19 @@
     </header>
 
     <aside class="sidebar" aria-label="Console sections">
-      <button class="nav-item active" data-tab="resources" type="button">Resources</button>
-      <button class="nav-item" data-tab="projects" type="button">Projects</button>
+      <button class="nav-item active" data-tab="projects" type="button">Projects</button>
+      <button class="nav-item" data-tab="resources" type="button">Resources</button>
       <button class="nav-item" data-tab="roadmap" type="button">Roadmap</button>
       <button class="nav-item" data-tab="recovery" type="button">Recovery</button>
       <button class="nav-item" data-tab="usage" type="button">Usage</button>
     </aside>
 
     <main class="workspace">
-      <section class="tab-view active" id="tab-resources">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">SERVER CAPACITY</p>
-            <h1>Resources</h1>
-          </div>
-          <p class="timestamp" id="resource-time">Not collected</p>
-        </div>
+      <section class="tab-view" id="tab-resources">
         <div class="metrics-grid" id="server-metrics"></div>
       </section>
 
-      <section class="tab-view" id="tab-projects">
+      <section class="tab-view active" id="tab-projects">
         <div class="workstation-list" id="workstation-detail"></div>
       </section>
 

@@ -88,8 +88,24 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertIn("workstationIndicator(office)", javascript)
         self.assertEqual(javascript.count('class="project-heading">Project</th>'), 1)
         self.assertEqual(javascript.count('workstationRepositoryCell(commonStatusProject, "github")'), 1)
-        self.assertEqual(javascript.count("class=\"terminal-heading\""), 1)
-        self.assertIn('classList.toggle("projects-workspace"', javascript)
+        self.assertIn('class="terminal-link terminal-root-link"', javascript)
+        self.assertIn('href="http://127.0.0.1:8092/?project=server"', javascript)
+        self.assertIn('class="project-toggle"', javascript)
+        self.assertIn('class="project-container-row"', javascript)
+        self.assertIn('renderProjectContainers(serverProject)', javascript)
+        self.assertIn('classList.toggle("full-width-workspace"', javascript)
+
+    def test_projects_precede_resources_and_both_use_the_full_workspace(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
+        javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
+
+        self.assertLess(html.index('data-tab="projects"'), html.index('data-tab="resources"'))
+        self.assertIn('<section class="tab-view active" id="tab-projects">', html)
+        self.assertNotIn("SERVER CAPACITY", html)
+        self.assertNotIn("<h1>Resources</h1>", html)
+        self.assertNotIn('id="resource-time"', html)
+        self.assertIn('? "roadmap" : "projects"', javascript)
 
 
 class OverviewCacheTests(unittest.TestCase):

@@ -99,6 +99,16 @@ class TerminalRunnerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unavailable"):
                 runner.execute("gaia", "pwd")
 
+    def test_server_workspace_context_is_allowlisted_without_root_privilege(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        example = (repository / "console" / "terminal-config.example.json").read_text(encoding="utf-8")
+        deployment = (repository / "deployment" / "console" / "Manage-DeveloperOSConsole.ps1").read_text(encoding="utf-8")
+
+        self.assertIn('"slug": "server"', example)
+        self.assertIn('"path": "X:/Projects"', example)
+        self.assertIn('{"slug":"server","name":"Server","path":"/home/opc"}', deployment)
+        self.assertNotIn('{"slug":"server","name":"Server","path":"/"}', deployment)
+
 
 if __name__ == "__main__":
     unittest.main()

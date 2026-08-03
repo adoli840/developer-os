@@ -1,6 +1,11 @@
 {
   "projects": [
     {
+      "slug": "server",
+      "name": "Server",
+      "path": "X:/Projects"
+    },
+    {
       "slug": "developer-os",
       "name": "DeveloperOS",
       "path": "X:/Projects/DeveloperOS"
