@@ -68,11 +68,11 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Latest Status Change
 
-- Topic: Snapshot Manager
-- Change: Planned to Cancelled
-- Evidence or reason: The developer selected Git as the sole source-code
-  recovery mechanism after review found 27 file-copy sets, no recorded restore,
-  no implemented manager, and no adoption in OA, Gaia, or bTest.
+- Topic: Managed project roadmap adoption
+- Change: OA migration blocker narrowed to deployment and visual parity verification
+- Evidence or reason: OA schema version 2 parsing, Overall-to-track linkage,
+  shared-asset parity, and DeveloperOS console rendering now pass; its own
+  application route still requires deployment and viewport and interaction checks.
 
 ## Next Status Transitions
 
@@ -177,9 +177,3 @@ DeveloperOS v1.0 should be considered stable when:
 - Active projects can be reviewed consistently.
 - AI Project Manager summaries can guide daily work.
 - GPT and Codex can collaborate through DeveloperOS with minimal repeated context restoration.
-
-## Completed Topics
-
-| Topic | Status | Evidence |
-|---|---|---|
-| Snapshot Manager | Cancelled | AI work snapshots were abolished in favor of Git-only source recovery after no recorded restore or cross-project adoption was found. |
