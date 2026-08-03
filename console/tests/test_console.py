@@ -403,6 +403,7 @@ class WorkstationStatusTests(unittest.TestCase):
                                     "branch": "main",
                                     "revision": "abc1234",
                                     "remote_revision": "abc123456789",
+                                    "remote_refresh_status": "success",
                                     "modified": 1,
                                     "ahead": 2,
                                     "behind": 0,
@@ -425,6 +426,44 @@ class WorkstationStatusTests(unittest.TestCase):
         self.assertEqual(
             result["projects"][0]["repository"]["remote_revision"],
             "abc123456789",
+        )
+        self.assertEqual(
+            result["projects"][0]["repository"]["remote_refresh_status"],
+            "success",
+        )
+
+    def test_legacy_remote_refresh_status_is_unverified(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            status_dir = Path(directory)
+            (status_dir / "home.json").write_text(
+                json.dumps(
+                    {
+                        "schema_version": 1,
+                        "workstation": "home",
+                        "generated_at": datetime.now(timezone.utc).isoformat(),
+                        "projects": [
+                            {
+                                "slug": "oa",
+                                "name": "OA",
+                                "available": True,
+                                "repository": {
+                                    "revision": "local111",
+                                    "upstream": "origin/main",
+                                    "remote_revision": "cached222",
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            spec = WorkstationSpec("home", "Home", 900)
+            result = collect_workstations((spec,), status_dir)[0]
+
+        self.assertTrue(result["online"])
+        self.assertEqual(
+            result["projects"][0]["repository"]["remote_refresh_status"],
+            "unknown",
         )
 
     def test_recent_office_report_is_online(self) -> None:
@@ -484,6 +523,7 @@ class WorkstationStatusTests(unittest.TestCase):
                         "repository": {
                             "revision": "abc1234",
                             "remote_revision": "abc123456789",
+                            "remote_refresh_status": "success",
                         },
                     }
                 ],
@@ -522,6 +562,7 @@ class WorkstationStatusTests(unittest.TestCase):
                         "repository": {
                             "revision": "local111",
                             "remote_revision": "remote222",
+                            "remote_refresh_status": "success",
                         },
                     }
                 ],
@@ -543,6 +584,74 @@ class WorkstationStatusTests(unittest.TestCase):
         self.assertEqual(comparison["deployment_status"], "mismatch")
         self.assertEqual(comparison["runtime_status"], "match")
 
+    def test_failed_remote_refresh_does_not_fall_back_to_local_revision(self) -> None:
+        workstations = [
+            {
+                "online": True,
+                "projects": [
+                    {
+                        "slug": "oa",
+                        "repository": {
+                            "revision": "same111",
+                            "remote_revision": None,
+                            "remote_refresh_status": "failed",
+                        },
+                    }
+                ],
+                "summary": {},
+            }
+        ]
+        server_projects = [
+            {
+                "slug": "oa",
+                "available": True,
+                "repository": {"revision": "same111"},
+                "deployment": {"deployed_revisions": ["same111-full"]},
+                "containers": [{"state": "running", "status": "Up 1 hour"}],
+            }
+        ]
+
+        attach_server_comparisons(workstations, server_projects)
+
+        comparison = workstations[0]["projects"][0]["comparison"]
+        self.assertEqual(comparison["server_status"], "match")
+        self.assertEqual(comparison["deployment_status"], "match")
+        self.assertEqual(comparison["runtime_status"], "unavailable")
+
+    def test_unknown_remote_refresh_is_not_treated_as_current(self) -> None:
+        workstations = [
+            {
+                "online": True,
+                "projects": [
+                    {
+                        "slug": "oa",
+                        "repository": {
+                            "revision": "local111",
+                            "remote_revision": "cached222",
+                            "remote_refresh_status": "unknown",
+                        },
+                    }
+                ],
+                "summary": {},
+            }
+        ]
+        server_projects = [
+            {
+                "slug": "oa",
+                "available": True,
+                "repository": {"revision": "cached222"},
+                "deployment": {"deployed_revisions": ["cached222-full"]},
+                "containers": [{"state": "running", "status": "Up 1 hour"}],
+            }
+        ]
+
+        attach_server_comparisons(workstations, server_projects)
+
+        self.assertEqual(
+            workstations[0]["projects"][0]["comparison"]["runtime_status"],
+            "unavailable",
+        )
+
     def test_offline_comparisons_are_stale_not_mismatched(self) -> None:
         workstations = [
             {
@@ -553,6 +662,15 @@ class WorkstationStatusTests(unittest.TestCase):
                         "repository": {
                             "revision": "733a70d",
                             "remote_revision": "733a70d",
+                            "remote_refresh_status": "success",
+                        },
+                    },
+                    {
+                        "slug": "oa",
+                        "repository": {
+                            "revision": "local111",
+                            "remote_revision": None,
+                            "remote_refresh_status": "failed",
                         },
                     },
                     {"slug": "unknown", "repository": None},
@@ -568,7 +686,15 @@ class WorkstationStatusTests(unittest.TestCase):
                 "repository": {"revision": "c6d6156"},
                 "deployment": {"deployed_revisions": ["c6d6156"]},
                 "containers": [],
-            }
+            },
+            {
+                "slug": "oa",
+                "available": True,
+                "port": 8082,
+                "repository": {"revision": "remote222"},
+                "deployment": {"deployed_revisions": ["remote222"]},
+                "containers": [{"state": "running", "status": "Up 1 hour"}],
+            },
         ]
 
         attach_server_comparisons(workstations, server_projects)
@@ -584,6 +710,7 @@ class WorkstationStatusTests(unittest.TestCase):
         self.assertEqual(stale["runtime_status"], "stale")
         self.assertEqual(stale["server_revision"], "c6d6156")
         self.assertEqual(stale["deployed_revisions"], ["c6d6156"])
+        self.assertEqual(comparisons["oa"]["runtime_status"], "unavailable")
         self.assertEqual(comparisons["unknown"]["server_status"], "unavailable")
         self.assertEqual(comparisons["unknown"]["deployment_status"], "unavailable")
         self.assertEqual(comparisons["unknown"]["runtime_status"], "unavailable")

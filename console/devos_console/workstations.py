@@ -23,6 +23,9 @@ def _parse_time(value: object) -> datetime | None:
 def _safe_repository(value: object) -> dict[str, Any] | None:
     if not isinstance(value, dict):
         return None
+    remote_refresh_status = value.get("remote_refresh_status")
+    if remote_refresh_status not in {"success", "failed"}:
+        remote_refresh_status = "unknown"
     return {
         "branch": str(value.get("branch") or "detached"),
         "revision": str(value.get("revision") or "") or None,
@@ -32,6 +35,7 @@ def _safe_repository(value: object) -> dict[str, Any] | None:
         "untracked": max(0, int(value.get("untracked") or 0)),
         "upstream": str(value.get("upstream") or "") or None,
         "remote_revision": str(value.get("remote_revision") or "") or None,
+        "remote_refresh_status": remote_refresh_status,
         "ahead": max(0, int(value.get("ahead") or 0)),
         "behind": max(0, int(value.get("behind") or 0)),
         "last_commit_at": str(value.get("last_commit_at") or "") or None,
@@ -152,8 +156,10 @@ def attach_server_comparisons(
         fresh = workstation.get("online") is True
         mismatches = 0
         for project in workstation["projects"]:
-            local_revision = (project.get("repository") or {}).get("revision")
-            remote_revision = (project.get("repository") or {}).get("remote_revision")
+            repository = project.get("repository") or {}
+            local_revision = repository.get("revision")
+            remote_revision = repository.get("remote_revision")
+            remote_refresh_status = repository.get("remote_refresh_status", "unknown")
             server_project = server_by_slug.get(project["slug"])
             server_revision = (
                 (server_project.get("repository") or {}).get("revision")
@@ -177,7 +183,7 @@ def attach_server_comparisons(
                     if any(_revisions_match(local_revision, revision) for revision in deployed_revisions)
                     else "mismatch"
                 )
-            runtime_target = remote_revision or local_revision
+            runtime_target = remote_revision if remote_refresh_status == "success" else None
             if not runtime_target or not deployed_revisions:
                 runtime_status = "unavailable"
             else:

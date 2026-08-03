@@ -124,9 +124,10 @@ make console-backup-status
 
 ## Workstation Reporting
 
-The Home and Office workstation reporters execute read-only Git commands for
-DeveloperOS, OA, Gaia, and bTest. Each sends a separate small JSON summary
-through SSH to the Oracle server. Send a one-time report with:
+The Home and Office workstation reporters refresh the configured upstreams for
+DeveloperOS, OA, Gaia, and bTest, then send separate small JSON summaries
+through SSH to the Oracle server. Fetch updates Git metadata without changing
+the checked-out branch, index, or working tree. Send a one-time report with:
 
 ```powershell
 make workstation-home-report
@@ -148,6 +149,11 @@ PowerShell process uses a hidden, non-interactive window.
 When a report becomes offline, its revision values remain visible as historical
 context, but GitHub and server comparisons are labeled stale and excluded from
 the mismatch total until a fresh report arrives.
+
+GitHub Match, Pull, Push, and Diverged states require a successful upstream
+refresh in that same report run. A failed refresh leaves the workstation report
+online but labels that repository `Refresh failed`; reports from an older
+reporter without refresh proof are labeled `Unverified`.
 
 ## Provider Usage Collection
 

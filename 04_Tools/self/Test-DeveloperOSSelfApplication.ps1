@@ -203,13 +203,17 @@ $workstationMakefile = Read-Text "Makefile"
 if (
     $workstationReporter -and
     $workstationReporter.Contains('slug = "developer-os"') -and
+    $workstationReporter.Contains('remote_refresh_status = $remoteRefreshStatus') -and
+    $workstationReporter.Contains('"fetch", "--quiet", "--no-tags", "--no-recurse-submodules"') -and
+    $workstationReporter.Contains('$env:GIT_TERMINAL_PROMPT = "0"') -and
+    $workstationReporter.Contains('$env:GIT_SSH_COMMAND = "$sshCommand -o BatchMode=yes -o ConnectTimeout=15"') -and
     $workstationManager -and
     $workstationManager.Contains('New-ScheduledTaskAction') -and
     $workstationManager.Contains('-WindowStyle Hidden') -and
     $workstationMakefile -match '(?m)^workstation-home-auto-enable:' -and
     $workstationMakefile -match '(?m)^workstation-office-auto-enable:'
 ) {
-    Add-CheckResult PASS "Workstation reporting" "DeveloperOS Git state supports manual and opt-in hidden scheduled reports"
+    Add-CheckResult PASS "Workstation reporting" "DeveloperOS Git state supports verified remotes and manual or opt-in hidden scheduled reports"
 } else {
     Add-CheckResult FAIL "Workstation reporting" "DeveloperOS workstation reporting or its hidden scheduler contract is incomplete"
 }

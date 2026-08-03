@@ -47,6 +47,44 @@ function Invoke-Git {
   }
 }
 
+function Invoke-GitRemoteRefresh {
+  param(
+    [Parameter(Mandatory = $true)][string]$Repository,
+    [Parameter(Mandatory = $true)][string]$Remote,
+    [Parameter(Mandatory = $true)][string]$Refspec
+  )
+
+  $previousTerminalPrompt = $env:GIT_TERMINAL_PROMPT
+  $previousGcmInteractive = $env:GCM_INTERACTIVE
+  $previousSshCommand = $env:GIT_SSH_COMMAND
+  try {
+    $env:GIT_TERMINAL_PROMPT = "0"
+    $env:GCM_INTERACTIVE = "Never"
+    $sshCommand = if ([string]::IsNullOrWhiteSpace($previousSshCommand)) { "ssh" } else { $previousSshCommand }
+    $env:GIT_SSH_COMMAND = "$sshCommand -o BatchMode=yes -o ConnectTimeout=15"
+    return Invoke-Git `
+      -Repository $Repository `
+      -Arguments @("fetch", "--quiet", "--no-tags", "--no-recurse-submodules", $Remote, $Refspec)
+  }
+  finally {
+    if ($null -eq $previousTerminalPrompt) {
+      Remove-Item Env:GIT_TERMINAL_PROMPT -ErrorAction SilentlyContinue
+    } else {
+      $env:GIT_TERMINAL_PROMPT = $previousTerminalPrompt
+    }
+    if ($null -eq $previousGcmInteractive) {
+      Remove-Item Env:GCM_INTERACTIVE -ErrorAction SilentlyContinue
+    } else {
+      $env:GCM_INTERACTIVE = $previousGcmInteractive
+    }
+    if ($null -eq $previousSshCommand) {
+      Remove-Item Env:GIT_SSH_COMMAND -ErrorAction SilentlyContinue
+    } else {
+      $env:GIT_SSH_COMMAND = $previousSshCommand
+    }
+  }
+}
+
 function Get-RepositoryStatus {
   param(
     [Parameter(Mandatory = $true)][string]$Slug,
@@ -76,21 +114,49 @@ function Get-RepositoryStatus {
   $revision = Invoke-Git -Repository $Path -Arguments @("rev-parse", "--short", "HEAD")
   $status = Invoke-Git -Repository $Path -Arguments @("status", "--porcelain")
   $upstream = Invoke-Git -Repository $Path -Arguments @("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
-  $remoteRevision = if ($upstream.Ok) {
-    Invoke-Git -Repository $Path -Arguments @("rev-parse", "@{u}")
-  } else {
-    $null
-  }
+  $upstreamRef = Invoke-Git -Repository $Path -Arguments @("rev-parse", "--symbolic-full-name", "@{u}")
   $lastCommit = Invoke-Git -Repository $Path -Arguments @("log", "-1", "--format=%cI")
   $statusLines = @($status.Lines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+  $remoteRefreshStatus = "unknown"
+  $remoteRevision = $null
   $ahead = 0
   $behind = 0
   if ($upstream.Ok) {
-    $counts = Invoke-Git -Repository $Path -Arguments @("rev-list", "--left-right", "--count", "HEAD...@{u}")
-    $parts = @($counts.Text -split "\s+" | Where-Object { $_ })
-    if ($counts.Ok -and $parts.Count -eq 2) {
-      $ahead = [int]$parts[0]
-      $behind = [int]$parts[1]
+    $remote = if ($branch.Ok -and $branch.Text) {
+      Invoke-Git -Repository $Path -Arguments @("config", "--get", "branch.$($branch.Text).remote")
+    } else {
+      $null
+    }
+    $mergeRef = if ($branch.Ok -and $branch.Text) {
+      Invoke-Git -Repository $Path -Arguments @("config", "--get", "branch.$($branch.Text).merge")
+    } else {
+      $null
+    }
+    $canRefresh = (
+      $null -ne $remote -and $remote.Ok -and $remote.Text -and
+      $null -ne $mergeRef -and $mergeRef.Ok -and $mergeRef.Text -match "^refs/heads/" -and
+      $upstreamRef.Ok -and $upstreamRef.Text -match "^refs/remotes/"
+    )
+    if ($canRefresh) {
+      $refspec = "+$($mergeRef.Text):$($upstreamRef.Text)"
+      $refresh = Invoke-GitRemoteRefresh -Repository $Path -Remote $remote.Text -Refspec $refspec
+      if ($refresh.Ok) {
+        $candidateRevision = Invoke-Git -Repository $Path -Arguments @("rev-parse", $upstreamRef.Text)
+        $counts = Invoke-Git -Repository $Path -Arguments @("rev-list", "--left-right", "--count", "HEAD...$($upstreamRef.Text)")
+        $parts = @($counts.Text -split "\s+" | Where-Object { $_ })
+        if ($candidateRevision.Ok -and $candidateRevision.Text -and $counts.Ok -and $parts.Count -eq 2) {
+          $remoteRefreshStatus = "success"
+          $remoteRevision = $candidateRevision
+          $ahead = [int]$parts[0]
+          $behind = [int]$parts[1]
+        } else {
+          $remoteRefreshStatus = "failed"
+        }
+      } else {
+        $remoteRefreshStatus = "failed"
+      }
+    } else {
+      $remoteRefreshStatus = "failed"
     }
   }
 
@@ -107,6 +173,7 @@ function Get-RepositoryStatus {
       untracked = @($statusLines | Where-Object { $_.StartsWith("??") }).Count
       upstream = if ($upstream.Ok) { $upstream.Text } else { $null }
       remote_revision = if ($null -ne $remoteRevision -and $remoteRevision.Ok) { $remoteRevision.Text } else { $null }
+      remote_refresh_status = $remoteRefreshStatus
       ahead = $ahead
       behind = $behind
       last_commit_at = if ($lastCommit.Ok) { $lastCommit.Text } else { $null }

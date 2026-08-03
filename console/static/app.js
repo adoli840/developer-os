@@ -410,9 +410,14 @@ function renderWorkstations(workstations) {
   elements.workstationSummary.innerHTML = workstations.map((workstation) => {
     const lastReport = formatDate(workstation.last_report_at);
     const staleReport = workstation.status === "offline";
+    const remoteUnverified = workstation.projects.some((project) => (
+      project.repository?.upstream && project.repository.remote_refresh_status !== "success"
+    ));
     const summaryDescription = staleReport
       ? "This snapshot is stale. Local and GitHub values are historical; comparisons are unavailable."
-      : "Local Git state reported while this computer is powered on.";
+      : remoteUnverified
+        ? "Live local state; one or more GitHub revisions could not be verified."
+        : "Local Git state reported while this computer is powered on.";
     return `
       <section class="surface">
         <div class="surface-heading">
@@ -423,7 +428,7 @@ function renderWorkstations(workstations) {
           <div><span>Last report</span><strong>${escapeHtml(lastReport)}</strong></div>
           <div><span>Repositories</span><strong>${escapeHtml(workstation.summary.available)}</strong></div>
           <div><span>Dirty</span><strong>${escapeHtml(workstation.summary.dirty)}</strong></div>
-          <div><span>Not pushed</span><strong>${escapeHtml(workstation.summary.ahead)}</strong></div>
+          <div><span>Not pushed</span><strong>${escapeHtml(staleReport || remoteUnverified ? "-" : workstation.summary.ahead)}</strong></div>
           <div><span>Mismatches</span><strong>${escapeHtml(workstation.summary.mismatches ?? "-")}</strong></div>
         </div>
       </section>
@@ -472,6 +477,8 @@ function renderWorkstations(workstations) {
 function githubStatus(repository, fresh = true) {
   if (!repository?.upstream) return statusBadge("Unavailable", "neutral");
   if (fresh === false) return statusBadge("Stale report", "neutral");
+  if (repository.remote_refresh_status === "failed") return statusBadge("Refresh failed", "warn");
+  if (repository.remote_refresh_status !== "success") return statusBadge("Unverified", "neutral");
   if (repository.ahead > 0 && repository.behind > 0) return statusBadge("Diverged", "bad");
   if (repository.ahead > 0) return statusBadge("Push needed", "warn");
   if (repository.behind > 0) return statusBadge("Pull needed", "warn");
