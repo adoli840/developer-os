@@ -245,6 +245,10 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return
 
         if parsed.path.startswith("/api/"):
+            project_logs = parsed.path.startswith("/api/projects/") and parsed.path.endswith("/logs")
+            if parsed.path != "/api/overview" and not project_logs:
+                self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
+                return
             public_read = (
                 self.application.settings.public_read_only
                 and parsed.path == "/api/overview"
@@ -255,7 +259,7 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 if parsed.path == "/api/overview":
                     self._json(HTTPStatus.OK, self.application.overview(public=public_read))
                     return
-                if parsed.path.startswith("/api/projects/") and parsed.path.endswith("/logs"):
+                if project_logs:
                     slug = parsed.path.split("/")[3]
                     values = parse_qs(parsed.query)
                     lines = int(values.get("lines", ["120"])[0])
