@@ -292,6 +292,10 @@ def _bounded_residual_components(
                 "disposition": "baseline" if metric != "disk" else "unattributed",
             }
         )
+    if metric == "cpu" and components:
+        displayed_total = round(residual, 1)
+        displayed_components = round(sum(float(item["value"]) for item in components), 1)
+        components[-1]["value"] = round(float(components[-1]["value"]) + displayed_total - displayed_components, 1)
     return components
 
 

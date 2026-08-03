@@ -321,6 +321,20 @@ class ResourceBreakdownTests(unittest.TestCase):
         self.assertEqual(_parse_size("2MiB"), 2_097_152)
         self.assertIsNone(_parse_size("N/A"))
 
+    def test_cpu_component_rounding_preserves_the_displayed_residual(self) -> None:
+        from console.devos_console.resources import _bounded_residual_components
+
+        components = _bounded_residual_components(
+            "cpu",
+            31.2,
+            [
+                {"name": "A", "value": 10.04},
+                {"name": "B", "value": 10.04},
+                {"name": "C", "value": 11.12},
+            ],
+        )
+        self.assertEqual(sum(item["value"] for item in components), 31.2)
+
     def test_resources_are_grouped_by_project_and_component(self) -> None:
         spec = ProjectSpec(
             slug="oa",
