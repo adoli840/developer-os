@@ -88,7 +88,7 @@ def build_alerts(
             {
                 "severity": "info",
                 "source": "security",
-                "message": "Public HTTP mode is read-only; administrative commands remain disabled.",
+                "message": "Public HTTP mode is read-only; project commands remain isolated behind SSH.",
             }
         )
     order = {"critical": 0, "warning": 1, "info": 2}
