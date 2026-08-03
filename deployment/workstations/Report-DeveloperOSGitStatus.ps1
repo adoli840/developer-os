@@ -39,9 +39,17 @@ function Invoke-Git {
     [Parameter(Mandatory = $true)][string[]]$Arguments
   )
 
-  $output = @(& git -C $Repository @Arguments 2>$null)
+  $previousErrorActionPreference = $ErrorActionPreference
+  try {
+    $ErrorActionPreference = "Continue"
+    $output = @(& git -C $Repository @Arguments 2>$null)
+    $exitCode = $LASTEXITCODE
+  }
+  finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
   return [pscustomobject]@{
-    Ok = $LASTEXITCODE -eq 0
+    Ok = $exitCode -eq 0
     Lines = $output
     Text = ($output -join "`n").Trim()
   }
