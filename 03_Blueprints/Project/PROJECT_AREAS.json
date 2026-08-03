@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "project": "Project Name",
+  "exclude_globs": [
+    "generated/**",
+    "outputs/**"
+  ],
+  "areas": [
+    {
+      "id": "application-core",
+      "name": "Application core",
+      "description": "Primary application behavior and shared domain contracts.",
+      "keywords": [
+        "core",
+        "application",
+        "domain"
+      ],
+      "path_globs": [
+        "src/**",
+        "app/**",
+        "README.md",
+        "PROJECT_CONTEXT.md"
+      ],
+      "entrypoints": [
+        "README.md"
+      ],
+      "related_docs": [
+        "PROJECT_CONTEXT.md"
+      ],
+      "test_commands": [
+        "replace with the smallest focused test command"
+      ],
+      "services": [],
+      "data_stores": [],
+      "risk_tags": []
+    }
+  ]
+}

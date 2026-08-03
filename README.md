@@ -88,7 +88,15 @@ After enabling, any project directory can use:
 
 ```bash
 make git-check
+make context TASK="describe the current task"
 ```
+
+`make context` reads the project's tracked `PROJECT_AREAS.json`, incrementally
+refreshes the ignored `.developer-os/context-index.json`, and returns the
+smallest declared source area, entrypoints, related files, tests, services,
+data stores, and risks relevant to the request. It reuses Git blob identities
+for unchanged files, skips files outside declared areas, and reads working-tree
+contents only for changed files.
 
 Docker projects can also use:
 
@@ -121,6 +129,22 @@ Verify the shared contract across DeveloperOS, OA, Gaia, and bTest:
 make make-check
 make docker-policy-check
 ```
+
+## Project Context Routing
+
+DeveloperOS avoids repeated whole-repository investigation through a small
+project-owned area map and a shared generated index:
+
+- `PROJECT_AREAS.json` is reviewed project state and maps task terms to source
+  boundaries and focused verification.
+- `.developer-os/context-index.json` is derived local cache and remains outside
+  Git.
+- `make context TASK="..."` selects the first files to inspect and states when
+  the search should expand.
+
+The index is advisory. Authentication, database, deployment, shared API, and
+safety changes still expand across every real dependency boundary. See
+`04_Tools/context/README.md` for the schema and operating contract.
 
 ## Git Dashboard
 

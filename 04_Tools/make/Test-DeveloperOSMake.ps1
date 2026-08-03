@@ -11,7 +11,7 @@ $projects = @(
 )
 
 $reservedTargets = @(
-    "run", "run-b", "b-run", "up", "down", "logs", "docker-build",
+    "context", "run", "run-b", "b-run", "up", "down", "logs", "docker-build",
     "docker-stop", "docker-logs", "docker-clean", "rebuild", "dh-tag",
     "dh-push", "dh-pull", "dh-b-push", "server-deploy", "sync", "deploy"
 )
@@ -34,6 +34,12 @@ try {
     $gitCheckOutput = @(& make --no-print-directory -n git-check -C $developerOSPath 2>&1)
     if ($LASTEXITCODE -ne 0 -or ($gitCheckOutput -join "`n") -notmatch "Invoke-GitDashboard.ps1") {
         Write-Host "FAIL DeveloperOS: shared make git-check is unavailable."
+        $developerOSFailed = $true
+    }
+
+    $contextOutput = @(& make --no-print-directory -n context TASK="shared make" -C $developerOSPath 2>&1)
+    if ($LASTEXITCODE -ne 0 -or ($contextOutput -join "`n") -notmatch "project_context.py") {
+        Write-Host "FAIL DeveloperOS: shared make context is unavailable."
         $developerOSFailed = $true
     }
 
@@ -94,6 +100,14 @@ try {
         }
         if ($runText -notmatch "--no-build" -or $runText -match "(?:^|\s)--build(?:\s|$)") {
             Write-Host "FAIL $($project.Name): make run does not enforce no-build startup."
+            $failed = $true
+            $projectFailed = $true
+            continue
+        }
+
+        $contextOutput = @(& make --no-print-directory -n context TASK="project area" -C $project.Path 2>&1)
+        if ($LASTEXITCODE -ne 0 -or ($contextOutput -join "`n") -notmatch "project_context.py") {
+            Write-Host "FAIL $($project.Name): shared make context is unavailable."
             $failed = $true
             $projectFailed = $true
             continue

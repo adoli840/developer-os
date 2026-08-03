@@ -30,8 +30,10 @@ Use this order when working from an individual project:
 4. Current project `PROJECT_RULES.md`, if present
 5. The canonical project roadmap resolved through
    `00_Master/ProjectRoadmapPolicy.md`
-6. Task-relevant DeveloperOS documents from the routing table below
-7. Relevant project source files
+6. When the project owns `PROJECT_AREAS.json`, run
+   `make context TASK="<current request>"` and inspect its selected entrypoints
+7. Task-relevant DeveloperOS documents from the routing table below
+8. Relevant project source files
 
 ## Precedence Rule
 
@@ -87,6 +89,13 @@ High-risk work includes multi-file refactoring, file deletion, structural change
 DeveloperOS should reduce repeated reasoning, not create extra maintenance.
 
 If a task can be completed by reading project-local context and one or two DeveloperOS documents, stop there. Do not continue reading just because more documents exist.
+
+When `PROJECT_AREAS.json` exists, use the shared `make context` command before a
+broad source search. Start with its selected area, entrypoints, related files,
+and focused verification. Expand only when imports, shared contracts, database
+or authentication boundaries, deployment behavior, safety rules, or failing
+evidence cross that area. The generated index is advisory and never replaces
+reading the selected source or the project's explicit instructions.
 
 ## Output Rule
 

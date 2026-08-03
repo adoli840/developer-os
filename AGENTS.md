@@ -9,6 +9,8 @@ Before meaningful work in this repository:
 2. Read `README.md`, `PROJECT_CONTEXT.md`, and `PROJECT_RULES.md`.
 3. Read the canonical `ROADMAP.md` and the task-relevant policy documents routed
    by `BOOT.md`.
+4. Run `make context TASK="<current request>"` and begin source inspection from
+   the selected DeveloperOS area.
 
 For Docker, Compose, image, deployment, or container lifecycle work, read
 `00_Master/DockerImageBuildPolicy.md`. Routine starts and restarts reuse images;

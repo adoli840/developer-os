@@ -1,0 +1,292 @@
+{
+  "schema_version": 1,
+  "project": "DeveloperOS",
+  "exclude_globs": [
+    ".console/**",
+    "05_Snapshots/**"
+  ],
+  "areas": [
+    {
+      "id": "context-routing",
+      "name": "Project context routing",
+      "description": "Area maps, incremental indexes, and task-scoped Codex investigation.",
+      "keywords": [
+        "context",
+        "index",
+        "project areas",
+        "codex investigation",
+        "\ubb38\ub9e5",
+        "\uc0c9\uc778",
+        "\uc804\uc218\uc870\uc0ac"
+      ],
+      "path_globs": [
+        "PROJECT_AREAS.json",
+        "BOOT.md",
+        "AGENTS.md",
+        "Makefile",
+        "04_Tools/context/**",
+        "04_Tools/make/**",
+        "04_Tools/codex/**",
+        "04_Tools/codex-task/**",
+        "04_Tools/self/**",
+        "03_Blueprints/Project/PROJECT_AREAS.json",
+        "03_Blueprints/Project/.gitignore",
+        "03_Blueprints/ProjectBootstrapPrompt.md"
+      ],
+      "entrypoints": [
+        "04_Tools/context/project_context.py",
+        "PROJECT_AREAS.json",
+        "04_Tools/make/DeveloperOS.mk"
+      ],
+      "related_docs": [
+        "04_Tools/context/README.md",
+        "BOOT.md"
+      ],
+      "test_commands": [
+        "make context-test",
+        "make self-check",
+        "make make-check"
+      ],
+      "services": [
+        "DeveloperOS shared Make"
+      ],
+      "data_stores": [
+        ".developer-os/context-index.json"
+      ],
+      "risk_tags": [
+        "shared-tooling",
+        "generated-cache"
+      ]
+    },
+    {
+      "id": "governance",
+      "name": "Workspace governance",
+      "description": "Global engineering policy, decisions, roadmaps, and AI collaboration rules.",
+      "keywords": [
+        "governance",
+        "policy",
+        "decision",
+        "roadmap continuity",
+        "\uc815\ucc45",
+        "\uc758\uc0ac\uacb0\uc815"
+      ],
+      "path_globs": [
+        "BOOT.md",
+        "README.md",
+        "PROJECT_CONTEXT.md",
+        "PROJECT_RULES.md",
+        "ROADMAP.md",
+        "00_Master/**",
+        "01_Knowledge/**",
+        "02_AI/**"
+      ],
+      "entrypoints": [
+        "BOOT.md",
+        "PROJECT_CONTEXT.md"
+      ],
+      "related_docs": [
+        "README.md",
+        "00_Master/Decisions.md"
+      ],
+      "test_commands": [
+        "make self-check"
+      ],
+      "services": [],
+      "data_stores": [],
+      "risk_tags": [
+        "workspace-wide-policy"
+      ]
+    },
+    {
+      "id": "shared-tooling",
+      "name": "Shared workspace tooling",
+      "description": "Reusable Make, Git, Codex, Docker, roadmap, and self-application tools.",
+      "keywords": [
+        "shared make",
+        "tooling",
+        "self-check",
+        "git dashboard",
+        "\uacf5\ud1b5 \uba85\ub839",
+        "\uacf5\uc720 \ub3c4\uad6c"
+      ],
+      "path_globs": [
+        "Makefile",
+        "04_Tools/**"
+      ],
+      "entrypoints": [
+        "04_Tools/README.md",
+        "04_Tools/make/DeveloperOS.mk"
+      ],
+      "related_docs": [
+        "README.md"
+      ],
+      "test_commands": [
+        "make self-check",
+        "make make-check"
+      ],
+      "services": [
+        "DeveloperOS shared Make"
+      ],
+      "data_stores": [],
+      "risk_tags": [
+        "shared-tooling"
+      ]
+    },
+    {
+      "id": "roadmap-publication",
+      "name": "Roadmap publication",
+      "description": "Canonical roadmap parsing, linked tracks, and shared browser presentation.",
+      "keywords": [
+        "roadmap",
+        "roadmap renderer",
+        "track parity",
+        "/roadmap",
+        "\ub85c\ub4dc\ub9f5"
+      ],
+      "path_globs": [
+        "ROADMAP.md",
+        "ROADMAPS.json",
+        "00_Master/ProjectRoadmapPolicy.md",
+        "04_Tools/roadmap-web/**",
+        "console/devos_console/roadmaps.py",
+        "console/static/**",
+        "console/tests/test_roadmaps.py"
+      ],
+      "entrypoints": [
+        "00_Master/ProjectRoadmapPolicy.md",
+        "console/devos_console/roadmaps.py",
+        "04_Tools/roadmap-web/assets/roadmap-view.js"
+      ],
+      "related_docs": [
+        "04_Tools/roadmap-web/README.md",
+        "console/README.md"
+      ],
+      "test_commands": [
+        "make console-test",
+        "make self-check"
+      ],
+      "services": [
+        "developer-os-console"
+      ],
+      "data_stores": [
+        "canonical Markdown roadmaps"
+      ],
+      "risk_tags": [
+        "public-read-only-view",
+        "shared-presentation-contract"
+      ]
+    },
+    {
+      "id": "console",
+      "name": "DeveloperOS console",
+      "description": "Browser console, terminal integration, usage snapshots, and project monitoring.",
+      "keywords": [
+        "console",
+        "terminal",
+        "usage",
+        "repository status",
+        "\ucf58\uc194",
+        "\ud130\ubbf8\ub110"
+      ],
+      "path_globs": [
+        "console/**",
+        "deployment/console/**",
+        "Makefile"
+      ],
+      "entrypoints": [
+        "console/README.md",
+        "console/devos_console/__main__.py"
+      ],
+      "related_docs": [
+        "PROJECT_CONTEXT.md"
+      ],
+      "test_commands": [
+        "make console-test"
+      ],
+      "services": [
+        "developer-os-console",
+        "developer-os-terminal"
+      ],
+      "data_stores": [
+        "credential-free operational snapshots"
+      ],
+      "risk_tags": [
+        "public-read-only-view",
+        "server-service"
+      ]
+    },
+    {
+      "id": "deployment-operations",
+      "name": "Deployment and workstation operations",
+      "description": "Systemd deployment, workstation reporting, terminal tunnels, and server operations.",
+      "keywords": [
+        "deploy",
+        "systemd",
+        "workstation report",
+        "ssh",
+        "\ubc30\ud3ec",
+        "\uc6cc\ud06c\uc2a4\ud14c\uc774\uc158"
+      ],
+      "path_globs": [
+        "deployment/**",
+        "Makefile",
+        "04_Tools/make/**"
+      ],
+      "entrypoints": [
+        "deployment/README.md",
+        "Makefile"
+      ],
+      "related_docs": [
+        "PROJECT_RULES.md"
+      ],
+      "test_commands": [
+        "make self-check",
+        "make make-check"
+      ],
+      "services": [
+        "developer-os-console",
+        "developer-os-terminal",
+        "Windows workstation reporter"
+      ],
+      "data_stores": [
+        "workstation reports",
+        "server runtime snapshots"
+      ],
+      "risk_tags": [
+        "ssh",
+        "server-service",
+        "scheduled-task"
+      ]
+    },
+    {
+      "id": "blueprints",
+      "name": "Project blueprints",
+      "description": "Reusable project bootstrap files and project-owned contract examples.",
+      "keywords": [
+        "blueprint",
+        "bootstrap",
+        "new project",
+        "template",
+        "\ube14\ub8e8\ud504\ub9b0\ud2b8"
+      ],
+      "path_globs": [
+        "03_Blueprints/**"
+      ],
+      "entrypoints": [
+        "03_Blueprints/README.md",
+        "03_Blueprints/ProjectBootstrapPrompt.md"
+      ],
+      "related_docs": [
+        "03_Blueprints/Project/Project_README.md"
+      ],
+      "test_commands": [
+        "make self-check"
+      ],
+      "services": [],
+      "data_stores": [],
+      "risk_tags": [
+        "future-project-defaults"
+      ]
+    }
+  ]
+}

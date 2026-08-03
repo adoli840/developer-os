@@ -61,6 +61,7 @@ $requiredFiles = @(
     "BOOT.md",
     "README.md",
     "PROJECT_CONTEXT.md",
+    "PROJECT_AREAS.json",
     "PROJECT_RULES.md",
     "ROADMAP.md",
     "00_Master\ProjectRoadmapPolicy.md"
@@ -116,9 +117,28 @@ if ($LASTEXITCODE -eq 0) {
     Add-CheckResult FAIL "Snapshot recovery" ".snapshots is not ignored by Git"
 }
 
+$null = & git -C $developerOSRoot check-ignore -q -- ".developer-os/context-index.json"
+$contextCacheIgnored = $LASTEXITCODE -eq 0
+$projectAreaTemplate = Read-Text "03_Blueprints\Project\PROJECT_AREAS.json"
+$contextTool = Read-Text "04_Tools\context\project_context.py"
+$contextGuide = Read-Text "04_Tools\context\README.md"
+if (
+    $contextCacheIgnored -and
+    $projectAreaTemplate -and
+    $projectAreaTemplate.Contains('"schema_version": 1') -and
+    $contextTool -and
+    $contextTool.Contains('GENERATOR_VERSION = "1.0.0"') -and
+    $contextGuide -and
+    $contextGuide.Contains("make context")
+) {
+    Add-CheckResult PASS "Context index contract" "the area Blueprint, incremental generator, and ignored cache are defined"
+} else {
+    Add-CheckResult FAIL "Context index contract" "the area Blueprint, generator, guide, or ignored cache is incomplete"
+}
+
 $globalAgents = Join-Path ([System.IO.Path]::GetFullPath($CodexHome)) "AGENTS.md"
 $globalAgentsText = if (Test-Path -LiteralPath $globalAgents -PathType Leaf) { Get-Content -Raw -LiteralPath $globalAgents } else { "" }
-if ($globalAgentsText.Contains("<!-- BEGIN DEVELOPEROS MANAGED GUIDANCE -->") -and $globalAgentsText.Contains("X:\Projects\DeveloperOS\BOOT.md") -and $globalAgentsText.Contains("DockerImageBuildPolicy.md")) {
+if ($globalAgentsText.Contains("<!-- BEGIN DEVELOPEROS MANAGED GUIDANCE -->") -and $globalAgentsText.Contains("X:\Projects\DeveloperOS\BOOT.md") -and $globalAgentsText.Contains("DockerImageBuildPolicy.md") -and $globalAgentsText.Contains("make context")) {
     Add-CheckResult PASS "Global Codex guidance" "DeveloperOS routing and image build minimization are installed in $globalAgents"
 } else {
     Add-CheckResult FAIL "Global Codex guidance" "the managed DeveloperOS block or Docker policy routing is not installed"
@@ -155,6 +175,8 @@ try {
     $gitCheckExitCode = $LASTEXITCODE
     $consoleTestOutput = @(& make --no-print-directory -n console-test -C $developerOSRoot 2>&1)
     $consoleTestExitCode = $LASTEXITCODE
+    $contextOutput = @(& make --no-print-directory context 'TASK=project context index' CONTEXT_FORMAT=json -C $developerOSRoot 2>&1)
+    $contextExitCode = $LASTEXITCODE
 } finally {
     $env:MAKEFILES = $previousMakeFiles
 }
@@ -169,6 +191,24 @@ if ($consoleTestExitCode -eq 0 -and ($consoleTestOutput -join "`n") -match "unit
     Add-CheckResult PASS "Project verification" "make console-test is available"
 } else {
     Add-CheckResult FAIL "Project verification" "make console-test is unavailable"
+}
+
+$contextPayload = $null
+if ($contextExitCode -eq 0) {
+    try {
+        $contextPayload = ($contextOutput -join "`n") | ConvertFrom-Json
+    } catch {
+        $contextPayload = $null
+    }
+}
+$selectedContextArea = @()
+if ($contextPayload) {
+    $selectedContextArea = @($contextPayload.selection.selected_areas | Where-Object { $_.id -eq "context-routing" })
+}
+if ($contextExitCode -eq 0 -and $contextPayload.selection.project -eq "DeveloperOS" -and $selectedContextArea.Count -eq 1) {
+    Add-CheckResult PASS "Project context routing" "make context incrementally selects the DeveloperOS context-routing area"
+} else {
+    Add-CheckResult FAIL "Project context routing" "make context did not return the expected DeveloperOS area"
 }
 
 $gitDashboard = Read-Text "04_Tools\git\Invoke-GitDashboard.ps1"
@@ -234,8 +274,8 @@ if ($rootMakefile -and $rootMakefile -match "(?m)^console-deploy:" -and $rootMak
 }
 
 $taskTemplate = Read-Text "04_Tools\codex-task\TASK.template.md"
-if ((Test-Path -LiteralPath (Join-Path $developerOSRoot "04_Tools\codex-task\New-CodexTask.ps1")) -and $taskTemplate -and $taskTemplate.Contains("ProjectRoadmapPolicy.md") -and $taskTemplate.Contains("DockerImageBuildPolicy.md")) {
-    Add-CheckResult PASS "Codex task generation" "the shared task generator includes roadmap continuity and image build minimization"
+if ((Test-Path -LiteralPath (Join-Path $developerOSRoot "04_Tools\codex-task\New-CodexTask.ps1")) -and $taskTemplate -and $taskTemplate.Contains("ProjectRoadmapPolicy.md") -and $taskTemplate.Contains("DockerImageBuildPolicy.md") -and $taskTemplate.Contains("make context")) {
+    Add-CheckResult PASS "Codex task generation" "the shared task generator includes context routing, roadmap continuity, and image build minimization"
 } else {
     Add-CheckResult FAIL "Codex task generation" "the task generator or required global policy instruction is missing"
 }

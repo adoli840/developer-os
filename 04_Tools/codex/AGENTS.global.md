@@ -5,6 +5,10 @@ For every repository under `X:\Projects`:
 
 - Before meaningful project work, read `X:\Projects\DeveloperOS\BOOT.md` and
   follow its task routing and precedence rules.
+- When the current repository has `PROJECT_AREAS.json`, run
+  `make context TASK="<current request>"` before broad source inspection. Start
+  with the selected files and expand only when a real dependency crosses the
+  declared area.
 - For Docker, Compose, image, deployment, or container lifecycle work, read
   `X:\Projects\DeveloperOS\00_Master\DockerImageBuildPolicy.md`. Routine
   starts and restarts must reuse existing images with `--no-build`; build only

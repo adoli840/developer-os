@@ -60,6 +60,15 @@ Docker projects use `make run` or `make up` to reuse existing images. Use
 
 See `PROJECT_CONTEXT.md`.
 
+`PROJECT_AREAS.json` maps task language to project-owned source boundaries,
+entrypoints, documentation, services, data stores, risks, and focused tests.
+Keep `.developer-os/` ignored and use the shared selector before broad source
+inspection:
+
+```bash
+make context TASK="describe the current task"
+```
+
 ## Roadmap
 
 See `ROADMAP.md`. Evaluate it after meaningful work and update it only at the

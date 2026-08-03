@@ -1,8 +1,9 @@
-# Shared DeveloperOS make targets for Docker Compose projects.
+# Shared DeveloperOS targets for every managed project.
 #
-# This file is loaded through GNU Make's MAKEFILES environment variable. Public
-# Docker targets are owned here; project Makefiles may provide project-specific
-# targets and configure the shared targets through docker-config.
+# This file is loaded through GNU Make's MAKEFILES environment variable. The
+# context and Git targets apply to every repository. Public Docker targets are
+# owned here; project Makefiles may provide project-specific targets and
+# configure the shared targets through docker-config.
 
 -include docker-config
 
@@ -35,6 +36,11 @@ DEVOS_DEPLOY_GIT_REMOTE ?= origin
 DEVOS_DEPLOY_GIT_BRANCH ?= main
 DEVELOPEROS_GIT_DASHBOARD ?= X:/Projects/DeveloperOS/04_Tools/git/Invoke-GitDashboard.ps1
 DEVELOPEROS_DEPLOY_GIT ?= X:/Projects/DeveloperOS/04_Tools/make/Invoke-DeveloperOSDeployGit.ps1
+DEVELOPEROS_CONTEXT_TOOL ?= X:/Projects/DeveloperOS/04_Tools/context/project_context.py
+DEVOS_CONTEXT_PYTHON ?= python
+CONTEXT_LIMIT ?= 30
+CONTEXT_FORMAT ?= text
+CONTEXT_REFRESH ?= 0
 
 define DEVELOPEROS_REQUIRE_COMPOSE
 $(if $(DEVOS_COMPOSE_FILE),,$(error No Docker Compose file configured in $(CURDIR). Add a standard Compose file or set DEVOS_COMPOSE_FILE in docker-config))
@@ -59,16 +65,20 @@ define DEVELOPEROS_REQUIRE_SYNC_TARGET
 $(if $(filter sync,$(strip $(DEVOS_SYNC_PUSH_TARGET))),$(error DEVOS_SYNC_PUSH_TARGET must not point to the shared sync target),)
 endef
 
-.PHONY: git-check
+.PHONY: git-check context
 
 git-check:
 	@powershell -NoProfile -ExecutionPolicy Bypass -File "$(DEVELOPEROS_GIT_DASHBOARD)"
 
+context:
+	@$(DEVOS_CONTEXT_PYTHON) "$(DEVELOPEROS_CONTEXT_TOOL)" --project-root "$(CURDIR)" $(if $(strip $(TASK)),--task "$(TASK)",) $(if $(strip $(AREA)),--area "$(AREA)",) --limit "$(CONTEXT_LIMIT)" --format "$(CONTEXT_FORMAT)" $(if $(filter 1 true yes,$(CONTEXT_REFRESH)),--refresh,)
+
 .PHONY: developeros-help run b-run run-b up down logs docker-build docker-stop docker-logs docker-clean rebuild dh-tag dh-push dh-pull dh-b-push developeros-image-build developeros-image-push server-deploy sync deploy db-%
 
 developeros-help:
-	@echo "DeveloperOS shared Docker targets"
+	@echo "DeveloperOS shared targets"
 	@echo "  make git-check      Show end-of-day Git dashboard"
+	@echo "  make context TASK=...  Select task-relevant project context"
 	@echo "  make run            Start with existing images (foreground)"
 	@echo "  make b-run          Build once, then start without another build"
 	@echo "  make run-b          Alias for b-run"

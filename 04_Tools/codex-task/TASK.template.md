@@ -18,6 +18,14 @@ DeveloperOS is the global engineering constitution. The project repository owns 
 
 Do not scan the entire DeveloperOS repository. Use `BOOT.md` as the routing entry point and read only the DeveloperOS documents relevant to this task.
 
+## Project Context Rule
+
+When this repository has `PROJECT_AREAS.json`, run
+`make context TASK="{{TASK}}"` before broad source inspection. Begin with the
+selected entrypoints, files, and focused verification. Expand only when imports,
+shared contracts, database or authentication boundaries, deployment behavior,
+safety rules, or failing evidence cross the selected area.
+
 ## Roadmap Completion Rule
 
 Follow `X:\Projects\DeveloperOS\00_Master\ProjectRoadmapPolicy.md` without

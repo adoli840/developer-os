@@ -15,6 +15,9 @@ Thumbs.db
 *.log
 logs/
 
+# Generated DeveloperOS context index
+.developer-os/
+
 # Python
 __pycache__/
 *.py[cod]

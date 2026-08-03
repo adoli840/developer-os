@@ -15,6 +15,7 @@ Blueprints should reference DeveloperOS through `PROJECT_CONTEXT.md` and use `PR
 ## Available Blueprints
 
 - `Project`: generic project blueprint
+- `Project/PROJECT_AREAS.json`: task-to-source area map for incremental Codex context routing
 - `Project/ROADMAP.md`: default project-owned roadmap for repositories without an established roadmap mechanism
 - `Project/ROADMAPS.example.json`: opt-in manifest example for independently prioritizable roadmap tracks
 - `Project/DATA_SYNC.md`: optional project-owned contract for non-source data synchronization

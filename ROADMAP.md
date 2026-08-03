@@ -21,6 +21,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Topic | Status | Completion Signal | Next Transition |
 |---|---|---|---|
 | Workspace foundation | Done | Self-application and roadmap lifecycle and publication contracts are confirmed across active projects | Observe the shared contracts for regressions |
+| Project context routing | In Progress | DeveloperOS, OA, Gaia, and bTest use project-owned area maps, ignored incremental indexes, and the shared task context selector | Move to Done after all three application projects pass focused routing checks |
 | Project roadmap continuity | Done | Global policy, templates, task guidance, and DeveloperOS self-use follow topic status boundaries | Observe project-specific generators for conflicts |
 | Roadmap web publication | Done | Card-first single and linked multi-track formats, validated public fields, and the versioned shared `/roadmap` renderer are implemented and tested | Monitor adapters without duplicating project state |
 | Managed project roadmap adoption | In Progress | OA, Gaia, and bTest use bundle 3.0.0, schema version 2 track linkage, and exact Overall-to-track card parity at their own `/roadmap` routes | Move to Done after all three local routes pass data and visual parity checks |
@@ -35,6 +36,13 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Stage | Item | Status | Blocker Type | Description |
 |---|---|---|---|---|
 | Workspace foundation | Governance entry point | Done | None | BOOT and project guidance route agents to durable workspace policies. |
+| Project context routing | Area map contract | Done | None | A concise project-owned map declares source boundaries, entrypoints, focused verification, services, data stores, and risks. |
+| Project context routing | Incremental Git index | Done | None | Clean files reuse Git blob IDs while only dirty and untracked files are read again. |
+| Project context routing | Task selector | Done | None | The shared Make command returns a bounded first-read set and explicit expansion rule. |
+| Project context routing | DeveloperOS self-application | Done | None | DeveloperOS owns a real area map and verifies its generated cache and selected context. |
+| Project context routing | OA area adoption | Blocked | Operator | Define OA plugin and automation areas in the OA repository and verify representative task routing. |
+| Project context routing | Gaia area adoption | Blocked | Operator | Define Gaia game, persistence, simulation, and AI areas in the Gaia repository and verify representative task routing. |
+| Project context routing | bTest area adoption | Blocked | Operator | Define Elliott, Ever, data, execution, and recovery areas in the bTest repository and verify representative task routing. |
 | Project roadmap continuity | Status-boundary lifecycle | Done | None | Projects update canonical roadmap state only when a defined transition occurs. |
 | Roadmap web publication | Shared parser contract | Done | None | The console validates canonical topics, details, statuses, blockers, and safe public fields. |
 | Roadmap web publication | Shared browser renderer | Done | None | The versioned renderer displays all declared items with common responsive behavior. |
@@ -52,38 +60,42 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Current Priority
 
-1. Migrate OA, Gaia, and bTest local roadmap routes to shared bundle 3.0.0,
+1. Adopt project-owned context areas and verify representative routing in OA,
+   Gaia, and bTest without copying their project state into DeveloperOS.
+2. Migrate OA, Gaia, and bTest local roadmap routes to shared bundle 3.0.0,
    schema version 2 track linkage, and exact Overall-to-track card parity.
-2. Observe the first ordinary status-boundary update in each new project track.
-3. Keep overall roadmaps limited to cross-track priority and release state.
-4. Apply data synchronization first as read-only manifest comparison when a
+3. Observe the first ordinary status-boundary update in each new project track.
+4. Keep overall roadmaps limited to cross-track priority and release state.
+5. Apply data synchronization first as read-only manifest comparison when a
    project explicitly adopts a contract.
-5. Observe bTest's newly enabled project deployment hook for regressions while
+6. Observe bTest's newly enabled project deployment hook for regressions while
    its database and kline synchronization remain explicitly disabled.
-6. Define Snapshot Manager scope before moving its topic to `In Progress`.
+7. Define Snapshot Manager scope before moving its topic to `In Progress`.
 
 ## Latest Status Change
 
-- Topic: Managed project roadmap adoption
-- Change: Done -> In Progress
-- Evidence or reason: The DeveloperOS card-first renderer and linked-card
-  contract are ready, but OA, Gaia, and bTest still require project-owned
-  manifest, content, adapter, and asset migration before their `/roadmap` views
-  match the DeveloperOS view.
+- Topic: Project context routing
+- Change: Added at In Progress
+- Evidence or reason: DeveloperOS now owns and verifies the area-map contract,
+  Git-aware incremental index, and shared task selector. OA, Gaia, and bTest
+  still require project-owned maps and representative routing checks.
 
 ## Next Status Transitions
 
 1. Reopen `Docker image build minimization` only if routine startup can build,
    build and startup become ambiguous again, or deployment omits `--no-build`.
-2. Move `Managed project roadmap adoption` to `Done` after OA, Gaia, and bTest
+2. Move `Project context routing` to `Done` after OA, Gaia, and bTest each own a
+   valid area map, ignore the generated cache, and pass representative
+   `make context` checks without unrelated area expansion.
+3. Move `Managed project roadmap adoption` to `Done` after OA, Gaia, and bTest
    pass linked-card data parity, shared-asset parity, desktop, mobile, hover,
    and keyboard checks.
-3. Move `Snapshot Manager` from `Planned` to `In Progress` when its scoped
+4. Move `Snapshot Manager` from `Planned` to `In Progress` when its scoped
    create and restore contract begins implementation.
-4. Update an individual project track without changing its overall roadmap
+5. Update an individual project track without changing its overall roadmap
    unless a cross-track milestone, priority, dependency, or release boundary
    also changes.
-5. Reopen `Project data synchronization governance` only if a project cannot
+6. Reopen `Project data synchronization governance` only if a project cannot
    express its identity, authority, conflict, verification, or promotion
    boundary through the standard contract.
 
@@ -98,6 +110,9 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
   status transitions stay concise and do not drift back into duplicate logs.
 - Existing schema version 1 manifests remain readable but cannot guarantee
   Overall-to-track card identity until each project completes its v2 migration.
+- A stale or overly broad project area map can misroute the first inspection;
+  the generated index remains advisory and shared-contract or safety evidence
+  must expand the search beyond the declared area.
 - Bidirectional transfer remains unsafe for any data set that lacks immutable
   payloads, stable identities, content checksums, and hard conflict detection.
 - No active blocker is known for new project sessions.

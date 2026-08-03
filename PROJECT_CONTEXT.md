@@ -35,6 +35,8 @@ explicit structural exception is recorded in `PROJECT_RULES.md`.
 - `00_Master/`, `01_Knowledge/`, and `02_AI/`: governance and shared memory
 - `03_Blueprints/`: reusable project starting points
 - `04_Tools/`: shared workspace and Codex tooling
+- `PROJECT_AREAS.json` and `04_Tools/context/`: task-scoped project navigation
+  and the incremental local context index
 - `console/`: browser console, private terminal, and usage collector
 - `deployment/`: console deployment, project deployment guidance, backups, and
   workstation reporting

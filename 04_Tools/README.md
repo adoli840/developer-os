@@ -41,7 +41,13 @@ Available workspace command:
 
 ```bash
 make git-check
+make context TASK="describe the current task"
 ```
+
+`make context` uses the current project's tracked `PROJECT_AREAS.json` and
+ignored `.developer-os/context-index.json` to select task-relevant entrypoints,
+files, focused tests, services, data stores, and risks before broad source
+inspection.
 
 Docker projects can use these standard commands:
 
@@ -84,6 +90,24 @@ Verify DeveloperOS, OA, Gaia, and bTest against the shared contract:
 make make-check
 make docker-policy-check
 ```
+
+## Project Context Routing
+
+`04_Tools/context/project_context.py` owns the shared incremental index and
+task selector. Clean tracked files reuse their Git blob IDs; only dirty and
+untracked files are hashed from the working tree. The index records paths,
+symbols, imports, headings, routes, and area assignments without copying source
+contents or runtime data.
+
+Projects adopt the feature by copying the Blueprint `PROJECT_AREAS.json`,
+replacing the example area with real feature boundaries, and ignoring
+`.developer-os/`. Run:
+
+```bash
+make context TASK="current request"
+```
+
+See `04_Tools/context/README.md` for the complete schema and expansion rules.
 
 ## Git Dashboard
 
@@ -148,7 +172,6 @@ Read .codex/TASK.md
 
 - Git Dashboard / end-of-day Git check
 - Snapshot Manager
-- Workspace inspection helpers
 - Project bootstrap helpers
 - Documentation maintenance helpers
 - Daily Review generator

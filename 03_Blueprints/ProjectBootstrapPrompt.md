@@ -11,6 +11,10 @@ Do not scan the entire DeveloperOS repository by default. Use `BOOT.md` as the r
 
 After reading `BOOT.md`, read this project's `README.md`, then `PROJECT_CONTEXT.md` if present, then `PROJECT_RULES.md` if present.
 
+If `PROJECT_AREAS.json` exists, run `make context TASK="<current request>"`
+before broad source inspection. Start with the selected entrypoints and expand
+only when a real dependency crosses the declared area.
+
 Project-specific documents override DeveloperOS only when they explicitly say so. Otherwise, DeveloperOS is the global engineering constitution.
 
 Preserve the separation between DeveloperOS and this project repository:

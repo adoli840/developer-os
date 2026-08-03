@@ -744,3 +744,39 @@ DeveloperOS roadmap bundle 3.0.0 implements the card-first layout and linked
 card metadata. OA, Gaia, and bTest must upgrade their manifests, overview rows,
 track adapters, and vendored assets in their own repositories. Their project
 tasks remain responsible for resolving content-specific mismatches.
+
+## 2026-08-03 - Route Codex Through Project-Owned Context Areas
+
+Status: Accepted
+
+Context:
+
+Repeated project work spent substantial time rediscovering source boundaries,
+test commands, services, data stores, and risk rules. Full repository scans were
+especially expensive in bTest, while static summaries could become stale and
+silently misroute work.
+
+Decision:
+
+Each project may own one concise `PROJECT_AREAS.json` that maps task language to
+source globs, entrypoints, related documents, focused verification, services,
+data stores, and risks. DeveloperOS owns a shared `make context TASK="..."`
+command. It generates `.developer-os/context-index.json`, uses Git blob IDs for
+unchanged tracked files, hashes only dirty or untracked files, and recalculates
+area assignments from the current map. The generated cache is ignored by Git
+and contains structural metadata rather than file contents or runtime data.
+
+Reason:
+
+A small reviewed routing map removes repeated broad investigation without
+turning DeveloperOS into the owner of project state. Git-aware incremental
+indexing stays fast and detects working-tree changes, while explicit expansion
+rules preserve correctness for shared contracts and safety boundaries.
+
+Impact:
+
+DeveloperOS applies the contract to itself and provides the map Blueprint,
+indexer, tests, shared Make command, startup guidance, and self-check. OA, Gaia,
+and bTest must define their own real areas and focused tests in project-local
+tasks. The index remains advisory; source code and explicit project rules are
+still authoritative.

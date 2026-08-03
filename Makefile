@@ -5,7 +5,7 @@ DEVOS_OPENAI_ENV ?= X:/Settings/env/developer-os.env
 DEVOS_DEPLOY_TARGET := console-deploy
 WORKSTATION_REPORT_INTERVAL_MINUTES ?= 5
 
-.PHONY: self-enable self-check make-check docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
+.PHONY: self-enable self-check make-check context-test docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
 
 self-enable:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/self/Enable-DeveloperOSSelfApplication.ps1
@@ -16,6 +16,9 @@ self-check:
 make-check:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/make/Test-DeveloperOSMake.ps1
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Test-DockerImageBuildPolicy.ps1
+
+context-test:
+	$(PYTHON) -m unittest 04_Tools.context.tests.test_project_context -v
 
 docker-policy-check:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Test-DockerImageBuildPolicy.ps1

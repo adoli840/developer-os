@@ -19,6 +19,9 @@ __pycache__/
 **/.snapshots/
 .snapshots/
 
+# Generated project context index
+.developer-os/
+
 # Secrets
 .env
 *.key

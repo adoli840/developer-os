@@ -37,8 +37,9 @@ Before making changes, AI should read:
 2. `PROJECT_CONTEXT.md`
 3. `PROJECT_RULES.md`, if present
 4. The canonical project roadmap
-5. DeveloperOS global policies
-6. Relevant source files
+5. `make context TASK="<current request>"` when `PROJECT_AREAS.json` exists
+6. DeveloperOS global policies
+7. Relevant source files selected by the context command
 
 ## Do Not Change
 
