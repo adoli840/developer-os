@@ -3,10 +3,10 @@
 ## Purpose
 
 This directory is the canonical, framework-neutral browser presentation for
-DeveloperOS-governed roadmaps. DeveloperOS and project-local `/roadmap` routes
-must use the same versioned assets so the same canonical roadmap has the same
-structure, colors, blocker signals, hover descriptions, and responsive
-behavior in both locations.
+DeveloperOS-governed roadmaps. Project-local `/roadmap` routes use the same
+versioned assets so canonical roadmaps share structure, colors, blocker
+signals, hover descriptions, and responsive behavior without centralizing
+their project state in DeveloperOS.
 
 Projects continue to own their roadmap content and parsing adapters.
 DeveloperOS owns the common presentation contract and assets.
@@ -28,8 +28,8 @@ canonical assets here, verify them, then reinstall the bundle in each project.
 
 ## Data Contract
 
-The renderer accepts the public roadmap object produced by the DeveloperOS
-console parser. Each `topics` entry may include:
+The renderer accepts the project-owned public roadmap object defined by the
+shared contract. Each `topics` entry may include:
 
 ```json
 {

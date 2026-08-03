@@ -812,3 +812,33 @@ The primary navigation is Overview, Projects, Roadmap, Recovery, and Usage.
 Deployment and delivery signals remain derived in their existing views, while
 recoverability evidence retains a dedicated view. The console no longer emits
 project actions or accepts `/api/actions` requests.
+
+## 2026-08-03 - Remove Centralized Roadmap Aggregation
+
+Status: Accepted
+
+Context:
+
+The browser console aggregated DeveloperOS, OA, Gaia, and bTest planning state
+under one Roadmap tab. Even when read-only, that presentation made DeveloperOS
+behave like a project dashboard and blurred project ownership.
+
+Decision:
+
+Remove the console Roadmap tab, `/api/roadmaps`, `/roadmap-assets`, and the
+console-owned roadmap parser. Keep the DeveloperOS internal `ROADMAP.md`, the
+global roadmap lifecycle policy, Blueprints, canonical renderer assets, and
+project-local `/roadmap` contract. Each project owns its parser and published
+planning state. This decision narrows the navigation established by the earlier
+2026-08-03 console decision.
+
+Reason:
+
+DeveloperOS is an engineering constitution and decision engine, not the owner
+or aggregator of application-project planning state.
+
+Impact:
+
+The primary console navigation is Overview, Projects, Recovery, and Usage.
+Roadmap standards remain shared, while roadmap content and web publication stay
+inside each project repository and application.

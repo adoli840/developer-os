@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DeveloperOS Console</title>
   <link rel="stylesheet" href="/styles.css">
-  <link rel="stylesheet" href="/roadmap-assets/roadmap-view.css">
 </head>
 <body>
   <section class="login-shell" id="login-shell" hidden>
@@ -41,7 +40,6 @@
     <aside class="sidebar" aria-label="Console sections">
       <button class="nav-item active" data-tab="overview" type="button">Overview</button>
       <button class="nav-item" data-tab="projects" type="button">Projects</button>
-      <button class="nav-item" data-tab="roadmap" type="button">Roadmap</button>
       <button class="nav-item" data-tab="recovery" type="button">Recovery</button>
       <button class="nav-item" data-tab="usage" type="button">Usage</button>
     </aside>
@@ -74,12 +72,6 @@
         <div class="workstation-list" id="workstation-detail"></div>
       </section>
 
-      <section class="tab-view" id="tab-roadmap" aria-label="Project roadmaps">
-        <div class="roadmap-tabs" id="roadmap-tabs" role="tablist" aria-label="Project roadmaps"></div>
-        <div class="roadmap-track-tabs" id="roadmap-track-tabs" role="tablist" aria-label="Roadmap tracks" hidden></div>
-        <div class="roadmap-detail" id="roadmap-detail" role="tabpanel" aria-live="polite"></div>
-      </section>
-
       <section class="tab-view" id="tab-recovery">
         <div class="section-heading">
           <div>
@@ -106,7 +98,6 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/roadmap-assets/roadmap-view.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>

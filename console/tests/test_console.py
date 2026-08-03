@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+from urllib.error import HTTPError
 from urllib.request import HTTPCookieProcessor, build_opener
 
 from console.devos_console.alerts import build_alerts
@@ -53,6 +54,10 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertIn('id="tab-recovery"', html)
         self.assertNotIn('data-tab="operations"', html)
         self.assertNotIn('data-tab="commands"', html)
+        self.assertNotIn('data-tab="roadmap"', html)
+        self.assertNotIn("/api/roadmaps", javascript)
+        self.assertNotIn("/api/roadmaps", server)
+        self.assertNotIn("/roadmap-assets", server)
         self.assertNotIn("/api/actions", javascript)
         self.assertNotIn("/api/actions", server)
         self.assertFalse(hasattr(ProjectService, "run_action"))
@@ -230,6 +235,31 @@ class LocalSessionTests(unittest.TestCase):
         self.assertTrue(payload["authenticated"])
         self.assertTrue(payload["trusted_local"])
         self.assertTrue(payload["csrf_token"])
+
+    def test_removed_roadmap_routes_return_not_found(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings(dev_mode=True, bind="127.0.0.1", port=0)
+            server = create_server(settings)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            opener = build_opener(HTTPCookieProcessor(CookieJar()))
+            base_url = f"http://127.0.0.1:{server.server_address[1]}"
+            try:
+                opener.open(f"{base_url}/api/session", timeout=5).close()
+                for path in ("/roadmap", "/api/roadmaps", "/roadmap-assets/roadmap-view.js"):
+                    with self.subTest(path=path):
+                        with self.assertRaises(HTTPError) as error:
+                            opener.open(f"{base_url}{path}", timeout=5)
+                        self.assertEqual(error.exception.code, 404)
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=5)
 
     def test_default_workstations_include_home_and_office(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
