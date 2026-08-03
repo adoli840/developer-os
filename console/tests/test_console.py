@@ -105,6 +105,8 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn("SERVER CAPACITY", html)
         self.assertNotIn("<h1>Resources</h1>", html)
         self.assertNotIn('id="resource-time"', html)
+        self.assertIn('href="/styles.css?v=2"', html)
+        self.assertIn('src="/app.js?v=2"', html)
         self.assertIn('? "roadmap" : "projects"', javascript)
 
 
