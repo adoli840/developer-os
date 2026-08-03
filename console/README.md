@@ -138,6 +138,10 @@ from the Home computer. Local revisions are compared directly with the server
 checkout and the running deployment image. No Windows Scheduled Task is
 installed, so reporting never starts PowerShell periodically.
 
+When a report becomes offline, its revision values remain visible as historical
+context, but GitHub and server comparisons are labeled stale and excluded from
+the mismatch total until a fresh report arrives.
+
 ## Provider Usage Collection
 
 The public console never receives a provider credential. A separate hardened

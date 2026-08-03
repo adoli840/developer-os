@@ -149,6 +149,7 @@ def attach_server_comparisons(
 ) -> None:
     server_by_slug = {project["slug"]: project for project in server_projects}
     for workstation in workstations:
+        fresh = workstation.get("online") is True
         mismatches = 0
         for project in workstation["projects"]:
             local_revision = (project.get("repository") or {}).get("revision")
@@ -185,9 +186,17 @@ def attach_server_comparisons(
                     if any(_revisions_match(runtime_target, revision) for revision in deployed_revisions)
                     else "mismatch"
                 )
-            if server_status == "mismatch" or deployment_status == "mismatch":
+            if not fresh:
+                if server_status != "unavailable":
+                    server_status = "stale"
+                if deployment_status != "unavailable":
+                    deployment_status = "stale"
+                if runtime_status != "unavailable":
+                    runtime_status = "stale"
+            if fresh and (server_status == "mismatch" or deployment_status == "mismatch"):
                 mismatches += 1
             project["comparison"] = {
+                "fresh": fresh,
                 "server_status": server_status,
                 "server_revision": server_revision,
                 "deployment_status": deployment_status,
@@ -197,4 +206,4 @@ def attach_server_comparisons(
             }
             project["port"] = server_project.get("port") if server_project else None
         workstation["projects"].sort(key=_project_port_sort_key)
-        workstation["summary"]["mismatches"] = mismatches
+        workstation["summary"]["mismatches"] = mismatches if fresh else None

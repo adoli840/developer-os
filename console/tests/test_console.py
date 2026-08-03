@@ -443,6 +443,7 @@ class WorkstationStatusTests(unittest.TestCase):
     def test_local_revision_is_compared_with_server_and_deployment(self) -> None:
         workstations = [
             {
+                "online": True,
                 "projects": [
                     {
                         "slug": "gaia",
@@ -469,6 +470,7 @@ class WorkstationStatusTests(unittest.TestCase):
         ]
         attach_server_comparisons(workstations, server_projects)
         comparison = workstations[0]["projects"][0]["comparison"]
+        self.assertTrue(comparison["fresh"])
         self.assertEqual(comparison["server_status"], "match")
         self.assertEqual(comparison["deployment_status"], "match")
         self.assertEqual(comparison["runtime_status"], "match")
@@ -479,6 +481,7 @@ class WorkstationStatusTests(unittest.TestCase):
     def test_runtime_is_compared_with_the_tracked_github_revision(self) -> None:
         workstations = [
             {
+                "online": True,
                 "projects": [
                     {
                         "slug": "oa",
@@ -506,9 +509,56 @@ class WorkstationStatusTests(unittest.TestCase):
         self.assertEqual(comparison["deployment_status"], "mismatch")
         self.assertEqual(comparison["runtime_status"], "match")
 
+    def test_offline_comparisons_are_stale_not_mismatched(self) -> None:
+        workstations = [
+            {
+                "online": False,
+                "projects": [
+                    {
+                        "slug": "developer-os",
+                        "repository": {
+                            "revision": "733a70d",
+                            "remote_revision": "733a70d",
+                        },
+                    },
+                    {"slug": "unknown", "repository": None},
+                ],
+                "summary": {},
+            }
+        ]
+        server_projects = [
+            {
+                "slug": "developer-os",
+                "available": True,
+                "port": 8080,
+                "repository": {"revision": "c6d6156"},
+                "deployment": {"deployed_revisions": ["c6d6156"]},
+                "containers": [],
+            }
+        ]
+
+        attach_server_comparisons(workstations, server_projects)
+
+        comparisons = {
+            project["slug"]: project["comparison"]
+            for project in workstations[0]["projects"]
+        }
+        stale = comparisons["developer-os"]
+        self.assertFalse(stale["fresh"])
+        self.assertEqual(stale["server_status"], "stale")
+        self.assertEqual(stale["deployment_status"], "stale")
+        self.assertEqual(stale["runtime_status"], "stale")
+        self.assertEqual(stale["server_revision"], "c6d6156")
+        self.assertEqual(stale["deployed_revisions"], ["c6d6156"])
+        self.assertEqual(comparisons["unknown"]["server_status"], "unavailable")
+        self.assertEqual(comparisons["unknown"]["deployment_status"], "unavailable")
+        self.assertEqual(comparisons["unknown"]["runtime_status"], "unavailable")
+        self.assertIsNone(workstations[0]["summary"]["mismatches"])
+
     def test_projects_are_sorted_by_server_port(self) -> None:
         workstations = [
             {
+                "online": True,
                 "projects": [
                     {"slug": "gaia", "name": "Gaia", "repository": None},
                     {"slug": "unknown", "name": "Unknown", "repository": None},

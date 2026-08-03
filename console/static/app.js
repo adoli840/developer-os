@@ -407,9 +407,16 @@ function renderWorkstations(workstations) {
     return;
   }
   const lastReport = formatDate(home.last_report_at);
+  const staleReport = home.status === "offline";
+  const summaryDescription = staleReport
+    ? "This snapshot is stale. Local and GitHub values are historical; comparisons are unavailable."
+    : "Local Git state reported while the computer is powered on.";
+  const detailDescription = staleReport
+    ? `Stale snapshot from ${lastReport}. Local and GitHub values are historical; comparisons are unavailable.`
+    : (home.online ? "Live local state." : `Last known state from ${lastReport}.`);
   elements.workstationSummary.innerHTML = `
     <div class="surface-heading">
-      <div><h2>Home computer</h2><p>Local Git state reported while the computer is powered on.</p></div>
+      <div><h2>Home computer</h2><p>${escapeHtml(summaryDescription)}</p></div>
       ${workstationStatus(home)}
     </div>
     <div class="workstation-stats">
@@ -417,13 +424,13 @@ function renderWorkstations(workstations) {
       <div><span>Repositories</span><strong>${escapeHtml(home.summary.available)}</strong></div>
       <div><span>Dirty</span><strong>${escapeHtml(home.summary.dirty)}</strong></div>
       <div><span>Not pushed</span><strong>${escapeHtml(home.summary.ahead)}</strong></div>
-      <div><span>Mismatches</span><strong>${escapeHtml(home.summary.mismatches || 0)}</strong></div>
+      <div><span>Mismatches</span><strong>${escapeHtml(home.summary.mismatches ?? "-")}</strong></div>
     </div>
   `;
 
   elements.workstationDetail.innerHTML = `
     <div class="surface-heading">
-      <div><h2>Home repositories</h2><p>${home.online ? "Live local state." : `Last known state from ${lastReport}.`}</p></div>
+      <div><h2>Home repositories</h2><p>${escapeHtml(detailDescription)}</p></div>
       ${workstationStatus(home)}
     </div>
     <div class="table-wrap">
@@ -434,7 +441,7 @@ function renderWorkstations(workstations) {
             <tr>
               <td><strong>${escapeHtml(project.name)}</strong><div class="mobile-terminal">${terminalLink(project)}</div></td>
               <td>${repositoryStatus(project)}<div class="cell-detail">${escapeHtml(shortRevision(project.repository?.revision))}</div></td>
-              <td>${githubStatus(project.repository)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div></td>
+              <td>${githubStatus(project.repository, project.comparison?.fresh)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div></td>
               <td>${comparisonStatus(project.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(project.comparison?.deployed_revisions))}</div></td>
               <td>${serviceStatus(project.comparison?.service_status)}</td>
               <td><strong>${project.port ? escapeHtml(project.port) : "-"}</strong></td>
@@ -447,8 +454,9 @@ function renderWorkstations(workstations) {
   `;
 }
 
-function githubStatus(repository) {
+function githubStatus(repository, fresh = true) {
   if (!repository?.upstream) return statusBadge("Unavailable", "neutral");
+  if (fresh === false) return statusBadge("Stale report", "neutral");
   if (repository.ahead > 0 && repository.behind > 0) return statusBadge("Diverged", "bad");
   if (repository.ahead > 0) return statusBadge("Push needed", "warn");
   if (repository.behind > 0) return statusBadge("Pull needed", "warn");
@@ -473,6 +481,7 @@ function terminalLink(project) {
 function comparisonStatus(status) {
   if (status === "match") return statusBadge("Match", "good");
   if (status === "mismatch") return statusBadge("Mismatch", "bad");
+  if (status === "stale") return statusBadge("Stale report", "neutral");
   return statusBadge("Unavailable", "neutral");
 }
 
