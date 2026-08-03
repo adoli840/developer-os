@@ -20,7 +20,7 @@ The console reads:
 - Git working-tree and upstream status from project repositories.
 - Docker Compose container state.
 - Repository HEAD compared with running Docker image revisions.
-- Home and Office Git status reported separately over SSH while each computer is online.
+- Home and Office local Git status reported separately over SSH while each computer is online.
 - Oracle Linux CPU, memory, and root-disk capacity with always-visible project and host attribution.
 - Daily database backup and weekly isolated restore-verification status.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
@@ -34,6 +34,11 @@ disk details. Registered project usage is separated from host usage. The
 baseline, shared Docker data, protected backups, reviewable usage, and the
 remaining measurement or attribution boundary. Category values are bounded by
 the observed host total so a detailed estimate never exceeds actual usage.
+
+The `Projects` view is a single full-width comparison table. Project identity,
+GitHub state, server state, service health, port, and terminal are shared columns;
+Home and Office each contribute only their Local state. A green or red light
+beside each workstation name replaces the repeated status cards and headings.
 
 ## Security Model
 

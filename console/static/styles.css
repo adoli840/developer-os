@@ -199,6 +199,11 @@ button {
   padding: 28px clamp(18px, 3vw, 42px) 48px;
 }
 
+.workspace.projects-workspace {
+  max-width: none;
+  padding: 0;
+}
+
 .tab-view {
   display: none;
 }
@@ -551,12 +556,46 @@ tbody tr:last-child td {
 }
 
 .workstation-list {
-  display: grid;
-  gap: 18px;
+  width: 100%;
 }
 
-.workstation-list > .surface {
-  margin-bottom: 0;
+.project-comparison-wrap {
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.project-comparison-table {
+  min-width: 1180px;
+}
+
+.project-comparison-table th,
+.project-comparison-table td {
+  padding-inline: 12px;
+}
+
+.workstation-group-row th {
+  padding-block: 11px;
+}
+
+.workstation-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  text-transform: none;
+}
+
+.workstation-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 3px rgba(255, 116, 108, 0.12);
+}
+
+.workstation-indicator.online {
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(74, 214, 154, 0.12);
 }
 
 .backup-list {
@@ -891,7 +930,7 @@ tbody tr:last-child td {
     white-space: nowrap;
   }
 
-  .workspace {
+  .workspace:not(.projects-workspace) {
     padding: 20px 12px 40px;
   }
 
@@ -905,23 +944,23 @@ tbody tr:last-child td {
     text-align: left;
   }
 
-  .project-comparison-table th:first-child,
-  .project-comparison-table td:first-child {
+  .project-comparison-table .project-heading,
+  .project-comparison-table .project-cell {
     position: sticky;
     z-index: 1;
     left: 0;
   }
 
-  .project-comparison-table th:last-child,
-  .project-comparison-table td:last-child {
+  .project-comparison-table .terminal-heading,
+  .project-comparison-table .terminal-cell {
     display: none;
   }
 
-  .project-comparison-table th:first-child {
+  .project-comparison-table .project-heading {
     background: var(--surface-subtle);
   }
 
-  .project-comparison-table td:first-child {
+  .project-comparison-table .project-cell {
     background: var(--surface);
   }
 

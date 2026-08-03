@@ -75,6 +75,22 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn('data-metric=', javascript)
         self.assertIn("resourceBreakdown(metric.key", javascript)
 
+    def test_projects_use_one_compact_home_office_comparison_table(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
+        javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
+
+        self.assertNotIn("APPLICATION REPOSITORIES", html)
+        self.assertNotIn("<h1>Projects</h1>", html)
+        self.assertNotIn("repositories</h2>", javascript)
+        self.assertNotIn("Live local state.", javascript)
+        self.assertIn("workstationIndicator(home)", javascript)
+        self.assertIn("workstationIndicator(office)", javascript)
+        self.assertEqual(javascript.count('class="project-heading">Project</th>'), 1)
+        self.assertEqual(javascript.count('workstationRepositoryCell(commonStatusProject, "github")'), 1)
+        self.assertEqual(javascript.count("class=\"terminal-heading\""), 1)
+        self.assertIn('classList.toggle("projects-workspace"', javascript)
+
 
 class OverviewCacheTests(unittest.TestCase):
     def test_repeated_overview_reads_reuse_an_isolated_cached_value(self) -> None:

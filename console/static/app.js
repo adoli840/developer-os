@@ -16,6 +16,7 @@ const elements = {
   loginError: document.querySelector("#login-error"),
   accessToken: document.querySelector("#access-token"),
   appShell: document.querySelector("#app-shell"),
+  workspace: document.querySelector(".workspace"),
   modeBadge: document.querySelector("#mode-badge"),
   syncState: document.querySelector("#sync-state"),
   refreshButton: document.querySelector("#refresh-button"),
@@ -261,6 +262,7 @@ function selectPrimaryTab(tab, updateHistory = true) {
   if (!button) return;
   document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
   document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${tab}`));
+  elements.workspace.classList.toggle("projects-workspace", tab === "projects");
   if (updateHistory) {
     const nextPath = tab === "roadmap" ? "/roadmap" : "/";
     if (window.location.pathname !== nextPath) window.history.pushState({tab}, "", nextPath);
@@ -346,11 +348,22 @@ function deploymentStatus(project) {
   return statusBadge("Unknown", "neutral");
 }
 
-function workstationStatus(workstation) {
-  if (workstation.status === "online") return statusBadge("Online", "good");
-  if (workstation.status === "offline") return statusBadge("Offline", "neutral");
-  if (workstation.status === "never_reported") return statusBadge("Not connected", "warn");
-  return statusBadge("Invalid report", "bad");
+function workstationIndicator(workstation) {
+  const online = workstation?.status === "online";
+  const label = online ? "Online" : "Offline";
+  return `<span class="workstation-indicator ${online ? "online" : "offline"}" title="${label}" aria-label="${label}"></span>`;
+}
+
+function workstationProject(workstation, slug) {
+  return workstation?.projects?.find((project) => project.slug === slug);
+}
+
+function workstationRepositoryCell(project, kind) {
+  if (!project) return `${statusBadge("Unavailable", "neutral")}<div class="cell-detail">-</div>`;
+  if (kind === "local") {
+    return `${repositoryStatus(project)}<div class="cell-detail">${escapeHtml(shortRevision(project.repository?.revision))}</div>`;
+  }
+  return `${githubStatus(project.repository, project.comparison?.fresh)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div>`;
 }
 
 function renderWorkstations(workstations) {
@@ -358,43 +371,60 @@ function renderWorkstations(workstations) {
     elements.workstationDetail.innerHTML = "";
     return;
   }
-  elements.workstationDetail.innerHTML = workstations.map((workstation) => {
-    const lastReport = formatDate(workstation.last_report_at);
-    const staleReport = workstation.status === "offline";
-    const detailDescription = staleReport
-      ? `Stale snapshot from ${lastReport}. Local and GitHub values are historical; comparisons are unavailable.`
-      : workstation.online
-        ? "Live local state."
-        : workstation.last_report_at
-          ? `Last known state from ${lastReport}.`
-          : "No report has been received yet.";
-    return `
-      <section class="surface">
-        <div class="surface-heading">
-          <div><h2>${escapeHtml(workstation.name)} repositories</h2><p>${escapeHtml(detailDescription)}</p></div>
-          ${workstationStatus(workstation)}
-        </div>
-        <div class="table-wrap">
-          <table class="project-comparison-table">
-            <thead><tr><th>Project</th><th>Local</th><th>GitHub</th><th>Server</th><th>Service</th><th>Port</th><th>Terminal</th></tr></thead>
-            <tbody>
-              ${workstation.projects.length ? workstation.projects.map((project) => `
-                <tr>
-                  <td><strong>${escapeHtml(project.name)}</strong><div class="mobile-terminal">${terminalLink(project)}</div></td>
-                  <td>${repositoryStatus(project)}<div class="cell-detail">${escapeHtml(shortRevision(project.repository?.revision))}</div></td>
-                  <td>${githubStatus(project.repository, project.comparison?.fresh)}<div class="cell-detail">${escapeHtml(project.repository?.remote_revision ? shortRevision(project.repository.remote_revision) : project.repository?.upstream || "-")}</div></td>
-                  <td>${comparisonStatus(project.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(project.comparison?.deployed_revisions))}</div></td>
-                  <td>${serviceStatus(project.comparison?.service_status)}</td>
-                  <td><strong>${project.port ? escapeHtml(project.port) : "-"}</strong></td>
-                  <td class="terminal-cell">${terminalLink(project)}</td>
-                </tr>
-              `).join("") : `<tr><td colspan="7" class="muted">No ${escapeHtml(workstation.name)} report has been received yet.</td></tr>`}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    `;
-  }).join("");
+  const home = workstations.find((workstation) => workstation.id === "home") || {name: "Home", status: "never_reported", projects: []};
+  const office = workstations.find((workstation) => workstation.id === "office") || {name: "Office", status: "never_reported", projects: []};
+  const projects = new Map();
+  for (const workstation of [home, office]) {
+    for (const project of workstation.projects || []) {
+      if (!projects.has(project.slug)) projects.set(project.slug, project);
+    }
+  }
+  const sharedProjects = [...projects.values()].sort((left, right) => {
+    const leftPort = Number(left.port) || Number.MAX_SAFE_INTEGER;
+    const rightPort = Number(right.port) || Number.MAX_SAFE_INTEGER;
+    return leftPort - rightPort || left.name.localeCompare(right.name);
+  });
+  elements.workstationDetail.innerHTML = `
+    <div class="table-wrap project-comparison-wrap">
+      <table class="project-comparison-table">
+        <thead>
+          <tr class="workstation-group-row">
+            <th class="project-heading">Project</th>
+            <th><span class="workstation-group">${workstationIndicator(home)}Home</span></th>
+            <th><span class="workstation-group">${workstationIndicator(office)}Office</span></th>
+            <th>GitHub</th>
+            <th>Server</th>
+            <th>Service</th>
+            <th>Port</th>
+            <th class="terminal-heading">Terminal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sharedProjects.length ? sharedProjects.map((sharedProject) => {
+            const homeProject = workstationProject(home, sharedProject.slug);
+            const officeProject = workstationProject(office, sharedProject.slug);
+            const commonProject = homeProject || officeProject || sharedProject;
+            const commonStatusProject = [homeProject, officeProject].find((project) => project?.repository?.remote_refresh_status === "success" && project?.comparison?.fresh)
+              || [homeProject, officeProject].find((project) => project?.comparison?.fresh)
+              || homeProject
+              || officeProject;
+            return `
+              <tr>
+                <td class="project-cell"><strong>${escapeHtml(commonProject.name)}</strong><div class="mobile-terminal">${terminalLink(commonProject)}</div></td>
+                <td>${workstationRepositoryCell(homeProject, "local")}</td>
+                <td>${workstationRepositoryCell(officeProject, "local")}</td>
+                <td>${workstationRepositoryCell(commonStatusProject, "github")}</td>
+                <td>${comparisonStatus(commonStatusProject?.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(commonStatusProject?.comparison?.deployed_revisions))}</div></td>
+                <td>${serviceStatus(commonStatusProject?.comparison?.service_status)}</td>
+                <td><strong>${commonProject.port ? escapeHtml(commonProject.port) : "-"}</strong></td>
+                <td class="terminal-cell">${terminalLink(commonProject)}</td>
+              </tr>
+            `;
+          }).join("") : `<tr><td colspan="8" class="muted">No workstation reports have been received yet.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function githubStatus(repository, fresh = true) {
