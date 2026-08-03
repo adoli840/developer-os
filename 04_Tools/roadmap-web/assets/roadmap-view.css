@@ -131,9 +131,7 @@
 
 .devos-roadmap-view .roadmap-stage-track {
   display: grid;
-  grid-template-columns: repeat(var(--roadmap-stage-count), minmax(218px, 1fr));
   gap: 18px;
-  min-width: var(--roadmap-stage-min-width);
 }
 
 .devos-roadmap-view .roadmap-stage {

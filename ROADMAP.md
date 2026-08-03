@@ -23,7 +23,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Workspace foundation | Done | Self-application and roadmap lifecycle and publication contracts are confirmed across active projects | Observe the shared contracts for regressions |
 | Project context routing | In Progress | DeveloperOS, OA, Gaia, and bTest use project-owned area maps, ignored incremental indexes, and the shared task context selector | Move to Done after all three application projects pass focused routing checks |
 | Roadmap web publication | Done | Card-first single and linked multi-track formats, validated public fields, and the versioned shared `/roadmap` renderer are implemented and tested | Monitor adapters without duplicating project state |
-| Managed project roadmap adoption | In Progress | OA, Gaia, and bTest use bundle 3.0.0, schema version 2 track linkage, and exact Overall-to-track card parity at their own `/roadmap` routes | Move to Done after all three local routes pass data and visual parity checks |
+| Managed project roadmap adoption | In Progress | OA, Gaia, and bTest use the current shared bundle, schema version 2 track linkage, and exact Overall-to-track card parity at their own `/roadmap` routes | Move to Done after all three local routes pass data and visual parity checks |
 | Docker image build minimization | Done | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Monitor lifecycle and deployment commands for regressions |
 | Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
 | Workspace release commands | Done | Shared deploy and local-to-server sync facades delegate only to explicit project-owned hooks and preserve Git revision identity | Add project hooks only after their deployment or data contracts are verified |
@@ -46,9 +46,9 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Roadmap web publication | Shared browser renderer | Done | None | The versioned renderer displays all declared items with common responsive behavior. |
 | Roadmap web publication | Overall and track card identity | Done | None | Schema version 2 rejects linked compact and large cards that differ in count, order, name, status, or description. |
 | Roadmap web publication | Hover and focus descriptions | Done | None | Every detail item exposes its short explanation to pointer and keyboard users. |
-| Managed project roadmap adoption | OA local route migration | Blocked | Operator | Adopt bundle 3.0.0, card-first layout, and schema version 2 linked-card parity in the OA project task. |
-| Managed project roadmap adoption | Gaia local route migration | Blocked | Operator | Adopt bundle 3.0.0, card-first layout, and schema version 2 linked-card parity in the Gaia project task. |
-| Managed project roadmap adoption | bTest local route migration | Blocked | Operator | Adopt bundle 3.0.0, card-first layout, and schema version 2 linked-card parity in the bTest project task. |
+| Managed project roadmap adoption | OA local route migration | Blocked | Operator | Deploy OA's installed current shared bundle, then complete desktop, mobile, hover, and keyboard parity checks. |
+| Managed project roadmap adoption | Gaia local route migration | Blocked | Operator | Adopt the current shared bundle, card-first layout, and schema version 2 linked-card parity in the Gaia project task. |
+| Managed project roadmap adoption | bTest local route migration | Blocked | Operator | Adopt the current shared bundle, card-first layout, and schema version 2 linked-card parity in the bTest project task. |
 | Docker image build minimization | Shared lifecycle contract | Done | None | Routine starts reuse images and explicit build or release boundaries build once. |
 | Project data synchronization governance | Opt-in data ownership | Done | None | Each project explicitly selects transferable data and authority direction. |
 | Workspace release commands | Shared release facade | Done | None | Common commands delegate to verified project-owned deployment and synchronization hooks. |
@@ -60,7 +60,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 1. Adopt project-owned context areas and verify representative routing in OA,
    Gaia, and bTest without copying their project state into DeveloperOS.
-2. Migrate OA, Gaia, and bTest local roadmap routes to shared bundle 3.0.0,
+2. Migrate OA, Gaia, and bTest local roadmap routes to the current shared bundle,
    schema version 2 track linkage, and exact Overall-to-track card parity.
 3. Observe the first ordinary status-boundary update in each new project track.
 4. Keep overall roadmaps limited to cross-track priority and release state.
@@ -72,12 +72,11 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Latest Status Change
 
-- Topic: Project roadmap continuity
-- Change: Removed as a standalone roadmap stage
-- Evidence or reason: Roadmap lifecycle remains a baseline governance rule,
-  while the browser roadmap itself remains an essential read-only capability.
-  Treating roadmap maintenance as a project stage confused the policy with the
-  product evolution it governs.
+- Topic: Managed project roadmap adoption
+- Change: OA migration blocker narrowed to deployment and visual parity verification
+- Evidence or reason: OA schema version 2 parsing, Overall-to-track linkage,
+  shared-asset parity, and DeveloperOS console rendering now pass; its own
+  application route still requires deployment and viewport and interaction checks.
 
 ## Next Status Transitions
 

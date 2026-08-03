@@ -168,7 +168,7 @@
     container.innerHTML = `
       <section class="roadmap-stage-section" aria-label="Roadmap progress">
         <div class="roadmap-stage-scroll">
-          <div class="roadmap-stage-track" role="list" style="--roadmap-stage-count: ${stageCount}; --roadmap-stage-min-width: ${stageMinWidth}px">
+          <div class="roadmap-stage-track" role="list" style="grid-template-columns: repeat(${stageCount}, minmax(218px, 1fr)); min-width: ${stageMinWidth}px">
             ${topics.map((topic, index) => renderStage(topic, index, project.detail_mode)).join("")}
           </div>
         </div>

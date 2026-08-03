@@ -455,12 +455,8 @@ class RoadmapRouteTests(unittest.TestCase):
         self.assertIn('src="/app.js"', page)
         self.assertIn("DeveloperOSRoadmapView", renderer)
         self.assertIn('const VERSION = "3.0.1"', renderer)
-        self.assertIn("--roadmap-stage-count", renderer)
-        self.assertIn("--roadmap-stage-min-width", renderer)
-        self.assertIn(
-            "grid-template-columns: repeat(var(--roadmap-stage-count), minmax(218px, 1fr))",
-            renderer_css,
-        )
+        self.assertIn("grid-template-columns: repeat(${stageCount}, minmax(218px, 1fr))", renderer)
+        self.assertIn("min-width: ${stageMinWidth}px", renderer)
         self.assertNotIn("roadmap-milestone-strip", renderer)
         self.assertIn(".devos-roadmap-view", renderer_css)
 
