@@ -22,6 +22,7 @@ $workstationName = $workstationNames[$Workstation]
 $taskName = "DeveloperOS Workstation Report - $workstationName"
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $reportScript = Join-Path $PSScriptRoot "Report-DeveloperOSGitStatus.ps1"
+$hiddenLauncher = Join-Path $PSScriptRoot "Run-DeveloperOSWorkstationReporterHidden.vbs"
 
 function Quote-TaskArgument {
   param([Parameter(Mandatory = $true)][string]$Value)
@@ -41,6 +42,9 @@ switch ($Action) {
     if (-not (Test-Path -LiteralPath $reportScript -PathType Leaf)) {
       throw "Workstation report script not found: $reportScript"
     }
+    if (-not (Test-Path -LiteralPath $hiddenLauncher -PathType Leaf)) {
+      throw "Hidden workstation launcher not found: $hiddenLauncher"
+    }
     if (-not (Test-Path -LiteralPath $SshKey -PathType Leaf)) {
       throw "SSH key not found: $SshKey"
     }
@@ -51,7 +55,10 @@ switch ($Action) {
     $resolvedSshKey = (Resolve-Path -LiteralPath $SshKey).Path
     $resolvedWorkspaceRoot = (Resolve-Path -LiteralPath $WorkspaceRoot).Path
     $powerShell = (Get-Command powershell.exe -ErrorAction Stop).Source
+    $scriptHost = (Get-Command wscript.exe -ErrorAction Stop).Source
     $taskArguments = @(
+      (Quote-TaskArgument $hiddenLauncher)
+      (Quote-TaskArgument $powerShell)
       "-NoLogo"
       "-NoProfile"
       "-NonInteractive"
@@ -65,7 +72,7 @@ switch ($Action) {
     ) -join " "
 
     $scheduledAction = New-ScheduledTaskAction `
-      -Execute $powerShell `
+      -Execute $scriptHost `
       -Argument $taskArguments `
       -WorkingDirectory $repositoryRoot
     $trigger = New-ScheduledTaskTrigger `

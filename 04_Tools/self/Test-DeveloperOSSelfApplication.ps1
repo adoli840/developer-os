@@ -247,6 +247,7 @@ if ($terminalConfig.projects | Where-Object { $_.slug -eq "developer-os" } | Sel
 
 $workstationReporter = Read-Text "deployment\workstations\Report-DeveloperOSGitStatus.ps1"
 $workstationManager = Read-Text "deployment\workstations\Manage-DeveloperOSWorkstationReporter.ps1"
+$workstationLauncher = Read-Text "deployment\workstations\Run-DeveloperOSWorkstationReporterHidden.vbs"
 $workstationMakefile = Read-Text "Makefile"
 if (
     $workstationReporter -and
@@ -257,7 +258,10 @@ if (
     $workstationReporter.Contains('$env:GIT_SSH_COMMAND = "$sshCommand -o BatchMode=yes -o ConnectTimeout=15"') -and
     $workstationManager -and
     $workstationManager.Contains('New-ScheduledTaskAction') -and
+    $workstationManager.Contains('wscript.exe') -and
     $workstationManager.Contains('-WindowStyle Hidden') -and
+    $workstationLauncher -and
+    $workstationLauncher.Contains('shell.Run(command, 0, True)') -and
     $workstationMakefile -match '(?m)^workstation-home-auto-enable:' -and
     $workstationMakefile -match '(?m)^workstation-office-auto-enable:'
 ) {

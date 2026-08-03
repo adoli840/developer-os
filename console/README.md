@@ -131,7 +131,9 @@ make workstation-office-report
 Or install the matching opt-in hidden Windows Scheduled Task once with
 `make workstation-home-auto-enable` or
 `make workstation-office-auto-enable`. The task runs every five minutes while
-the registered Windows user session is active and does not require Codex.
+the registered Windows user session is active and does not require Codex. A
+windowless Windows Script Host launcher starts the PowerShell reporter fully in
+the background, avoiding a visible console flash at each trigger.
 
 The public console does not expose local paths or the Windows hostname. A
 report older than 15 minutes is displayed as offline. Run each report command

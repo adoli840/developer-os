@@ -20,10 +20,13 @@ make workstation-office-auto-enable
 ```
 
 The task runs every five minutes under the current Windows user with least
-privilege. It starts the existing reporter with no profile, no interactive
-input, and a hidden PowerShell window. Windows supplies only the periodic
-trigger; DeveloperOS owns the report contents, SSH transfer, logging, and task
-management. Codex is not involved after installation.
+privilege. Its action starts the GUI-subsystem `wscript.exe` launcher, which
+runs the existing PowerShell reporter with no profile, no interactive input,
+and window style `Hidden`. Using a windowless task entrypoint prevents the
+brief console flash that can occur when Task Scheduler starts `powershell.exe`
+directly. Windows supplies only the periodic trigger; DeveloperOS owns the
+report contents, SSH transfer, logging, and task management. Codex is not
+involved after installation.
 
 Before comparing revisions, the reporter performs a non-interactive fetch of
 each configured upstream. Fetch updates Git objects and remote-tracking refs
