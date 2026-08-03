@@ -45,6 +45,11 @@ Server context rooted at `/home/opc`; commands still run as `opc`, never as root
 The `Resources` view uses the same edge-to-edge workspace without a repeated
 page title or outer padding.
 
+The selected primary menu, roadmap project, and per-project roadmap track are
+kept for the lifetime of the current browser tab. Reloading the page refreshes
+the operational data without resetting those valid selections. If a saved
+project or track no longer exists, the view safely falls back to its default.
+
 ## Security Model
 
 - Production requires `DEVOS_CONSOLE_TOKEN`.

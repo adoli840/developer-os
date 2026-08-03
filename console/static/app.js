@@ -1,3 +1,17 @@
+const UI_STATE_KEY = "developer-os-console-ui-state-v1";
+const PRIMARY_TABS = new Set(["projects", "resources", "roadmap", "recovery", "usage"]);
+
+function readUiState() {
+  try {
+    const saved = JSON.parse(window.sessionStorage.getItem(UI_STATE_KEY) || "{}");
+    return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+  } catch {
+    return {};
+  }
+}
+
+const savedUiState = readUiState();
+
 const state = {
   authenticated: false,
   publicReadOnly: false,
@@ -5,10 +19,28 @@ const state = {
   csrfToken: "",
   overview: null,
   roadmaps: null,
-  activeRoadmap: "",
+  activeTab: PRIMARY_TABS.has(savedUiState.activeTab) ? savedUiState.activeTab : "projects",
+  activeRoadmap: typeof savedUiState.activeRoadmap === "string" ? savedUiState.activeRoadmap : "",
   activeRoadmapTrack: "overall",
+  activeRoadmapTracks: savedUiState.activeRoadmapTracks
+    && typeof savedUiState.activeRoadmapTracks === "object"
+    && !Array.isArray(savedUiState.activeRoadmapTracks)
+    ? savedUiState.activeRoadmapTracks
+    : {},
   refreshTimer: null,
 };
+
+function persistUiState() {
+  try {
+    window.sessionStorage.setItem(UI_STATE_KEY, JSON.stringify({
+      activeTab: state.activeTab,
+      activeRoadmap: state.activeRoadmap,
+      activeRoadmapTracks: state.activeRoadmapTracks,
+    }));
+  } catch {
+    // The console remains usable when browser storage is disabled or unavailable.
+  }
+}
 
 const elements = {
   loginShell: document.querySelector("#login-shell"),
@@ -189,6 +221,8 @@ function renderRoadmaps(roadmaps) {
       || projects[0]?.slug
       || "";
   }
+  state.activeRoadmapTrack = state.activeRoadmapTracks[state.activeRoadmap] || "overall";
+  persistUiState();
   elements.roadmapTabs.innerHTML = projects.map((project) => {
     const active = project.slug === state.activeRoadmap;
     return `<button class="roadmap-tab${active ? " active" : ""}" data-roadmap="${escapeHtml(project.slug)}" role="tab" aria-selected="${active}" type="button">${escapeHtml(project.name)}</button>`;
@@ -196,7 +230,8 @@ function renderRoadmaps(roadmaps) {
   elements.roadmapTabs.querySelectorAll("button[data-roadmap]").forEach((button) => {
     button.addEventListener("click", () => {
       state.activeRoadmap = button.dataset.roadmap;
-      state.activeRoadmapTrack = "overall";
+      state.activeRoadmapTrack = state.activeRoadmapTracks[state.activeRoadmap] || "overall";
+      persistUiState();
       renderRoadmaps(state.roadmaps);
     });
   });
@@ -209,6 +244,8 @@ function renderRoadmapTracks(project) {
   const tracks = project?.state === "available" ? (project.tracks || []) : [];
   if (!tracks.length) {
     state.activeRoadmapTrack = "overall";
+    state.activeRoadmapTracks[state.activeRoadmap] = state.activeRoadmapTrack;
+    persistUiState();
     elements.roadmapTrackTabs.hidden = true;
     elements.roadmapTrackTabs.innerHTML = "";
     renderRoadmapDetail(project);
@@ -220,6 +257,8 @@ function renderRoadmapTracks(project) {
   if (!choices.some((choice) => choice.slug === state.activeRoadmapTrack)) {
     state.activeRoadmapTrack = "overall";
   }
+  state.activeRoadmapTracks[state.activeRoadmap] = state.activeRoadmapTrack;
+  persistUiState();
   elements.roadmapTrackTabs.hidden = false;
   elements.roadmapTrackTabs.innerHTML = choices.map((choice) => {
     const active = choice.slug === state.activeRoadmapTrack;
@@ -228,6 +267,8 @@ function renderRoadmapTracks(project) {
   elements.roadmapTrackTabs.querySelectorAll("button[data-roadmap-track]").forEach((button) => {
     button.addEventListener("click", () => {
       state.activeRoadmapTrack = button.dataset.roadmapTrack;
+      state.activeRoadmapTracks[state.activeRoadmap] = state.activeRoadmapTrack;
+      persistUiState();
       renderRoadmapTracks(project);
     });
   });
@@ -249,12 +290,17 @@ function renderRoadmapDetail(project) {
 }
 
 function tabFromPath() {
-  return window.location.pathname.replace(/\/$/, "") === "/roadmap" ? "roadmap" : "projects";
+  if (window.location.pathname.replace(/\/$/, "") === "/roadmap") return "roadmap";
+  return PRIMARY_TABS.has(state.activeTab) && state.activeTab !== "roadmap"
+    ? state.activeTab
+    : "projects";
 }
 
 function selectPrimaryTab(tab, updateHistory = true) {
   const button = document.querySelector(`.nav-item[data-tab="${tab}"]`);
   if (!button) return;
+  state.activeTab = tab;
+  persistUiState();
   document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
   document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${tab}`));
   elements.workspace.classList.toggle("full-width-workspace", ["projects", "resources"].includes(tab));

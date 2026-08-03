@@ -106,8 +106,13 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn("<h1>Resources</h1>", html)
         self.assertNotIn('id="resource-time"', html)
         self.assertIn('href="/styles.css?v=2"', html)
-        self.assertIn('src="/app.js?v=2"', html)
-        self.assertIn('? "roadmap" : "projects"', javascript)
+        self.assertIn('src="/app.js?v=3"', html)
+        self.assertIn('const UI_STATE_KEY = "developer-os-console-ui-state-v1"', javascript)
+        self.assertIn("window.sessionStorage.getItem(UI_STATE_KEY)", javascript)
+        self.assertIn("window.sessionStorage.setItem(UI_STATE_KEY", javascript)
+        self.assertIn("activeRoadmapTracks: state.activeRoadmapTracks", javascript)
+        self.assertIn('state.activeRoadmapTracks[state.activeRoadmap] || "overall"', javascript)
+        self.assertIn('state.activeTab !== "roadmap"', javascript)
 
 
 class OverviewCacheTests(unittest.TestCase):
