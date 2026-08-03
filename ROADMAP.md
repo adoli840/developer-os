@@ -22,8 +22,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 |---|---|---|---|
 | Workspace foundation | Done | Self-application and roadmap lifecycle and publication contracts are confirmed across active projects | Observe the shared contracts for regressions |
 | Project context routing | In Progress | DeveloperOS, OA, Gaia, and bTest use project-owned area maps, ignored incremental indexes, and the shared task context selector | Move to Done after all three application projects pass focused routing checks |
-| Project roadmap continuity | Done | Global policy, templates, task guidance, and DeveloperOS self-use follow topic status boundaries | Observe project-specific generators for conflicts |
-| Roadmap web publication | Done | Card-first single and linked multi-track formats plus the versioned shared renderer are implemented for project-owned `/roadmap` routes | Monitor project adapters without aggregating their planning state in DeveloperOS |
+| Roadmap web publication | Done | Card-first single and linked multi-track formats, validated public fields, and the versioned shared `/roadmap` renderer are implemented and tested | Monitor adapters without duplicating project state |
 | Managed project roadmap adoption | In Progress | OA, Gaia, and bTest use bundle 3.0.0, schema version 2 track linkage, and exact Overall-to-track card parity at their own `/roadmap` routes | Move to Done after all three local routes pass data and visual parity checks |
 | Docker image build minimization | Done | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Monitor lifecycle and deployment commands for regressions |
 | Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
@@ -43,8 +42,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Project context routing | OA area adoption | Blocked | Operator | Define OA plugin and automation areas in the OA repository and verify representative task routing. |
 | Project context routing | Gaia area adoption | Blocked | Operator | Define Gaia game, persistence, simulation, and AI areas in the Gaia repository and verify representative task routing. |
 | Project context routing | bTest area adoption | Blocked | Operator | Define Elliott, Ever, data, execution, and recovery areas in the bTest repository and verify representative task routing. |
-| Project roadmap continuity | Status-boundary lifecycle | Done | None | Projects update canonical roadmap state only when a defined transition occurs. |
-| Roadmap web publication | Project-owned parser contract | Done | None | Each project emits canonical topics, details, statuses, blockers, and safe public fields for its own route. |
+| Roadmap web publication | Shared parser contract | Done | None | The console validates canonical topics, details, statuses, blockers, and safe public fields. |
 | Roadmap web publication | Shared browser renderer | Done | None | The versioned renderer displays all declared items with common responsive behavior. |
 | Roadmap web publication | Overall and track card identity | Done | None | Schema version 2 rejects linked compact and large cards that differ in count, order, name, status, or description. |
 | Roadmap web publication | Hover and focus descriptions | Done | None | Every detail item exposes its short explanation to pointer and keyboard users. |
@@ -74,11 +72,12 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Latest Status Change
 
-- Topic: Roadmap web publication
-- Change: Scope narrowed while remaining Done
-- Evidence or reason: DeveloperOS retains the shared policy, schema, renderer,
-  and project-local route contract but no longer aggregates project roadmaps in
-  its operational console.
+- Topic: Project roadmap continuity
+- Change: Removed as a standalone roadmap stage
+- Evidence or reason: Roadmap lifecycle remains a baseline governance rule,
+  while the browser roadmap itself remains an essential read-only capability.
+  Treating roadmap maintenance as a project stage confused the policy with the
+  product evolution it governs.
 
 ## Next Status Transitions
 

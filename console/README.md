@@ -4,8 +4,16 @@
 
 The browser console is a live operational view of the workspace. It does not
 store project roadmaps, duplicate project documentation, or become the source
-of truth for project state. It does not aggregate project roadmaps; each project
-owns its canonical document, parser, and optional local `/roadmap` route.
+of truth for project state. `/roadmap` derives a read-only standard view from
+project-owned root `ROADMAP.md` files.
+
+The stage presentation is loaded directly from the canonical, versioned bundle
+under `04_Tools/roadmap-web`. Project-local `/roadmap` routes install and use
+the same bundle; projects continue to own their roadmap parser and content.
+The bundle starts with progress cards, places its legend below them, and omits
+title and milestone summary blocks from the first viewport. Multi-track schema
+version 2 manifests link each Overall compact-card group to the exact large
+cards shown by its track tab.
 
 The console reads:
 
@@ -17,6 +25,8 @@ The console reads:
 - Daily database backup and weekly isolated restore-verification status.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
 - A Recovery view limited to backup, restore-verification, and schedule evidence.
+- Standard roadmap fields for configured projects, without raw files or source
+  paths.
 
 The landing `Resources` view uses the full workspace for CPU, memory, and root
 disk details. Registered project usage is separated from host usage. The
@@ -33,6 +43,8 @@ the observed host total so a detailed estimate never exceeds actual usage.
   authenticated SSH local-forward.
 - The direct public HTTP deployment uses `DEVOS_PUBLIC_READ_ONLY=1`; it hides
   project paths and audit history and disables login.
+- The public roadmap API returns only parsed standard fields. It does not return
+  raw Markdown, source paths, or parser diagnostics.
 - A separate command console binds to server loopback only and is reachable
   through an SSH local-forward from a trusted workstation.
 
@@ -42,7 +54,9 @@ the observed host total so a detailed estimate never exceeds actual usage.
 make console-run
 ```
 
-Open `http://127.0.0.1:8080`. Development mode does not require an access token.
+Open `http://127.0.0.1:8080`. The roadmap view is
+`http://127.0.0.1:8080/roadmap`. Development mode does not require an access
+token.
 
 Run tests:
 
@@ -159,8 +173,9 @@ under `/var/lib/developer-os-console`.
 
 The browser console keeps the latest complete server inspection in memory for
 60 seconds. Expired data is returned immediately while Git, Docker stats,
-container image, disk, and backup inspection refresh in the background. This
-keeps page reloads responsive without presenting partial project state.
+container image, disk, and backup inspection refresh in the background. The
+roadmap payload is loaded only when its view is opened. This keeps page reloads
+responsive without presenting partial project state.
 
 OpenAI collection reads `OPENAI_ADMIN_API_KEY` and
 `OPENAI_MONTHLY_BUDGET_USD`, calls the organization Costs API, and writes

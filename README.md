@@ -213,9 +213,11 @@ Secret values are not stored in DeveloperOS. The scripts print required GitHub S
 
 DeveloperOS includes a live browser console under `console/`. It derives status
 from project repositories and the Oracle server without duplicating
-project-owned state. It deliberately does not aggregate project roadmaps;
-projects publish their own canonical planning state at their local `/roadmap`
-route when applicable.
+project-owned state. Its read-only roadmap view is available at `/roadmap` and
+derives standard fields from each project's root `ROADMAP.md` and any tracks
+declared by `ROADMAPS.json`. The shared card-first presentation puts progress
+immediately below project and track tabs; schema version 2 manifests keep each
+Overall compact-card group identical to the linked track's large cards.
 
 Run locally:
 
@@ -235,9 +237,10 @@ Deployment is accepted only from a clean `main` branch that exactly matches
 `origin/main`. The release is built from the committed Git revision, never
 from uncommitted local files.
 
-The deployed service listens on port `8080`. See `console/README.md` for its
-security boundary, recovery evidence, private-terminal boundary, and provider
-usage snapshot behavior.
+The deployed service listens on port `8080`; append `/roadmap` to that access
+address for the roadmap view. See `console/README.md` for its security boundary,
+recovery evidence, private-terminal boundary, and provider usage snapshot
+behavior.
 
 OpenAI organization costs and Oracle Cloud costs plus Ampere A1 monthly free
 usage are collected by a separate hourly server service. Oracle usage is shown

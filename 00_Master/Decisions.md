@@ -783,7 +783,7 @@ still authoritative.
 
 ## 2026-08-03 - Narrow The Browser Console To Evidence
 
-Status: Accepted
+Status: Superseded by the 2026-08-03 roadmap-view clarification
 
 Context:
 
@@ -815,7 +815,7 @@ project actions or accepts `/api/actions` requests.
 
 ## 2026-08-03 - Remove Centralized Roadmap Aggregation
 
-Status: Accepted
+Status: Superseded by the 2026-08-03 roadmap-view clarification
 
 Context:
 
@@ -842,6 +842,37 @@ Impact:
 The primary console navigation is Overview, Projects, Recovery, and Usage.
 Roadmap standards remain shared, while roadmap content and web publication stay
 inside each project repository and application.
+
+## 2026-08-03 - Preserve The Roadmap View Without A Roadmap Lifecycle Stage
+
+Status: Accepted
+
+Context:
+
+A request to remove roadmap as a specific DeveloperOS progress stage was
+misread as a request to remove the browser Roadmap view and aggregation API.
+The resulting change removed useful read-only planning visibility rather than
+only the self-referential `Project roadmap continuity` card.
+
+Decision:
+
+Restore the console Roadmap tab, `/roadmap`, `/api/roadmaps`, the validated
+parser, and the canonical shared renderer. Remove `Project roadmap continuity`
+from the DeveloperOS roadmap topics and details so roadmap lifecycle remains a
+governance baseline rather than appearing as a product-development stage.
+
+Reason:
+
+The roadmap is necessary planning evidence. A read-only derived view does not
+take ownership away from project repositories, while presenting roadmap
+maintenance itself as a roadmap stage creates a self-referential card with no
+useful product transition.
+
+Impact:
+
+The primary console navigation is Resources, Projects, Roadmap, Recovery, and
+Usage. Each project remains the canonical owner of its roadmap content; the
+console validates and renders that content without storing a second copy.
 
 ## 2026-08-03 - Make Resources The Console Landing View
 

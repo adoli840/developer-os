@@ -135,7 +135,7 @@
     {
       "id": "roadmap-publication",
       "name": "Roadmap publication",
-      "description": "Project-owned roadmap contracts, linked tracks, and shared browser presentation.",
+      "description": "Canonical roadmap parsing, linked tracks, and shared browser presentation.",
       "keywords": [
         "roadmap",
         "roadmap renderer",
@@ -147,23 +147,32 @@
         "ROADMAP.md",
         "ROADMAPS.json",
         "00_Master/ProjectRoadmapPolicy.md",
-        "04_Tools/roadmap-web/**"
+        "04_Tools/roadmap-web/**",
+        "console/devos_console/roadmaps.py",
+        "console/static/**",
+        "console/tests/test_roadmaps.py"
       ],
       "entrypoints": [
         "00_Master/ProjectRoadmapPolicy.md",
+        "console/devos_console/roadmaps.py",
         "04_Tools/roadmap-web/assets/roadmap-view.js"
       ],
       "related_docs": [
-        "04_Tools/roadmap-web/README.md"
+        "04_Tools/roadmap-web/README.md",
+        "console/README.md"
       ],
       "test_commands": [
+        "make console-test",
         "make self-check"
       ],
-      "services": [],
+      "services": [
+        "developer-os-console"
+      ],
       "data_stores": [
         "canonical Markdown roadmaps"
       ],
       "risk_tags": [
+        "public-read-only-view",
         "shared-presentation-contract"
       ]
     },

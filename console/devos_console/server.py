@@ -20,6 +20,7 @@ from .audit import AuditLog
 from .auth import Session, SessionStore
 from .backups import collect_backup_status
 from .projects import ProjectService
+from .roadmaps import collect_roadmaps
 from .resources import collect_resource_breakdown
 from .settings import Settings, load_settings
 from .system_info import collect_system_info
@@ -136,6 +137,9 @@ class ConsoleApplication:
             self._start_overview_refresh(public)
         return copy.deepcopy(value)
 
+    def roadmaps(self) -> dict[str, Any]:
+        return collect_roadmaps(self.settings.projects)
+
 class ConsoleHandler(BaseHTTPRequestHandler):
     server_version = "DeveloperOSConsole/1"
     application: ConsoleApplication
@@ -247,18 +251,21 @@ class ConsoleHandler(BaseHTTPRequestHandler):
 
         if parsed.path.startswith("/api/"):
             project_logs = parsed.path.startswith("/api/projects/") and parsed.path.endswith("/logs")
-            if parsed.path != "/api/overview" and not project_logs:
+            if parsed.path not in {"/api/overview", "/api/roadmaps"} and not project_logs:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
                 return
             public_read = (
                 self.application.settings.public_read_only
-                and parsed.path == "/api/overview"
+                and parsed.path in {"/api/overview", "/api/roadmaps"}
             )
             if not public_read and self._require_session() is None:
                 return
             try:
                 if parsed.path == "/api/overview":
                     self._json(HTTPStatus.OK, self.application.overview(public=public_read))
+                    return
+                if parsed.path == "/api/roadmaps":
+                    self._json(HTTPStatus.OK, self.application.roadmaps())
                     return
                 if project_logs:
                     slug = parsed.path.split("/")[3]
@@ -317,14 +324,23 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
 
     def _serve_static(self, request_path: str) -> None:
-        static_root = self.application.settings.repo_root / "console" / "static"
-        relative = "index.html" if request_path in {"", "/"} else request_path.lstrip("/")
+        roadmap_prefix = "/roadmap-assets/"
+        if request_path.startswith(roadmap_prefix):
+            static_root = self.application.settings.repo_root / "04_Tools" / "roadmap-web" / "assets"
+            relative = request_path.removeprefix(roadmap_prefix)
+            fallback_to_index = False
+        else:
+            static_root = self.application.settings.repo_root / "console" / "static"
+            relative = "index.html" if request_path in {"", "/"} else request_path.lstrip("/")
+            fallback_to_index = True
         candidate = (static_root / relative).resolve()
         try:
             candidate.relative_to(static_root.resolve())
         except ValueError:
             self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
             return
+        if not candidate.is_file() and fallback_to_index:
+            candidate = static_root / "index.html"
         if not candidate.is_file():
             self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
             return

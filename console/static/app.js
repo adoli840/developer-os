@@ -4,6 +4,9 @@ const state = {
   trustedLocal: false,
   csrfToken: "",
   overview: null,
+  roadmaps: null,
+  activeRoadmap: "",
+  activeRoadmapTrack: "overall",
   refreshTimer: null,
 };
 
@@ -20,6 +23,9 @@ const elements = {
   serverMetrics: document.querySelector("#server-metrics"),
   resourceTime: document.querySelector("#resource-time"),
   workstationDetail: document.querySelector("#workstation-detail"),
+  roadmapTabs: document.querySelector("#roadmap-tabs"),
+  roadmapTrackTabs: document.querySelector("#roadmap-track-tabs"),
+  roadmapDetail: document.querySelector("#roadmap-detail"),
   backupSummary: document.querySelector("#backup-summary"),
   timerSummary: document.querySelector("#timer-summary"),
   usagePanel: document.querySelector("#usage-panel"),
@@ -151,6 +157,7 @@ async function refreshOverview() {
   try {
     state.overview = await request("/api/overview");
     render();
+    if (tabFromPath() === "roadmap") await refreshRoadmaps();
     elements.syncState.textContent = "Live";
   } catch (error) {
     elements.syncState.textContent = "Refresh failed";
@@ -164,6 +171,7 @@ function render() {
   if (!state.overview) return;
   renderMetrics(state.overview.system);
   renderWorkstations(state.overview.workstations || []);
+  renderRoadmaps(state.roadmaps);
   renderRecovery(state.overview.backups);
   renderUsage(state.overview.usage);
   const collectedAt = state.overview.system.collected_at;
@@ -172,8 +180,80 @@ function render() {
     : "Collection time unavailable";
 }
 
+async function refreshRoadmaps() {
+  state.roadmaps = await request("/api/roadmaps");
+  renderRoadmaps(state.roadmaps);
+}
+
+function renderRoadmaps(roadmaps) {
+  if (!roadmaps) return;
+  const projects = roadmaps.projects || [];
+  if (!projects.some((project) => project.slug === state.activeRoadmap)) {
+    state.activeRoadmap = projects.find((project) => project.slug === "developer-os")?.slug
+      || projects[0]?.slug
+      || "";
+  }
+  elements.roadmapTabs.innerHTML = projects.map((project) => {
+    const active = project.slug === state.activeRoadmap;
+    return `<button class="roadmap-tab${active ? " active" : ""}" data-roadmap="${escapeHtml(project.slug)}" role="tab" aria-selected="${active}" type="button">${escapeHtml(project.name)}</button>`;
+  }).join("");
+  elements.roadmapTabs.querySelectorAll("button[data-roadmap]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activeRoadmap = button.dataset.roadmap;
+      state.activeRoadmapTrack = "overall";
+      renderRoadmaps(state.roadmaps);
+    });
+  });
+
+  const activeProject = projects.find((project) => project.slug === state.activeRoadmap);
+  renderRoadmapTracks(activeProject);
+}
+
+function renderRoadmapTracks(project) {
+  const tracks = project?.state === "available" ? (project.tracks || []) : [];
+  if (!tracks.length) {
+    state.activeRoadmapTrack = "overall";
+    elements.roadmapTrackTabs.hidden = true;
+    elements.roadmapTrackTabs.innerHTML = "";
+    renderRoadmapDetail(project);
+    return;
+  }
+
+  const choices = [{slug: "overall", name: "Overall", roadmap: project}]
+    .concat(tracks.map((track) => ({slug: track.slug, name: track.name, roadmap: track})));
+  if (!choices.some((choice) => choice.slug === state.activeRoadmapTrack)) {
+    state.activeRoadmapTrack = "overall";
+  }
+  elements.roadmapTrackTabs.hidden = false;
+  elements.roadmapTrackTabs.innerHTML = choices.map((choice) => {
+    const active = choice.slug === state.activeRoadmapTrack;
+    return `<button class="roadmap-track-tab${active ? " active" : ""}" data-roadmap-track="${escapeHtml(choice.slug)}" role="tab" aria-selected="${active}" type="button">${escapeHtml(choice.name)}</button>`;
+  }).join("");
+  elements.roadmapTrackTabs.querySelectorAll("button[data-roadmap-track]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.activeRoadmapTrack = button.dataset.roadmapTrack;
+      renderRoadmapTracks(project);
+    });
+  });
+  const active = choices.find((choice) => choice.slug === state.activeRoadmapTrack);
+  renderRoadmapDetail(active?.roadmap || project);
+}
+
+function renderRoadmapDetail(project) {
+  if (!window.DeveloperOSRoadmapView) {
+    elements.roadmapDetail.innerHTML = `
+      <section class="roadmap-empty">
+        <h2>Roadmap renderer unavailable</h2>
+        <p class="muted">The shared DeveloperOS roadmap bundle could not be loaded.</p>
+      </section>
+    `;
+    return;
+  }
+  window.DeveloperOSRoadmapView.renderDetail(elements.roadmapDetail, project);
+}
+
 function tabFromPath() {
-  return "resources";
+  return window.location.pathname.replace(/\/$/, "") === "/roadmap" ? "roadmap" : "resources";
 }
 
 function selectPrimaryTab(tab, updateHistory = true) {
@@ -182,7 +262,7 @@ function selectPrimaryTab(tab, updateHistory = true) {
   document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
   document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${tab}`));
   if (updateHistory) {
-    const nextPath = "/";
+    const nextPath = tab === "roadmap" ? "/roadmap" : "/";
     if (window.location.pathname !== nextPath) window.history.pushState({tab}, "", nextPath);
   }
 }
@@ -501,6 +581,9 @@ elements.logoutButton.addEventListener("click", async () => {
 document.querySelectorAll(".nav-item").forEach((button) => {
   button.addEventListener("click", () => {
     selectPrimaryTab(button.dataset.tab);
+    if (button.dataset.tab === "roadmap" && !state.roadmaps) {
+      refreshRoadmaps().catch((error) => showToast(error.message));
+    }
   });
 });
 
