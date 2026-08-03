@@ -11,9 +11,14 @@ behavior in both locations.
 Projects continue to own their roadmap content and parsing adapters.
 DeveloperOS owns the common presentation contract and assets.
 
+The default view is progress-card first: project and track navigation stays
+outside the renderer, large cards begin immediately below it, and the compact
+legend follows the cards. Canonical title, direction, update, and milestone
+fields remain available to planning tools but are not rendered above progress.
+
 ## Version
 
-The current browser bundle is `2.0.0` and consists of:
+The current browser bundle is `3.0.0` and consists of:
 
 - `assets/roadmap-view.js`
 - `assets/roadmap-view.css`
@@ -49,9 +54,48 @@ Blocked items use exactly one blocker type: `Operator`, `Processing`, or
 
 The canonical Markdown source declares these values in the optional
 `Roadmap Details` table defined by
-`00_Master/ProjectRoadmapPolicy.md`. Legacy roadmaps remain readable through a
-two-item compatibility derivation, but projects adopting this presentation
-must declare every material sibling item explicitly.
+`00_Master/ProjectRoadmapPolicy.md`. Legacy roadmaps remain readable, but the
+renderer does not show synthetic completion-signal or next-transition items.
+Projects adopting this presentation must declare every material sibling item
+explicitly.
+
+## Linked Track Contract
+
+Multi-track projects use `ROADMAPS.json` schema version 2. Every track declares
+the root overview topic it expands:
+
+```json
+{
+  "schema_version": 2,
+  "tracks": [
+    {
+      "slug": "delivery",
+      "name": "Delivery",
+      "path": "docs/roadmaps/delivery.md",
+      "overview_topic": "Delivery"
+    }
+  ]
+}
+```
+
+The mapped Overall detail rows must exactly match the linked track topics in
+count, order, name, presentation status, and description. Description is the
+track topic's completion signal. The parser adds the shared fields below to
+each linked track topic so its large card is the same card shown compactly in
+Overall:
+
+```json
+{
+  "topic": "Verified release",
+  "status": "Planned",
+  "display_status": "In Progress",
+  "blocker_type": "None",
+  "description": "The release passes focused verification."
+}
+```
+
+Schema version 1 remains readable during migration, but it represents
+independent overview and track summaries and does not guarantee parity.
 
 ## Installation
 
@@ -74,14 +118,17 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\04_Tools\roadmap-web\I
 ## Project Integration
 
 1. Parse the project-owned canonical roadmap into the shared public data
-   contract, including every `Roadmap Details` row.
+   contract, including every `Roadmap Details` row and schema version 2 track
+   linkage.
 2. Serve the two installed assets unchanged.
 3. Load the CSS, then the JavaScript, on the project `/roadmap` page.
 4. Call `DeveloperOSRoadmapView.renderDetail(container, roadmap)`.
-5. Keep project navigation outside the renderer. Do not recreate the roadmap
-   stage or item markup in a project template.
-6. Test desktop and mobile layout, keyboard focus, pointer hover, HTML escaping,
-   and asset hash parity.
+5. Keep project and track navigation directly above and outside the renderer.
+   Do not add a visible title, summary strip, direction, or milestone block
+   between the tabs and cards.
+6. Do not recreate the roadmap stage or item markup in a project template.
+7. Test linked-card parity, desktop and mobile layout, keyboard focus, pointer
+   hover, HTML escaping, and asset hash parity.
 
 The renderer is read-only and escapes all text fields before inserting them
 into the document.

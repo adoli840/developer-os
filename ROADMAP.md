@@ -22,8 +22,8 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 |---|---|---|---|
 | Workspace foundation | Done | Self-application and roadmap lifecycle and publication contracts are confirmed across active projects | Observe the shared contracts for regressions |
 | Project roadmap continuity | Done | Global policy, templates, task guidance, and DeveloperOS self-use follow topic status boundaries | Observe project-specific generators for conflicts |
-| Roadmap web publication | Done | Single and multi-track formats, validated public fields, and the versioned shared `/roadmap` renderer are implemented and tested | Monitor adapters without duplicating project state |
-| Managed project roadmap adoption | In Progress | OA, Gaia, and bTest use the same versioned presentation bundle and explicit detail contract at their own `/roadmap` routes | Move to Done after all three local routes pass parity checks |
+| Roadmap web publication | Done | Card-first single and linked multi-track formats, validated public fields, and the versioned shared `/roadmap` renderer are implemented and tested | Monitor adapters without duplicating project state |
+| Managed project roadmap adoption | In Progress | OA, Gaia, and bTest use bundle 3.0.0, schema version 2 track linkage, and exact Overall-to-track card parity at their own `/roadmap` routes | Move to Done after all three local routes pass data and visual parity checks |
 | Docker image build minimization | Done | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Monitor lifecycle and deployment commands for regressions |
 | Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
 | Workspace release commands | Done | Shared deploy and local-to-server sync facades delegate only to explicit project-owned hooks and preserve Git revision identity | Add project hooks only after their deployment or data contracts are verified |
@@ -38,10 +38,11 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Project roadmap continuity | Status-boundary lifecycle | Done | None | Projects update canonical roadmap state only when a defined transition occurs. |
 | Roadmap web publication | Shared parser contract | Done | None | The console validates canonical topics, details, statuses, blockers, and safe public fields. |
 | Roadmap web publication | Shared browser renderer | Done | None | The versioned renderer displays all declared items with common responsive behavior. |
+| Roadmap web publication | Overall and track card identity | Done | None | Schema version 2 rejects linked compact and large cards that differ in count, order, name, status, or description. |
 | Roadmap web publication | Hover and focus descriptions | Done | None | Every detail item exposes its short explanation to pointer and keyboard users. |
-| Managed project roadmap adoption | OA local route migration | Blocked | Operator | Apply the DeveloperOS migration handoff in the OA project task. |
-| Managed project roadmap adoption | Gaia local route migration | Blocked | Operator | Apply the DeveloperOS migration handoff in the Gaia project task. |
-| Managed project roadmap adoption | bTest local route migration | Blocked | Operator | Apply the DeveloperOS migration handoff in the bTest project task. |
+| Managed project roadmap adoption | OA local route migration | Blocked | Operator | Adopt bundle 3.0.0, card-first layout, and schema version 2 linked-card parity in the OA project task. |
+| Managed project roadmap adoption | Gaia local route migration | Blocked | Operator | Adopt bundle 3.0.0, card-first layout, and schema version 2 linked-card parity in the Gaia project task. |
+| Managed project roadmap adoption | bTest local route migration | Blocked | Operator | Adopt bundle 3.0.0, card-first layout, and schema version 2 linked-card parity in the bTest project task. |
 | Docker image build minimization | Shared lifecycle contract | Done | None | Routine starts reuse images and explicit build or release boundaries build once. |
 | Project data synchronization governance | Opt-in data ownership | Done | None | Each project explicitly selects transferable data and authority direction. |
 | Workspace release commands | Shared release facade | Done | None | Common commands delegate to verified project-owned deployment and synchronization hooks. |
@@ -51,8 +52,8 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Current Priority
 
-1. Migrate OA, Gaia, and bTest local roadmap routes to the shared versioned
-   renderer and explicit detail contract.
+1. Migrate OA, Gaia, and bTest local roadmap routes to shared bundle 3.0.0,
+   schema version 2 track linkage, and exact Overall-to-track card parity.
 2. Observe the first ordinary status-boundary update in each new project track.
 3. Keep overall roadmaps limited to cross-track priority and release state.
 4. Apply data synchronization first as read-only manifest comparison when a
@@ -65,17 +66,18 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 - Topic: Managed project roadmap adoption
 - Change: Done -> In Progress
-- Evidence or reason: The DeveloperOS shared renderer and rich detail contract
-  are ready, but OA, Gaia, and bTest still use independent project-local
-  templates and require migration before their `/roadmap` views match the
-  DeveloperOS view.
+- Evidence or reason: The DeveloperOS card-first renderer and linked-card
+  contract are ready, but OA, Gaia, and bTest still require project-owned
+  manifest, content, adapter, and asset migration before their `/roadmap` views
+  match the DeveloperOS view.
 
 ## Next Status Transitions
 
 1. Reopen `Docker image build minimization` only if routine startup can build,
    build and startup become ambiguous again, or deployment omits `--no-build`.
 2. Move `Managed project roadmap adoption` to `Done` after OA, Gaia, and bTest
-   pass shared-asset parity plus desktop, mobile, hover, and keyboard checks.
+   pass linked-card data parity, shared-asset parity, desktop, mobile, hover,
+   and keyboard checks.
 3. Move `Snapshot Manager` from `Planned` to `In Progress` when its scoped
    create and restore contract begins implementation.
 4. Update an individual project track without changing its overall roadmap
@@ -94,6 +96,8 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
   routine self-check accepts an active process registration.
 - Newly split tracks need ordinary project work to demonstrate that future
   status transitions stay concise and do not drift back into duplicate logs.
+- Existing schema version 1 manifests remain readable but cannot guarantee
+  Overall-to-track card identity until each project completes its v2 migration.
 - Bidirectional transfer remains unsafe for any data set that lacks immutable
   payloads, stable identities, content checksums, and hard conflict detection.
 - No active blocker is known for new project sessions.

@@ -83,11 +83,50 @@ def project_spec(path: Path, slug: str = "example", name: str = "Example") -> Pr
     )
 
 
-def write_manifest(path: Path, tracks: list[dict[str, str]]) -> None:
+def write_manifest(
+    path: Path,
+    tracks: list[dict[str, str]],
+    *,
+    schema_version: int = 1,
+) -> None:
     (path / "ROADMAPS.json").write_text(
-        json.dumps({"schema_version": 1, "tracks": tracks}),
+        json.dumps({"schema_version": schema_version, "tracks": tracks}),
         encoding="utf-8",
     )
+
+
+def linked_track_roadmap() -> str:
+    topics = """\
+## Roadmap Topics
+
+| Topic | Status | Completion Signal | Next Transition |
+|---|---|---|---|
+| Parser | Done | The canonical roadmap parser accepts the standard fields. | Reopen when the format changes |
+| Visual renderer | In Progress | The public view renders every declared detail item. | Move to Done after visual verification |
+| Operator approval | Blocked | The developer must approve the final publication boundary. | Move to Done after approval |
+"""
+    details = """\
+## Roadmap Details
+
+| Stage | Item | Status | Blocker Type | Description |
+|---|---|---|---|---|
+| Parser | Format contract | Done | None | Keep the canonical parser aligned with the shared format. |
+| Visual renderer | Browser bundle | In Progress | None | Render the linked cards at desktop and mobile widths. |
+| Operator approval | Publication decision | Blocked | Operator | Wait for the explicit publication decision. |
+"""
+    value = re.sub(
+        r"## Roadmap Topics\n.*?(?=\n## Roadmap Details)",
+        topics.rstrip(),
+        STANDARD_ROADMAP,
+        flags=re.DOTALL,
+    )
+    value = re.sub(
+        r"## Roadmap Details\n.*?(?=\n## Current Priority)",
+        details.rstrip(),
+        value,
+        flags=re.DOTALL,
+    )
+    return value.replace("# Example Roadmap", "# Delivery Roadmap")
 
 
 class RoadmapParserTests(unittest.TestCase):
@@ -110,6 +149,14 @@ class RoadmapParserTests(unittest.TestCase):
     def test_unknown_status_is_rejected(self) -> None:
         invalid = STANDARD_ROADMAP.replace("- Status: In Progress", "- Status: Almost")
         with self.assertRaisesRegex(ValueError, "Unsupported roadmap status"):
+            parse_roadmap(invalid, slug="example", name="Example")
+
+    def test_duplicate_topic_names_are_rejected(self) -> None:
+        invalid = STANDARD_ROADMAP.replace(
+            "| Publishing | Planned |",
+            "| Foundation | Planned |",
+        )
+        with self.assertRaisesRegex(ValueError, "topic names must be unique"):
             parse_roadmap(invalid, slug="example", name="Example")
 
     def test_blocked_detail_requires_a_specific_blocker_type(self) -> None:
@@ -183,9 +230,97 @@ class RoadmapParserTests(unittest.TestCase):
 
         self.assertEqual(result["state"], "available")
         self.assertEqual(result["roadmap_mode"], "multi")
+        self.assertEqual(result["roadmap_manifest_version"], 1)
+        self.assertEqual(result["track_summary_mode"], "independent")
         self.assertEqual(result["tracks"][0]["slug"], "delivery")
         self.assertEqual(result["tracks"][0]["title"], "Delivery Roadmap")
         self.assertNotIn("path", result["tracks"][0])
+
+    def test_manifest_v2_links_overview_items_to_track_topics(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tracks_path = root / "docs" / "roadmaps"
+            tracks_path.mkdir(parents=True)
+            (root / "ROADMAP.md").write_text(STANDARD_ROADMAP, encoding="utf-8")
+            (tracks_path / "delivery.md").write_text(
+                linked_track_roadmap(),
+                encoding="utf-8",
+            )
+            write_manifest(
+                root,
+                [
+                    {
+                        "slug": "delivery",
+                        "name": "Delivery",
+                        "path": "docs/roadmaps/delivery.md",
+                        "overview_topic": "Foundation",
+                    }
+                ],
+                schema_version=2,
+            )
+
+            result = collect_roadmaps((project_spec(root),))["projects"][0]
+
+        track = result["tracks"][0]
+        self.assertEqual(result["state"], "available")
+        self.assertEqual(result["roadmap_manifest_version"], 2)
+        self.assertEqual(result["track_summary_mode"], "linked")
+        self.assertEqual(track["overview_topic"], "Foundation")
+        self.assertEqual(
+            [item["item"] for item in result["topics"][0]["items"]],
+            [topic["topic"] for topic in track["topics"]],
+        )
+        self.assertEqual(track["topics"][2]["display_status"], "Blocked")
+        self.assertEqual(track["topics"][2]["blocker_type"], "Operator")
+        self.assertEqual(
+            track["topics"][2]["description"],
+            "The developer must approve the final publication boundary.",
+        )
+
+    def test_manifest_v2_rejects_overview_track_card_drift(self) -> None:
+        drifted_tracks = {
+            "name": linked_track_roadmap().replace(
+                "| Visual renderer | In Progress |",
+                "| Different renderer | In Progress |",
+            ),
+            "status": linked_track_roadmap().replace(
+                "| Visual renderer | In Progress |",
+                "| Visual renderer | Done |",
+            ),
+            "description": linked_track_roadmap().replace(
+                "The public view renders every declared detail item.",
+                "The public view renders a different completion signal.",
+            ),
+        }
+        for drift, track_text in drifted_tracks.items():
+            with self.subTest(drift=drift), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                tracks_path = root / "docs" / "roadmaps"
+                tracks_path.mkdir(parents=True)
+                (root / "ROADMAP.md").write_text(
+                    STANDARD_ROADMAP,
+                    encoding="utf-8",
+                )
+                (tracks_path / "delivery.md").write_text(
+                    track_text,
+                    encoding="utf-8",
+                )
+                write_manifest(
+                    root,
+                    [
+                        {
+                            "slug": "delivery",
+                            "name": "Delivery",
+                            "path": "docs/roadmaps/delivery.md",
+                            "overview_topic": "Foundation",
+                        }
+                    ],
+                    schema_version=2,
+                )
+
+                result = collect_roadmaps((project_spec(root),))["projects"][0]
+
+            self.assertEqual(result["state"], "invalid")
 
     def test_manifest_rejects_duplicate_track_slugs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -296,10 +431,14 @@ class RoadmapRouteTests(unittest.TestCase):
         self.assertNotIn("path", payload["projects"][0]["tracks"][0])
         self.assertIn('id="tab-roadmap"', page)
         self.assertIn('id="roadmap-track-tabs"', page)
+        self.assertNotIn('id="roadmap-summary"', page)
+        self.assertNotIn('id="roadmap-time"', page)
         self.assertIn('src="/roadmap-assets/roadmap-view.js"', page)
         self.assertIn('href="/roadmap-assets/roadmap-view.css"', page)
         self.assertIn('src="/app.js"', page)
         self.assertIn("DeveloperOSRoadmapView", renderer)
+        self.assertIn('const VERSION = "3.0.0"', renderer)
+        self.assertNotIn("roadmap-milestone-strip", renderer)
         self.assertIn(".devos-roadmap-view", renderer_css)
 
 

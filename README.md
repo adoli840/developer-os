@@ -191,7 +191,9 @@ DeveloperOS includes a live browser console under `console/`. It derives status
 from project repositories and the Oracle server without duplicating
 project-owned state. Its read-only roadmap view is available at `/roadmap` and
 derives standard fields from each project's root `ROADMAP.md` and any tracks
-declared by `ROADMAPS.json`.
+declared by `ROADMAPS.json`. The shared card-first presentation puts progress
+immediately below project and track tabs; schema version 2 manifests keep each
+Overall compact-card group identical to the linked track's large cards.
 
 Run locally:
 

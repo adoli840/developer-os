@@ -87,18 +87,26 @@ if ($roadmap -and $missingRoadmapState.Count -eq 0) {
 
 $roadmapPolicy = Read-Text "00_Master\ProjectRoadmapPolicy.md"
 $roadmapTemplate = Read-Text "03_Blueprints\Project\ROADMAP.md"
+$roadmapManifestTemplate = Read-Text "03_Blueprints\Project\ROADMAPS.example.json"
+$roadmapRenderer = Read-Text "04_Tools\roadmap-web\assets\roadmap-view.js"
 $standardTopicHeader = "| Topic | Status | Completion Signal | Next Transition |"
 if (
     $roadmapPolicy -and
     $roadmapTemplate -and
+    $roadmapManifestTemplate -and
+    $roadmapRenderer -and
     $roadmapPolicy.Contains("## Canonical Standard Format") -and
     $roadmapPolicy.Contains("## Roadmap Web View") -and
+    $roadmapPolicy.Contains("overview_topic") -and
     $roadmapPolicy.Contains("/roadmap") -and
-    $roadmapTemplate.Contains($standardTopicHeader)
+    $roadmapTemplate.Contains($standardTopicHeader) -and
+    $roadmapManifestTemplate.Contains('"schema_version": 2') -and
+    $roadmapManifestTemplate.Contains('"overview_topic"') -and
+    $roadmapRenderer.Contains('const VERSION = "3.0.0"')
 ) {
-    Add-CheckResult PASS "Roadmap standard" "the shared format and read-only /roadmap contract are defined"
+    Add-CheckResult PASS "Roadmap standard" "the card-first format, linked-track manifest, and read-only /roadmap contract are defined"
 } else {
-    Add-CheckResult FAIL "Roadmap standard" "the shared format, template, or /roadmap contract is missing"
+    Add-CheckResult FAIL "Roadmap standard" "the shared format, linked-track template, renderer, or /roadmap contract is missing"
 }
 
 $null = & git -C $developerOSRoot check-ignore -q -- ".snapshots/developer-os-self-check.tmp"

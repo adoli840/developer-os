@@ -10,6 +10,10 @@ project-owned root `ROADMAP.md` files.
 The stage presentation is loaded directly from the canonical, versioned bundle
 under `04_Tools/roadmap-web`. Project-local `/roadmap` routes install and use
 the same bundle; projects continue to own their roadmap parser and content.
+The bundle starts with progress cards, places its legend below them, and omits
+title and milestone summary blocks from the first viewport. Multi-track schema
+version 2 manifests link each Overall compact-card group to the exact large
+cards shown by its track tab.
 
 The console reads:
 

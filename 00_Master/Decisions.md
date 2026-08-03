@@ -707,3 +707,40 @@ DeveloperOS uses the canonical renderer directly. Individual projects vendor
 the versioned assets and adapt their project-owned parser output to the same
 JSON shape. Updating a shared visual contract requires deliberate project
 adoption and verification rather than silent cross-repository mutation.
+
+## 2026-08-03 - Make Linked Progress Cards The Primary Roadmap View
+
+Status: Accepted
+
+Context:
+
+The shared roadmap route spent most of its first viewport on a repeated title,
+direction, milestone, completion signal, and legend even though project and
+track tabs already established context. Multi-track projects also maintained
+independent Overall detail rows and track topics, allowing the compact cards to
+drift from the large cards shown after selecting a track.
+
+Decision:
+
+Begin every roadmap detail view with its large progress cards. Keep project and
+track tabs directly above the renderer, omit the visible title and milestone
+summary blocks, and place a compact legend below the cards. Retain the omitted
+fields in canonical roadmap documents and structured data for planning use.
+Adopt `ROADMAPS.json` schema version 2 for multi-track card parity: every track
+declares one unique `overview_topic`, and the parser rejects differences in the
+linked card count, order, name, presentation status, or description. Schema
+version 1 remains readable only as a migration format.
+
+Reason:
+
+Progress state is the roadmap's highest-frequency visual question. A linked
+contract makes Overall a truthful compact index of the track cards instead of a
+second summary that can silently diverge, while preserving detailed planning
+fields outside the first viewport.
+
+Impact:
+
+DeveloperOS roadmap bundle 3.0.0 implements the card-first layout and linked
+card metadata. OA, Gaia, and bTest must upgrade their manifests, overview rows,
+track adapters, and vendored assets in their own repositories. Their project
+tasks remain responsible for resolving content-specific mismatches.

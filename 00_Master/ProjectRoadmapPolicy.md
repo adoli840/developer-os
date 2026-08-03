@@ -179,23 +179,26 @@ boundary.
 
 A multi-track project must keep a concise repository-root `ROADMAP.md` as the
 overall roadmap. It coordinates project direction, cross-track priority,
-dependencies, and release-level status without copying every track topic. Each
-detailed track uses the same canonical standard format and is declared in the
+dependencies, and release-level status. Its detail cards also provide the
+exact compact projection of each linked track's topic cards. Each detailed
+track uses the same canonical standard format and is declared in the
 repository-root `ROADMAPS.json` manifest:
 
 ```json
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "tracks": [
     {
       "slug": "game",
       "name": "Game",
-      "path": "docs/roadmaps/game.md"
+      "path": "docs/roadmaps/game.md",
+      "overview_topic": "Game experience"
     },
     {
       "slug": "ai",
       "name": "AI",
-      "path": "docs/roadmaps/ai.md"
+      "path": "docs/roadmaps/ai.md",
+      "overview_topic": "AI capability"
     }
   ]
 }
@@ -203,7 +206,29 @@ repository-root `ROADMAPS.json` manifest:
 
 Track slugs must use lowercase letters, digits, and single hyphens. Track names
 and paths must be unique, paths must be relative Markdown files inside the
-project, and a manifest may declare at most eight tracks.
+project, and a manifest may declare at most eight tracks. Every schema version
+2 track must name one unique root `Roadmap Topics` entry through
+`overview_topic`. Root topics used only for cross-track coordination may remain
+unmapped, but every track tab must have exactly one mapped root topic. Schema
+version 1 remains readable during migration but does not claim card parity.
+
+For each mapped root topic, its `Roadmap Details` rows and the linked track's
+`Roadmap Topics` rows form one presentation contract:
+
+- Row order is identical.
+- Overall `Item` is exactly the track `Topic`.
+- Overall `Description` is exactly the track `Completion Signal`.
+- Overall presentation status is derived from the track status: `Done` stays
+  `Done`; `Blocked` or `Paused` becomes `Blocked`; `Prohibited` or `Cancelled`
+  becomes `Prohibited`; and `Planned` or `In Progress` becomes `In Progress`.
+- A blocked Overall row declares its shared blocker type. The same blocker
+  signal and description apply to the linked large track card.
+
+The parser must reject schema version 2 data when any linked card count, order,
+name, presentation status, or description differs. The Overall view renders
+these linked rows as compact cards. Selecting the track renders those exact
+cards as the large progress cards; the track's own `Roadmap Details` remain the
+smaller children beneath each large card.
 
 For work confined to one track, read and evaluate both the overall roadmap and
 the affected track. Update the track when its state boundary changes. Update
@@ -228,15 +253,22 @@ roadmap view at its normal access address followed by `/roadmap`.
 The view must:
 
 - Render the project's canonical roadmap rather than maintain a second copy.
-- Show the update date, direction, current milestone, topic statuses,
-  priorities, latest status change, next transitions, and risks or blockers.
+- Put project and track tabs immediately before the progress-card area.
+- Make the large progress cards the first roadmap content after navigation.
+- Omit the visible roadmap title, update date, direction, and Current Milestone
+  strip from the primary view. These fields remain required canonical planning
+  data and public structured data, but they do not consume the first viewport.
+- Place the compact status and bottleneck legend directly below the cards.
+- Show priorities, latest status change, next transitions, and risks or
+  blockers after the card area and legend.
 - Work at both desktop and mobile widths.
 - Escape or safely render roadmap content and never expose filesystem paths,
   credentials, private endpoints, personal data, or unrestricted raw files.
 - Remain read-only on a public endpoint. Roadmap edits continue through the
   project repository and its normal review process.
 - For a multi-track project, provide an `Overall` view and one clearly named
-  view per manifest track without merging their detailed topic tables.
+  view per manifest track. Schema version 2 views must preserve the linked-card
+  identity defined above without merging track child-detail tables.
 - Use the DeveloperOS roadmap presentation families consistently: green for
   done, blue for in progress, orange for blocked, and red for prohibited.
 - Distinguish operator blockers with an attention animation, processing
@@ -248,9 +280,9 @@ The view must:
   verified project-native implementation with equivalent DOM, colors,
   interaction, escaping, responsiveness, and accessibility behavior.
 
-Legacy roadmaps without `Roadmap Details` remain valid. A compatible renderer
-may derive `Completion signal` and `Next transition` items temporarily, but a
-project adopting the shared rich presentation must add explicit detail rows.
+Legacy roadmaps without `Roadmap Details` remain valid, but the shared renderer
+does not create visible synthetic `Completion signal` or `Next transition`
+cards. A project adopting the rich presentation must add explicit detail rows.
 
 Projects without a browser-accessible application are exempt from a local
 route. DeveloperOS may provide a derived cross-project view, but each project

@@ -29,8 +29,6 @@ const elements = {
   dockerSummary: document.querySelector("#docker-summary"),
   activitySummary: document.querySelector("#activity-summary"),
   workstationDetail: document.querySelector("#workstation-detail"),
-  roadmapTime: document.querySelector("#roadmap-time"),
-  roadmapSummary: document.querySelector("#roadmap-summary"),
   roadmapTabs: document.querySelector("#roadmap-tabs"),
   roadmapTrackTabs: document.querySelector("#roadmap-track-tabs"),
   roadmapDetail: document.querySelector("#roadmap-detail"),
@@ -211,19 +209,6 @@ async function refreshRoadmaps() {
 
 function renderRoadmaps(roadmaps) {
   if (!roadmaps) return;
-  const summary = roadmaps.summary || {};
-  elements.roadmapSummary.innerHTML = [
-    {label: "Projects", value: summary.total || 0},
-    {label: "Available", value: summary.available || 0},
-    {label: "Missing", value: summary.missing || 0},
-    {label: "Invalid", value: summary.invalid || 0},
-  ].map((item) => `
-    <div class="roadmap-summary-item">
-      <span>${escapeHtml(item.label)}</span>
-      <strong>${escapeHtml(item.value)}</strong>
-    </div>
-  `).join("");
-
   const projects = roadmaps.projects || [];
   if (!projects.some((project) => project.slug === state.activeRoadmap)) {
     state.activeRoadmap = projects.find((project) => project.slug === "developer-os")?.slug
@@ -244,9 +229,6 @@ function renderRoadmaps(roadmaps) {
 
   const activeProject = projects.find((project) => project.slug === state.activeRoadmap);
   renderRoadmapTracks(activeProject);
-  elements.roadmapTime.textContent = roadmaps.generated_at
-    ? `Collected ${new Date(roadmaps.generated_at).toLocaleString()}`
-    : "Collection time unavailable";
 }
 
 function renderRoadmapTracks(project) {

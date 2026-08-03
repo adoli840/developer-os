@@ -14,6 +14,7 @@ MAX_MANIFEST_BYTES = 16_384
 MAX_ROADMAP_TRACKS = 8
 ROADMAP_FILENAME = "ROADMAP.md"
 ROADMAP_MANIFEST_FILENAME = "ROADMAPS.json"
+ROADMAP_MANIFEST_VERSIONS = (1, 2)
 ROADMAP_STATUSES = (
     "Planned",
     "In Progress",
@@ -158,14 +159,13 @@ def _read_multi_track_roadmap(
     manifest_path: Path,
 ) -> dict[str, Any]:
     try:
-        manifest = _load_manifest(project.path, manifest_path)
+        manifest_version, manifest = _load_manifest(project.path, manifest_path)
         overview = _read_roadmap_file(
             project.path / ROADMAP_FILENAME,
             slug=project.slug,
             name=project.name,
         )
-        overview["roadmap_mode"] = "multi"
-        overview["tracks"] = [
+        tracks = [
             _read_roadmap_file(
                 track["path"],
                 slug=track["slug"],
@@ -173,6 +173,16 @@ def _read_multi_track_roadmap(
             )
             for track in manifest
         ]
+        if manifest_version == 2:
+            for track, definition in zip(tracks, manifest):
+                track["overview_topic"] = definition["overview_topic"]
+            _link_overview_tracks(overview, tracks)
+        overview["roadmap_mode"] = "multi"
+        overview["roadmap_manifest_version"] = manifest_version
+        overview["track_summary_mode"] = (
+            "linked" if manifest_version == 2 else "independent"
+        )
+        overview["tracks"] = tracks
         return overview
     except (OSError, UnicodeError, json.JSONDecodeError, ValueError, TypeError):
         return _unavailable(
@@ -182,12 +192,18 @@ def _read_multi_track_roadmap(
         )
 
 
-def _load_manifest(project_root: Path, manifest_path: Path) -> list[dict[str, Any]]:
+def _load_manifest(
+    project_root: Path,
+    manifest_path: Path,
+) -> tuple[int, list[dict[str, Any]]]:
     if manifest_path.stat().st_size > MAX_MANIFEST_BYTES:
         raise ValueError("Roadmap manifest exceeds the supported size limit.")
     value = json.loads(manifest_path.read_text(encoding="utf-8-sig"))
-    if not isinstance(value, dict) or value.get("schema_version") != 1:
-        raise ValueError("Roadmap manifest must use schema version 1.")
+    if not isinstance(value, dict):
+        raise ValueError("Roadmap manifest must be an object.")
+    schema_version = value.get("schema_version")
+    if schema_version not in ROADMAP_MANIFEST_VERSIONS:
+        raise ValueError("Roadmap manifest must use schema version 1 or 2.")
 
     tracks = value.get("tracks")
     if not isinstance(tracks, list) or not 1 <= len(tracks) <= MAX_ROADMAP_TRACKS:
@@ -197,6 +213,7 @@ def _load_manifest(project_root: Path, manifest_path: Path) -> list[dict[str, An
     seen_slugs: set[str] = set()
     seen_names: set[str] = set()
     seen_paths: set[Path] = set()
+    seen_overview_topics: set[str] = set()
     for track in tracks:
         if not isinstance(track, dict):
             raise ValueError("Each roadmap track must be an object.")
@@ -216,11 +233,74 @@ def _load_manifest(project_root: Path, manifest_path: Path) -> list[dict[str, An
         path = _safe_roadmap_path(project_root, relative_path)
         if path in seen_paths or path == (project_root / ROADMAP_FILENAME).resolve():
             raise ValueError("Roadmap track paths must be unique.")
+        overview_topic = track.get("overview_topic")
+        if schema_version == 2:
+            if (
+                not isinstance(overview_topic, str)
+                or not overview_topic.strip()
+                or len(overview_topic.strip()) > 120
+            ):
+                raise ValueError(
+                    "Schema version 2 roadmap tracks require overview_topic."
+                )
+            overview_key = overview_topic.strip().casefold()
+            if overview_key in seen_overview_topics:
+                raise ValueError("Roadmap track overview topics must be unique.")
+            seen_overview_topics.add(overview_key)
         seen_slugs.add(slug)
         seen_names.add(name.strip().casefold())
         seen_paths.add(path)
-        result.append({"slug": slug, "name": name.strip(), "path": path})
-    return result
+        definition = {"slug": slug, "name": name.strip(), "path": path}
+        if schema_version == 2:
+            definition["overview_topic"] = overview_topic.strip()
+        result.append(definition)
+    return schema_version, result
+
+
+def _link_overview_tracks(
+    overview: dict[str, Any],
+    tracks: list[dict[str, Any]],
+) -> None:
+    if overview.get("detail_mode") != "explicit":
+        raise ValueError(
+            "Schema version 2 requires explicit overview Roadmap Details."
+        )
+    overview_topics = {topic["topic"]: topic for topic in overview["topics"]}
+    for track in tracks:
+        overview_topic_name = track["overview_topic"]
+        overview_topic = overview_topics.get(overview_topic_name)
+        if overview_topic is None:
+            raise ValueError(
+                f"Roadmap track references an unknown overview topic: "
+                f"{overview_topic_name}."
+            )
+        summary_items = overview_topic["items"]
+        track_topics = track["topics"]
+        if len(summary_items) != len(track_topics):
+            raise ValueError(
+                f"Overview topic {overview_topic_name} must contain exactly one "
+                "detail item for every track topic."
+            )
+        for summary_item, track_topic in zip(summary_items, track_topics):
+            expected_status = _detail_status_for_topic(track_topic["status"])
+            if summary_item["item"] != track_topic["topic"]:
+                raise ValueError(
+                    f"Overview topic {overview_topic_name} item order and names "
+                    "must exactly match its track topics."
+                )
+            if summary_item["status"] != expected_status:
+                raise ValueError(
+                    f"Overview item {summary_item['item']} status must match its "
+                    "track topic presentation status."
+                )
+            if summary_item["description"] != track_topic["completion_signal"]:
+                raise ValueError(
+                    f"Overview item {summary_item['item']} description must match "
+                    "its track topic completion signal."
+                )
+            track_topic["display_status"] = summary_item["status"]
+            track_topic["blocker_type"] = summary_item["blocker_type"]
+            track_topic["description"] = summary_item["description"]
 
 
 def _safe_roadmap_path(project_root: Path, value: Any) -> Path:
@@ -308,6 +388,7 @@ def _required_labels(
 
 def _topic_rows(lines: list[str]) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
+    seen_topics: set[str] = set()
     header_seen = False
     for line in lines:
         stripped = line.strip()
@@ -321,6 +402,10 @@ def _topic_rows(lines: list[str]) -> list[dict[str, str]]:
             continue
         if len(cells) != 4 or not all(cells):
             raise ValueError("Roadmap Topics contains a malformed row.")
+        topic_key = cells[0].casefold()
+        if topic_key in seen_topics:
+            raise ValueError("Roadmap topic names must be unique.")
+        seen_topics.add(topic_key)
         rows.append(
             {
                 "topic": cells[0],

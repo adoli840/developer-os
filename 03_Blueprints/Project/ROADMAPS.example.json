@@ -1,15 +1,17 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "tracks": [
     {
       "slug": "first-track",
       "name": "First Track",
-      "path": "docs/roadmaps/first-track.md"
+      "path": "docs/roadmaps/first-track.md",
+      "overview_topic": "First workstream"
     },
     {
       "slug": "second-track",
       "name": "Second Track",
-      "path": "docs/roadmaps/second-track.md"
+      "path": "docs/roadmaps/second-track.md",
+      "overview_topic": "Second workstream"
     }
   ]
 }

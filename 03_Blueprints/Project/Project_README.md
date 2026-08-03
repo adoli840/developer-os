@@ -68,7 +68,10 @@ If this project has a browser-accessible application, render the canonical
 roadmap read-only at `/roadmap`; do not maintain separate web-only roadmap data.
 If the project has independent workstreams, copy `ROADMAPS.example.json` to
 `ROADMAPS.json`, replace the example tracks, and keep the root roadmap as the
-cross-track overview.
+cross-track overview. Schema version 2 maps every track to one unique root
+topic through `overview_topic`. Keep that root topic's detail rows exactly
+aligned with the linked track topics so Overall compact cards and track large
+cards are the same progress items.
 
 ## Project Rules
 

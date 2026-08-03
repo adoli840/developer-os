@@ -1,7 +1,7 @@
 (function initializeDeveloperOSRoadmapView(global) {
   "use strict";
 
-  const VERSION = "2.0.0";
+  const VERSION = "3.0.0";
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -20,7 +20,8 @@
   }
 
   function blockerClass(item) {
-    if (item.status !== "Blocked") return "";
+    const status = item.display_status || item.status;
+    if (statusFamily(status) !== "blocked") return "";
     return {
       Operator: "blocker-operator",
       Processing: "blocker-processing",
@@ -28,29 +29,9 @@
     }[item.blocker_type] || "";
   }
 
-  function detailItems(topic) {
-    if (Array.isArray(topic.items) && topic.items.length) return topic.items;
-    const status = statusFamily(topic.status) === "prohibited"
-      ? "Prohibited"
-      : statusFamily(topic.status) === "blocked"
-        ? "Blocked"
-        : statusFamily(topic.status) === "done"
-          ? "Done"
-          : "In Progress";
-    return [
-      {
-        item: "Completion signal",
-        status,
-        blocker_type: status === "Blocked" ? "Processing" : "None",
-        description: topic.completion_signal,
-      },
-      {
-        item: "Next transition",
-        status,
-        blocker_type: status === "Blocked" ? "Future" : "None",
-        description: topic.next_transition,
-      },
-    ];
+  function detailItems(topic, detailMode) {
+    if (detailMode === "derived") return [];
+    return Array.isArray(topic.items) ? topic.items : [];
   }
 
   function statusLegendItem(label, family) {
@@ -93,6 +74,33 @@
         <strong>${escapeHtml(item.item)}</strong>
         <span>${escapeHtml(item.status)}</span>
       </div>
+    `;
+  }
+
+  function renderStage(topic, index, detailMode) {
+    const status = topic.display_status || topic.status;
+    const description = String(
+      topic.description || topic.completion_signal || "No description provided.",
+    );
+    const blocker = blockerClass({
+      status,
+      blocker_type: topic.blocker_type,
+    });
+    const ariaLabel = `${topic.topic}. ${status}. ${description}`;
+    return `
+      <article class="roadmap-stage ${statusFamily(status)}" role="listitem">
+        <div class="roadmap-stage-card ${blocker}"
+             tabindex="0"
+             aria-label="${escapeHtml(ariaLabel)}"
+             data-roadmap-description="${escapeHtml(description)}">
+          <span class="roadmap-stage-number" aria-hidden="true">${index + 1}</span>
+          <h4>${escapeHtml(topic.topic)}</h4>
+          <span class="roadmap-stage-status">${escapeHtml(status)}</span>
+        </div>
+        <div class="roadmap-stage-items">
+          ${detailItems(topic, detailMode).map(renderDetailItem).join("")}
+        </div>
+      </article>
     `;
   }
 
@@ -153,17 +161,19 @@
       return;
     }
 
-    const milestone = project.milestone || {};
     const latest = project.latest_status_change || {};
     const topics = project.topics || [];
     container.innerHTML = `
-      <section class="roadmap-hero">
-        <div class="roadmap-title-block">
-          <p class="roadmap-eyebrow">UPDATED ${escapeHtml(project.updated_at)}</p>
-          <h2>${escapeHtml(project.title)}</h2>
-          <p>${escapeHtml(project.direction)}</p>
+      <section class="roadmap-stage-section" aria-label="Roadmap progress">
+        <div class="roadmap-stage-scroll">
+          <div class="roadmap-stage-track" role="list">
+            ${topics.map((topic, index) => renderStage(topic, index, project.detail_mode)).join("")}
+          </div>
         </div>
-        <aside class="roadmap-legend" aria-label="Roadmap presentation legend">
+      </section>
+
+      <aside class="roadmap-legend" aria-label="Roadmap presentation legend">
+        <div class="roadmap-legend-group">
           <h3>Item status</h3>
           <div class="roadmap-legend-grid">
             ${statusLegendItem("Done", "done")}
@@ -171,40 +181,16 @@
             ${statusLegendItem("Blocked", "blocked")}
             ${statusLegendItem("Prohibited", "prohibited")}
           </div>
-          <h3 class="roadmap-legend-subtitle">Bottleneck type</h3>
+        </div>
+        <div class="roadmap-legend-group">
+          <h3>Bottleneck type</h3>
           <div class="roadmap-legend-grid roadmap-blocker-legend">
             ${blockerLegendItem("Operator response", "operator")}
             ${blockerLegendItem("Processing", "processing")}
             ${blockerLegendItem("Future evidence", "future")}
           </div>
-        </aside>
-      </section>
-
-      <section class="roadmap-milestone-strip">
-        <div><span>Current milestone</span><strong>${escapeHtml(milestone.objective)}</strong></div>
-        <div><span>Status</span><b class="roadmap-inline-status ${statusFamily(milestone.status)}">${escapeHtml(milestone.status)}</b></div>
-        <div><span>Completion signal</span><strong>${escapeHtml(milestone.completion_signal)}</strong></div>
-      </section>
-
-      <section class="roadmap-stage-section">
-        <div class="roadmap-band-heading"><h3>Roadmap stages</h3><span>${escapeHtml(topics.length)} stages</span></div>
-        <div class="roadmap-stage-scroll">
-          <div class="roadmap-stage-track" role="list">
-            ${topics.map((topic, index) => `
-              <article class="roadmap-stage ${statusFamily(topic.status)}" role="listitem">
-                <div class="roadmap-stage-card">
-                  <span class="roadmap-stage-number" aria-hidden="true">${index + 1}</span>
-                  <h4>${escapeHtml(topic.topic)}</h4>
-                  <span class="roadmap-stage-status">${escapeHtml(topic.status)}</span>
-                </div>
-                <div class="roadmap-stage-items">
-                  ${detailItems(topic).map(renderDetailItem).join("")}
-                </div>
-              </article>
-            `).join("")}
-          </div>
         </div>
-      </section>
+      </aside>
 
       <div class="roadmap-columns">
         <section class="roadmap-band"><h3>Current priority</h3>${orderedList(project.current_priority)}</section>
