@@ -25,51 +25,27 @@ Create commits at meaningful boundaries:
 - Meaningful refactoring completion
 - End-of-day checkpoint
 
-## AI Snapshot Policy
-
-Snapshots are separate from Git.
-
-A snapshot is a short-term recovery mechanism for AI work. It does not replace Git commits.
-
-Use snapshots to recover quickly when AI changes are wrong or too broad.
-
-## Snapshot Creation Triggers
-
-Create a snapshot before:
-
-- Changes over 100 lines
-- Changes across 3 or more files
-- File deletion
-- Structural changes
-- Refactoring
-- Database schema changes
-- Multi-file AI edits
-
-Small edits do not require snapshots.
-
-## Snapshot Contents
-
-A snapshot should record:
-
-- Target files
-- Work purpose
-- Creation timestamp
-
-Snapshots must not pollute Git history.
-
 ## Recovery Principle
 
-Git is long-term version control. Snapshots are short-term recovery.
+Git is the sole recovery mechanism for source-code work. AI agents must not
+create parallel file-copy snapshots before edits.
 
-If AI makes a mistake, prefer simple snapshot restore over complex Git recovery commands.
+Before changing tracked files, inspect the working tree and preserve unrelated
+developer changes. Use normal Git commits and branches at meaningful boundaries
+so completed work remains recoverable. Never discard or overwrite existing
+uncommitted work to simplify recovery.
+
+Database backups, deployment rollback artifacts, provider usage records, and
+other project-owned operational recovery data are separate from this source-code
+rule and continue to follow their own policies.
 
 ## AI Work Sequence
 
 ```text
-Snapshot
+Git inspection
 -> Implementation
 -> Verification
--> Next task
+-> Commit
 ```
 
 ## Role Split
@@ -88,11 +64,12 @@ Use Codex for implementation, modification, refactoring, file creation, tests, a
 
 Git commits should be infrequent but meaningful.
 
-Intermediate work is protected by snapshots.
+Committed Git history protects completed work. Keep intermediate edits scoped
+and verify them before committing.
 
 ## AI Behavior Rules
 
-- Codex must create snapshots before large or risky changes.
+- Codex must inspect Git state before large or risky changes.
 - Codex should not perform broad project analysis only to create a commit.
 - Checkpoint work should use minimal analysis.
 - Codex should avoid large speculative edits.
@@ -101,17 +78,8 @@ Intermediate work is protected by snapshots.
 
 DeveloperOS is not an application project repository. DeveloperOS is the developer's operating system.
 
-DeveloperOS manages development philosophy, global rules, AI collaboration, technical decisions, knowledge, Blueprints, and snapshot policy.
-
-## Snapshot Manager
-
-DeveloperOS should eventually include Snapshot Manager.
-
-Goal:
-
-- Automatically create snapshots before risky AI work.
-- Restore failed AI work with one simple command.
-- Operate separately from Git.
+DeveloperOS manages development philosophy, global rules, AI collaboration,
+technical decisions, knowledge, Blueprints, and Git safety policy.
 
 ## AI Handoff Principles
 

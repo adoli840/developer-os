@@ -15,7 +15,7 @@ DeveloperOS exists to:
 - Preserve engineering decisions that affect future projects.
 - Make GPT and Codex work like one AI development team.
 - Minimize Codex token usage by separating planning from implementation.
-- Provide safe recovery through snapshots before risky AI work.
+- Use Git as the sole source-code recovery mechanism.
 - Act as an invoked AI Project Manager that recommends priorities without owning project state.
 - Become quieter as it matures.
 
@@ -38,7 +38,6 @@ DeveloperOS
 +-- 02_AI           # AI collaboration, safety, language, review policy
 +-- 03_Blueprints   # Project blueprints for future repositories
 +-- 04_Tools        # Automation tools
-+-- 05_Snapshots    # Snapshot location; runtime contents ignored by Git
 +-- deployment      # Deployment standards, templates, and readiness checks
 ```
 
@@ -53,14 +52,14 @@ DeveloperOS
 - Source code uses Git; non-source data synchronization uses explicit project-owned authority, identity, conflict, and verification contracts.
 - GPT handles thinking; Codex handles implementation.
 - Codex treats existing design documents as implementation specifications.
-- Git is for meaningful final history; snapshots are for short-term AI recovery.
+- Git is the sole source-code recovery mechanism.
 - DeveloperOS governance documents are written in English.
 - The developer may communicate with GPT and Codex in Korean.
 
 ## DeveloperOS Self-Application
 
 DeveloperOS is also a project repository. It follows its own applicable
-governance, roadmap, snapshot, Git, coding, language, verification, and
+governance, roadmap, Git, coding, language, verification, and
 documentation rules. Root `PROJECT_RULES.md` records the narrow capabilities
 that do not fit its system-management architecture.
 

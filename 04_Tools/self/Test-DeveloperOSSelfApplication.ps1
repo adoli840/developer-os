@@ -110,11 +110,24 @@ if (
     Add-CheckResult FAIL "Roadmap standard" "the shared format, linked-track template, renderer, or /roadmap contract is missing"
 }
 
-$null = & git -C $developerOSRoot check-ignore -q -- ".snapshots/developer-os-self-check.tmp"
-if ($LASTEXITCODE -eq 0) {
-    Add-CheckResult PASS "Snapshot recovery" "runtime snapshots are available and ignored by Git"
+$workflowPolicy = Read-Text "02_AI\AI_Workflow_Safety_Policy.md"
+$gitIgnore = Read-Text ".gitignore"
+$retiredSnapshotPaths = @(".snapshots", "05_Snapshots", "04_Tools\snapshots")
+$existingSnapshotPaths = @(
+    $retiredSnapshotPaths |
+        Where-Object { Test-Path -LiteralPath (Join-Path $developerOSRoot $_) }
+)
+if (
+    $workflowPolicy -and
+    $workflowPolicy.Contains("Git is the sole recovery mechanism for source-code work") -and
+    $gitIgnore -and
+    -not $gitIgnore.Contains(".snapshots") -and
+    -not $gitIgnore.Contains("05_Snapshots") -and
+    $existingSnapshotPaths.Count -eq 0
+) {
+    Add-CheckResult PASS "Git recovery" "AI work snapshots are retired and source-code recovery is Git-only"
 } else {
-    Add-CheckResult FAIL "Snapshot recovery" ".snapshots is not ignored by Git"
+    Add-CheckResult FAIL "Git recovery" "legacy AI snapshot policy, ignore rules, or storage paths remain"
 }
 
 $null = & git -C $developerOSRoot check-ignore -q -- ".developer-os/context-index.json"

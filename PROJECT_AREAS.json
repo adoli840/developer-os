@@ -2,8 +2,7 @@
   "schema_version": 1,
   "project": "DeveloperOS",
   "exclude_globs": [
-    ".console/**",
-    "05_Snapshots/**"
+    ".console/**"
   ],
   "areas": [
     {

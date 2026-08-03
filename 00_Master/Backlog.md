@@ -35,9 +35,6 @@ The current operating mode prioritizes inspection and stabilization over new fea
 - [ ] Create a README update checklist.
 - [ ] Define decision logging automation rules.
 - [ ] Create a project inspection template.
-- [ ] Design Snapshot Manager.
-- [ ] Define snapshot create/restore commands.
-- [ ] Automate snapshot checks before risky work.
 
 ## AI Project Manager
 

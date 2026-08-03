@@ -11,13 +11,7 @@ temp/
 __pycache__/
 *.py[cod]
 
-# AI snapshots
 .codex-remote-attachments/
-04_Tools/snapshots/
-05_Snapshots/*
-!05_Snapshots/README.md
-**/.snapshots/
-.snapshots/
 
 # Generated project context index
 .developer-os/

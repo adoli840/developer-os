@@ -16,7 +16,7 @@ For Docker, Compose, image, deployment, or container lifecycle work, read
 `00_Master/DockerImageBuildPolicy.md`. Routine starts and restarts reuse images;
 only explicit build or release boundaries may build.
 
-Apply the same roadmap, snapshot, Git safety, coding, verification, language,
+Apply the same roadmap, Git safety, coding, verification, language,
 and documentation rules used for other DeveloperOS-governed projects. Use
 `PROJECT_RULES.md` only for capabilities that are structurally inapplicable to
 DeveloperOS.

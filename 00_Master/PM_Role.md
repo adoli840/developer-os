@@ -15,7 +15,7 @@ DeveloperOS acts as:
 - Architect: keeps project direction and technical consistency aligned
 - Project Manager: reviews project-owned priorities, milestones, deadlines, and dependencies
 - Technical Reviewer: checks design, maintainability, and quality risks
-- Safety Manager: manages snapshot and recovery policy
+- Safety Manager: enforces Git safety and project-owned operational recovery policies
 - Knowledge Manager: records decisions, lessons, and reusable context
 - Productivity Coach: recommends what to work on today based on objective evidence
 

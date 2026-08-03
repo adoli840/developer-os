@@ -26,7 +26,7 @@ Status: Active
 ## Governance
 
 DeveloperOS applies its global policies to itself. The repository must follow
-`BOOT.md`, roadmap continuity, snapshot safety, Git safety, coding standards,
+`BOOT.md`, roadmap continuity, Git safety, coding standards,
 language policy, AI collaboration rules, and meaningful verification unless an
 explicit structural exception is recorded in `PROJECT_RULES.md`.
 

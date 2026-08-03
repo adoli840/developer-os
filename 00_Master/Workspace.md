@@ -20,7 +20,7 @@ Individual projects remain independent. DeveloperOS manages shared development o
 - AI collaboration policy
 - Project bootstrap standards
 - Project inspection standards
-- Snapshot and recovery policy
+- Git safety and recovery policy
 
 ## Top-Level Structure
 
@@ -33,7 +33,6 @@ X:\Projects
 |   +-- 02_AI
 |   +-- 03_Blueprints
 |   +-- 04_Tools
-|   +-- 05_Snapshots
 |   +-- .git
 +-- <Project A>
 +-- <Project B>
@@ -78,13 +77,9 @@ AI collaboration rules, prompts, memory, safety policy, language policy, and rev
 
 Reusable project blueprints. A blueprint can include documentation, governance context, Docker files, Git defaults, prompts, and project structure.
 
-### 05_Snapshots
-
-Reserved location for AI work snapshots. Snapshot contents are ignored by Git; only the directory README is tracked.
-
 ### 04_Tools
 
-DeveloperOS automation tools such as Snapshot Manager, project inspection helpers, and blueprint generators.
+DeveloperOS automation tools such as project inspection helpers and blueprint generators.
 
 ## Governance Model
 

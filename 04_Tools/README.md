@@ -16,7 +16,7 @@ make self-check
 
 `self-enable` installs the shared Make file, the `devos` command path, and the
 global Codex guidance block. `self-check` verifies project guidance, roadmap and
-snapshot rules, shared Git commands, monitoring, terminal access, workstation
+Git rules, shared Git commands, monitoring, terminal access, workstation
 reporting, deployment controls, and Codex task generation. Structurally
 inapplicable Docker lifecycle, database backup, and generic deployment
 capabilities are reported as explicit skips. Docker image build minimization is
@@ -171,16 +171,11 @@ Read .codex/TASK.md
 ## Planned Tools
 
 - Git Dashboard / end-of-day Git check
-- Snapshot Manager
 - Project bootstrap helpers
 - Documentation maintenance helpers
 - Daily Review generator
 - Roadmap and ProjectStatus checker
 - Developer Score calculator
-
-## Snapshot Storage
-
-Runtime snapshots should be stored under `04_Tools/snapshots/` or `.snapshots/` and must not be committed to Git.
 
 ## PM Tool Direction
 

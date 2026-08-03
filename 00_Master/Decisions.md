@@ -100,7 +100,7 @@ Use `DeveloperOS/02_AI/AI_Collaboration.md` as the shared collaboration guide. I
 
 ## 2026-06-29 - Separate Git History From AI Snapshots
 
-Status: Accepted
+Status: Superseded by `2026-08-04 - Use Git As The Sole Source-Code Recovery Mechanism`
 
 Context:
 
@@ -418,7 +418,7 @@ Decision:
 
 Treat DeveloperOS as a project governed by every applicable DeveloperOS policy.
 Maintain repository-local agent guidance, project context, explicit exceptions,
-roadmap state, snapshot recovery, Git checks, verification, monitoring, and
+roadmap state, Git safety, verification, monitoring, and
 deployment controls. Provide one installer and one self-check for durable local
 integrations.
 
@@ -909,3 +909,33 @@ Projects retains workstation and repository comparisons; Recovery retains
 backup and schedule evidence. Resource collection adds aggregate host-process,
 shared-Docker, system-file, log, and backup attribution without exposing
 individual process command lines or filesystem paths in the public payload.
+
+## 2026-08-04 - Use Git As The Sole Source-Code Recovery Mechanism
+
+Status: Accepted
+
+Context:
+
+The mandatory AI work snapshot rule produced 27 small DeveloperOS file-copy
+sets, no recorded restore, and no implemented create or restore manager. OA,
+Gaia, and bTest had no corresponding snapshots while their Git histories
+already provided frequent recovery boundaries.
+
+Decision:
+
+Abolish AI work snapshots and the planned Snapshot Manager. Git is the sole
+source-code recovery mechanism. Agents inspect the working tree, preserve
+unrelated developer changes, and commit meaningful verified work. They do not
+create parallel pre-edit file copies.
+
+Reason:
+
+An untested duplicate recovery mechanism adds policy and cleanup overhead
+without demonstrated recovery value. Git already provides reviewed history,
+branching, comparison, and restoration for source files.
+
+Impact:
+
+Remove AI snapshot directories, ignore rules, creation triggers, self-checks,
+and roadmap work. Database backups, deployment rollback artifacts, provider
+usage records, and other project-owned operational recovery data are unchanged.

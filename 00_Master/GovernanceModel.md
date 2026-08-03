@@ -17,8 +17,8 @@ Global rules live in one place. Project-specific exceptions live inside the proj
 ## Self-Application Rule
 
 DeveloperOS is also a project repository and must follow every applicable
-policy it defines for other projects. This includes roadmap continuity,
-snapshot safety, Git safety, coding and language rules, verification, and
+policy it defines for other projects. This includes roadmap continuity, Git
+safety, coding and language rules, verification, and
 meaningful decision records.
 
 DeveloperOS also applies the Docker image build minimization policy to itself.

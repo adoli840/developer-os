@@ -9,7 +9,7 @@ Its purpose is to make GPT, Codex, and future AI coding agents follow stable rul
 ## Core Documents
 
 - `AI_Collaboration.md`: Role split, handoff rules, and token-saving collaboration model for GPT and Codex
-- `AI_Workflow_Safety_Policy.md`: Git, snapshot, recovery, and cost-aware AI workflow policy
+- `AI_Workflow_Safety_Policy.md`: Git recovery and cost-aware AI workflow policy
 - `LanguagePolicy.md`: Official documentation language policy for DeveloperOS
 - `../00_Master/GovernanceModel.md`: Relationship between global DeveloperOS policy and project-local rules
 - `Rules.md`: AI operating rules

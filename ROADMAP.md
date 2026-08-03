@@ -1,6 +1,6 @@
 ﻿# DeveloperOS Roadmap
 
-Updated: 2026-08-03
+Updated: 2026-08-04
 
 ## Direction
 
@@ -10,11 +10,11 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Current Milestone
 
-- Objective: Prepare the v0.2 Snapshot Manager after completing and observing
-  the v0.1 workspace foundation across active projects.
-- Status: Planned
-- Completion signal: Snapshot create, inspect, restore, and cleanup operations
-  protect scoped risky work without adding generated state to project Git.
+- Objective: Complete context routing and shared roadmap adoption across the
+  active application projects.
+- Status: In Progress
+- Completion signal: OA, Gaia, and bTest pass their project-owned context
+  routing checks and local roadmap presentation parity checks.
 
 ## Roadmap Topics
 
@@ -28,7 +28,6 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
 | Workspace release commands | Done | Shared deploy and local-to-server sync facades delegate only to explicit project-owned hooks and preserve Git revision identity | Add project hooks only after their deployment or data contracts are verified |
 | Provider usage visibility | Done | OpenAI cost plus Oracle cost, actual A1 free-tier consumption, remaining quantities, and transparent month-end projections are published through credential-free snapshots | Monitor collector freshness and projection accuracy without exposing account service limits |
-| Snapshot Manager | Planned | Create and restore tooling protects risky AI work without Git noise | Move to In Progress after workspace foundation stabilizes |
 
 ## Roadmap Details
 
@@ -53,8 +52,6 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Project data synchronization governance | Opt-in data ownership | Done | None | Each project explicitly selects transferable data and authority direction. |
 | Workspace release commands | Shared release facade | Done | None | Common commands delegate to verified project-owned deployment and synchronization hooks. |
 | Provider usage visibility | Credential-free snapshots | Done | None | Public usage views consume protected server snapshots without receiving provider credentials. |
-| Snapshot Manager | Scope definition | In Progress | None | Define the smallest safe create, inspect, restore, and cleanup contract before implementation. |
-| Snapshot Manager | Unscoped automatic restore | Prohibited | None | Restore remains unavailable until explicit scope and verification rules are approved. |
 
 ## Current Priority
 
@@ -68,15 +65,14 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
    project explicitly adopts a contract.
 6. Observe bTest's newly enabled project deployment hook for regressions while
    its database and kline synchronization remain explicitly disabled.
-7. Define Snapshot Manager scope before moving its topic to `In Progress`.
 
 ## Latest Status Change
 
-- Topic: Managed project roadmap adoption
-- Change: OA migration blocker narrowed to deployment and visual parity verification
-- Evidence or reason: OA schema version 2 parsing, Overall-to-track linkage,
-  shared-asset parity, and DeveloperOS console rendering now pass; its own
-  application route still requires deployment and viewport and interaction checks.
+- Topic: Snapshot Manager
+- Change: Planned to Cancelled
+- Evidence or reason: The developer selected Git as the sole source-code
+  recovery mechanism after review found 27 file-copy sets, no recorded restore,
+  no implemented manager, and no adoption in OA, Gaia, or bTest.
 
 ## Next Status Transitions
 
@@ -88,12 +84,10 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 3. Move `Managed project roadmap adoption` to `Done` after OA, Gaia, and bTest
    pass linked-card data parity, shared-asset parity, desktop, mobile, hover,
    and keyboard checks.
-4. Move `Snapshot Manager` from `Planned` to `In Progress` when its scoped
-   create and restore contract begins implementation.
-5. Update an individual project track without changing its overall roadmap
+4. Update an individual project track without changing its overall roadmap
    unless a cross-track milestone, priority, dependency, or release boundary
    also changes.
-6. Reopen `Project data synchronization governance` only if a project cannot
+5. Reopen `Project data synchronization governance` only if a project cannot
    express its identity, authority, conflict, verification, or promotion
    boundary through the standard contract.
 
@@ -120,10 +114,9 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Version | Theme | Goal |
 |---|---|---|
 | v0.1 | Workspace Foundation | Establish governance, AI collaboration, safety policy, blueprints, and PM documents |
-| v0.2 | Snapshot Manager | Add create/restore tooling for AI work snapshots |
-| v0.3 | AI Project Manager | Generate daily reviews, priority recommendations, stale project warnings, and developer score summaries |
-| v0.4 | Blueprint Generator | Generate new project folders from approved blueprints |
-| v0.5 | Automatic Project Review | Inspect project README, structure, configuration, tests, and improvement candidates |
+| v0.2 | AI Project Manager | Generate daily reviews, priority recommendations, stale project warnings, and developer score summaries |
+| v0.3 | Blueprint Generator | Generate new project folders from approved blueprints |
+| v0.4 | Automatic Project Review | Inspect project README, structure, configuration, tests, and improvement candidates |
 | v1.0 | Stable DeveloperOS Platform | Provide a stable, repeatable operating model for all projects in the workspace |
 
 ## v0.1 Scope
@@ -137,7 +130,7 @@ Included capabilities:
 - AI collaboration model
 - GPT/Codex role separation
 - Token optimization policy
-- Snapshot safety policy
+- Git safety policy
 - Language policy
 - Blueprint system
 - AI Project Manager documents
@@ -145,16 +138,6 @@ Included capabilities:
 - Project-owned roadmap continuity at topic status boundaries
 
 ## v0.2 Candidate Scope
-
-Snapshot Manager should provide:
-
-- Snapshot creation before risky AI work
-- Snapshot metadata including purpose, timestamp, and target files
-- Simple restore command
-- Git-independent recovery
-- Snapshot cleanup policy
-
-## v0.3 Candidate Scope
 
 AI Project Manager should provide:
 
@@ -165,7 +148,7 @@ AI Project Manager should provide:
 - Developer Score summary
 - Soft challenge when requested work conflicts with higher-priority evidence
 
-## v0.4 Candidate Scope
+## v0.3 Candidate Scope
 
 Blueprint Generator should provide:
 
@@ -174,7 +157,7 @@ Blueprint Generator should provide:
 - Initial `.gitignore`, Docker, and decision files
 - Optional language/database presets
 
-## v0.5 Candidate Scope
+## v0.4 Candidate Scope
 
 Automatic Project Review should provide:
 
@@ -190,7 +173,13 @@ Automatic Project Review should provide:
 DeveloperOS v1.0 should be considered stable when:
 
 - New projects can be created from blueprints.
-- Risky AI work can be snapshotted and restored.
+- Source-code recovery is handled entirely through Git.
 - Active projects can be reviewed consistently.
 - AI Project Manager summaries can guide daily work.
 - GPT and Codex can collaborate through DeveloperOS with minimal repeated context restoration.
+
+## Completed Topics
+
+| Topic | Status | Evidence |
+|---|---|---|
+| Snapshot Manager | Cancelled | AI work snapshots were abolished in favor of Git-only source recovery after no recorded restore or cross-project adoption was found. |

@@ -14,8 +14,8 @@ This document stores durable AI memory for DeveloperOS.
 - GPT handles planning, design, and review. Codex handles implementation, edits, tests, and Git work.
 - DeveloperOS is shared memory between GPT and Codex.
 - Codex token saving is an explicit operating principle.
-- Git is for final development history. Snapshots are for short-term recovery from AI mistakes.
-- Create snapshots before large changes. Keep Git commits meaningful and human-readable.
+- Git is the sole source-code recovery mechanism. Keep commits meaningful and
+  preserve unrelated uncommitted developer work.
 - DeveloperOS long-term governance documents must be written in English.
 - Developer-AI conversations may remain in Korean.
 - DeveloperOS is the single source of truth for global policy. Projects reference it through `PROJECT_CONTEXT.md` instead of copying global rules.

@@ -74,7 +74,7 @@ direction, priority, dependency, milestone, or release state also changed.
 | Project planning task | `00_Master/Dashboard.md`, `00_Master/Roadmap.md`, `00_Master/PM_Role.md` |
 | AI collaboration or handoff | `02_AI/AI_Collaboration.md`, `02_AI/Rules.md`, `02_AI/Memory.md` |
 | High-risk refactoring | `02_AI/AI_Workflow_Safety_Policy.md`, then `00_Master/CodingStandards.md` and relevant architecture documents |
-| Snapshot or recovery decision | `02_AI/AI_Workflow_Safety_Policy.md` |
+| Git recovery decision | `02_AI/AI_Workflow_Safety_Policy.md` |
 | New project bootstrap | `03_Blueprints/README.md`, `03_Blueprints/ProjectBootstrapPrompt.md`, relevant blueprint folder |
 | Governance question | `00_Master/GovernanceModel.md`, `00_Master/Decisions.md`, `README.md` |
 

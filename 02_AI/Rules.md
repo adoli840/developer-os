@@ -28,7 +28,8 @@ Record difficult-to-reverse choices such as language, database, architecture, de
 
 Repeated work should be extracted into `03_Blueprints`.
 
-## Snapshot Rule
+## Git Recovery Rule
 
-Create a snapshot before large or risky multi-file work.
+Use Git as the sole source-code recovery mechanism. Inspect the working tree
+before edits and preserve unrelated developer changes.
 

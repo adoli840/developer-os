@@ -28,8 +28,6 @@ MAX_VALUES_PER_FIELD = 80
 BUILTIN_EXCLUDES = (
     ".git/**",
     ".developer-os/**",
-    ".snapshots/**",
-    "**/.snapshots/**",
     "node_modules/**",
     "**/node_modules/**",
     ".next/**",

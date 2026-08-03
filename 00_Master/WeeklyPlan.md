@@ -15,7 +15,7 @@ Create a stable DeveloperOS foundation and prepare for clean inspection of activ
 | Create DeveloperOS structure | Done | `00_Master`, `01_Knowledge`, `02_AI`, `03_Blueprints`, `04_Tools` |
 | Initialize DeveloperOS Git repository | Done | `X:\Projects\DeveloperOS\.git` |
 | Add AI collaboration rules | Done | `02_AI` policy documents |
-| Add safety and snapshot policy | Done | Snapshot before large or risky work |
+| Establish Git safety policy | Done | Git is the sole source-code recovery mechanism |
 | Add governance reference model | Done | DeveloperOS is SSOT; projects reference it |
 | Migrate governance docs to English | Done | AI-first technical English |
 | Add AI Project Manager model | Done | Roadmap, ProjectStatus, Metrics, DailyReview, PM_Role |

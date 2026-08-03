@@ -83,13 +83,11 @@ GPT and Codex should behave like one development team.
 - Codex should record important project findings in DeveloperOS so GPT can use them later.
 - Large analysis and long technology comparisons should happen in GPT when possible to save Codex tokens.
 
-## Snapshot Safety Rule
+## Git Recovery Rule
 
-Git manages final development history. Snapshots provide short-term recovery for AI work.
-
-Codex should create a snapshot before changes over 100 lines, changes across 3 or more files, file deletion, structural changes, refactoring, database schema changes, or multi-file AI edits.
-
-Small edits do not require snapshots.
+Git is the sole source-code recovery mechanism. Codex must inspect the working
+tree, preserve unrelated developer changes, and must not create parallel AI
+file-copy snapshots before edits.
 
 Git commits should be made only at meaningful boundaries such as feature completion, meaningful refactoring completion, or end-of-day checkpoint.
 
