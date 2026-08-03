@@ -41,7 +41,7 @@ if ($Check) {
         $problems | ForEach-Object { Write-Error $_ }
         exit 1
     }
-    Write-Host "Roadmap web assets match DeveloperOS version 3.0.0."
+    Write-Host "Roadmap web assets match DeveloperOS version 3.0.1."
     exit 0
 }
 
@@ -49,4 +49,4 @@ New-Item -ItemType Directory -Path $destinationRoot -Force | Out-Null
 foreach ($file in $files) {
     Copy-Item -LiteralPath (Join-Path $sourceRoot $file) -Destination (Join-Path $destinationRoot $file) -Force
 }
-Write-Host "Installed DeveloperOS roadmap web assets version 3.0.0 to $destinationRoot"
+Write-Host "Installed DeveloperOS roadmap web assets version 3.0.1 to $destinationRoot"

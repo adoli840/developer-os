@@ -1,7 +1,7 @@
 (function initializeDeveloperOSRoadmapView(global) {
   "use strict";
 
-  const VERSION = "3.0.0";
+  const VERSION = "3.0.1";
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -163,10 +163,12 @@
 
     const latest = project.latest_status_change || {};
     const topics = project.topics || [];
+    const stageCount = Math.max(topics.length, 1);
+    const stageMinWidth = (stageCount * 218) + (Math.max(stageCount - 1, 0) * 18);
     container.innerHTML = `
       <section class="roadmap-stage-section" aria-label="Roadmap progress">
         <div class="roadmap-stage-scroll">
-          <div class="roadmap-stage-track" role="list">
+          <div class="roadmap-stage-track" role="list" style="--roadmap-stage-count: ${stageCount}; --roadmap-stage-min-width: ${stageMinWidth}px">
             ${topics.map((topic, index) => renderStage(topic, index, project.detail_mode)).join("")}
           </div>
         </div>

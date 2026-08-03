@@ -103,7 +103,7 @@ if (
     $roadmapTemplate.Contains($standardTopicHeader) -and
     $roadmapManifestTemplate.Contains('"schema_version": 2') -and
     $roadmapManifestTemplate.Contains('"overview_topic"') -and
-    $roadmapRenderer.Contains('const VERSION = "3.0.0"')
+    $roadmapRenderer.Contains('const VERSION = "3.0.1"')
 ) {
     Add-CheckResult PASS "Roadmap standard" "the card-first format, linked-track manifest, and read-only /roadmap contract are defined"
 } else {

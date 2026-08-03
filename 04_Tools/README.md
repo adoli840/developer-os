@@ -148,7 +148,7 @@ used by the DeveloperOS console and project-local `/roadmap` routes. Its
 installer copies the canonical CSS and JavaScript into a project, and `-Check`
 verifies byte-for-byte parity. Projects own their roadmap content and parser;
 they must not independently restyle or truncate the shared stage presentation.
-Bundle 3.0.0 puts progress cards immediately below navigation, moves the legend
+Bundle 3.0.1 puts progress cards immediately below navigation, moves the legend
 below the cards, and uses schema version 2 track linkage to keep Overall compact
 cards identical to the linked track's large cards.
 

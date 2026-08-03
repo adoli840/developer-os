@@ -15,10 +15,13 @@ The default view is progress-card first: project and track navigation stays
 outside the renderer, large cards begin immediately below it, and the compact
 legend follows the cards. Canonical title, direction, update, and milestone
 fields remain available to planning tools but are not rendered above progress.
+Stage cards share all available horizontal space when their minimum readable
+width fits. Horizontal scrolling remains only when the viewport is narrower
+than the complete stage sequence.
 
 ## Version
 
-The current browser bundle is `3.0.0` and consists of:
+The current browser bundle is `3.0.1` and consists of:
 
 - `assets/roadmap-view.js`
 - `assets/roadmap-view.css`
