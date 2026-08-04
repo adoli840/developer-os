@@ -704,7 +704,7 @@ function renderRecovery(backups) {
           <div>${backupStatus(backup)}<span>${formatBytes(backup.size_bytes)}</span></div>
           <dl>
             <dt>Backup</dt><dd>${escapeHtml(formatDate(backup.last_success_at))}</dd>
-            <dt>Restore test</dt><dd>${escapeHtml(formatDate(backup.last_verification_at))}</dd>
+            <dt>Verification</dt><dd>${escapeHtml(formatDate(backup.last_verification_at))}</dd>
             <dt>Policy</dt><dd>${escapeHtml(backupPolicyLabel(backup.backup_policy))}</dd>
           </dl>
         </div>

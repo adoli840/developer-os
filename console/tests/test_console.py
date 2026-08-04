@@ -178,7 +178,7 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn("<h1>Resources</h1>", html)
         self.assertNotIn('id="resource-time"', html)
         self.assertIn('href="/styles.css?v=5"', html)
-        self.assertIn('src="/app.js?v=7"', html)
+        self.assertIn('src="/app.js?v=8"', html)
         self.assertIn('statusBadge(`${repo.behind} behind`, "behind")', javascript)
         self.assertIn(".status.behind", (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8"))
         self.assertIn('const UI_STATE_KEY = "developer-os-console-ui-state-v1"', javascript)
