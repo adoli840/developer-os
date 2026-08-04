@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>DeveloperOS Server Terminal</title>
-  <link rel="stylesheet" href="/terminal.css">
+  <link rel="stylesheet" href="/vendor/xterm/xterm.css?v=5.5.0">
+  <link rel="stylesheet" href="/terminal.css?v=2">
 </head>
 <body>
   <header class="topbar">
@@ -16,9 +17,9 @@
         <span>DeveloperOS</span>
       </div>
     </div>
-    <div class="connection">
+    <div class="connection" id="connection-state">
       <span class="connection-dot" aria-hidden="true"></span>
-      SSH tunnel
+      Connecting
     </div>
   </header>
 
@@ -29,31 +30,11 @@
       <button class="clear-button" id="clear-button" type="button">Clear</button>
     </section>
 
-    <section class="transcript" id="transcript" aria-live="polite" aria-label="Command output"></section>
-
-    <form class="command-form" id="command-form">
-      <span class="prompt" id="prompt">server:$</span>
-      <input
-        id="command-input"
-        name="command"
-        type="text"
-        autocomplete="off"
-        autocapitalize="none"
-        spellcheck="false"
-        aria-label="Shell command"
-      >
-      <button id="run-button" type="submit">Run</button>
-    </form>
+    <section class="terminal-viewport" id="terminal-viewport" aria-label="Interactive Linux terminal"></section>
   </main>
 
-  <template id="command-template">
-    <article class="command-entry">
-      <div class="command-line"><span class="entry-prompt"></span><code class="entry-command"></code></div>
-      <pre class="entry-output"></pre>
-      <div class="entry-result"></div>
-    </article>
-  </template>
-
-  <script src="/terminal.js"></script>
+  <script src="/vendor/xterm/xterm.js?v=5.5.0"></script>
+  <script src="/vendor/xterm/addon-fit.js?v=0.10.0"></script>
+  <script src="/terminal.js?v=2"></script>
 </body>
 </html>

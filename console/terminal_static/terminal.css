@@ -99,10 +99,15 @@ button {
   box-shadow: 0 0 0 3px rgb(57 217 138 / 12%);
 }
 
+.connection:not(.connected) .connection-dot {
+  background: var(--amber);
+  box-shadow: 0 0 0 3px rgb(244 188 85 / 12%);
+}
+
 .terminal-shell {
   min-height: calc(100vh - 60px);
   display: grid;
-  grid-template-rows: auto minmax(300px, 1fr) auto;
+  grid-template-rows: auto minmax(300px, 1fr);
 }
 
 .context-bar {
@@ -123,8 +128,7 @@ button {
 }
 
 .project-tab,
-.clear-button,
-#run-button {
+.clear-button {
   min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -159,12 +163,19 @@ button {
   white-space: nowrap;
 }
 
-.transcript {
+.terminal-viewport {
   min-height: 0;
-  overflow: auto;
-  padding: 18px 22px 40px;
-  font-family: "Cascadia Mono", Consolas, monospace;
+  overflow: hidden;
+  padding: 10px 12px;
   background: #0b0e11;
+}
+
+.terminal-viewport .xterm {
+  height: 100%;
+}
+
+.terminal-viewport .xterm-viewport {
+  scrollbar-color: var(--line) #0b0e11;
 }
 
 .empty-state {
@@ -295,17 +306,7 @@ button {
     grid-row: 1;
   }
 
-  .transcript {
+  .terminal-viewport {
     padding-inline: 14px;
-  }
-
-  .command-form {
-    grid-template-columns: auto minmax(0, 1fr);
-    padding-inline: 12px;
-  }
-
-  #run-button {
-    grid-column: 1 / -1;
-    width: 100%;
   }
 }

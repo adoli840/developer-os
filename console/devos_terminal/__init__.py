@@ -1,1 +1,1 @@
-"""Private browser command console for allowlisted server projects."""
+"""Private interactive browser terminal for allowlisted server projects."""

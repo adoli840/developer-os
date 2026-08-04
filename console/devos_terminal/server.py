@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import hashlib
 import hmac
 import json
 import mimetypes
+import select
 import secrets
 import sys
 import time
@@ -13,10 +15,12 @@ from http.cookies import SimpleCookie
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from ipaddress import ip_address
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
+from .pty_session import PtySession
 from .runner import TerminalRunner
 from .settings import TerminalSettings, load_settings
+from .websocket_transport import receive_frame, send_close, send_frame, websocket_accept
 
 
 MAX_REQUEST_BODY = 8192
@@ -160,6 +164,9 @@ class TerminalHandler(BaseHTTPRequestHandler):
         if parsed.path == "/healthz":
             self._json(HTTPStatus.OK, {"status": "ok"})
             return
+        if parsed.path == "/api/terminal":
+            self._open_terminal(parsed.query)
+            return
         if parsed.path == "/api/session":
             session, csrf_token = self.application.create_session()
             cookie = (
@@ -180,6 +187,96 @@ class TerminalHandler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
             return
         self._serve_static(parsed.path)
+
+    def _open_terminal(self, query: str) -> None:
+        if not self._require_session():
+            return
+        if not self._same_origin():
+            self._json(HTTPStatus.FORBIDDEN, {"error": "Request validation failed."})
+            return
+        if self.headers.get("Upgrade", "").lower() != "websocket":
+            self._json(HTTPStatus.UPGRADE_REQUIRED, {"error": "WebSocket upgrade required."})
+            return
+        if "upgrade" not in self.headers.get("Connection", "").lower():
+            self._json(HTTPStatus.BAD_REQUEST, {"error": "Invalid WebSocket connection."})
+            return
+        if self.headers.get("Sec-WebSocket-Version") != "13":
+            self._json(HTTPStatus.BAD_REQUEST, {"error": "Unsupported WebSocket version."})
+            return
+
+        key = self.headers.get("Sec-WebSocket-Key", "")
+        try:
+            if len(base64.b64decode(key, validate=True)) != 16:
+                raise ValueError
+        except (ValueError, base64.binascii.Error):
+            self._json(HTTPStatus.BAD_REQUEST, {"error": "Invalid WebSocket key."})
+            return
+
+        project_slug = parse_qs(query).get("project", [""])[0]
+        try:
+            project = self.application.runner.project(project_slug)
+        except ValueError as error:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+
+        self.send_response(HTTPStatus.SWITCHING_PROTOCOLS)
+        self.send_header("Upgrade", "websocket")
+        self.send_header("Connection", "Upgrade")
+        self.send_header("Sec-WebSocket-Accept", websocket_accept(key))
+        self.end_headers()
+        self.wfile.flush()
+        self.close_connection = True
+
+        terminal: PtySession | None = None
+        started = time.monotonic()
+        self.application.runner.audit_terminal_session(project.slug, "terminal_opened")
+        try:
+            terminal = PtySession.open(project.path)
+            while terminal.alive():
+                readable, _, _ = select.select([self.connection, terminal.fd], [], [], 1.0)
+                if terminal.fd in readable:
+                    output = terminal.read()
+                    if output:
+                        send_frame(self.connection, output, opcode=0x2)
+                    elif not terminal.alive():
+                        break
+                if self.connection in readable:
+                    frame = receive_frame(self.connection)
+                    if frame.opcode == 0x8:
+                        break
+                    if frame.opcode == 0x9:
+                        send_frame(self.connection, frame.payload, opcode=0xA)
+                        continue
+                    if frame.opcode != 0x1:
+                        continue
+                    message = json.loads(frame.payload.decode("utf-8"))
+                    if not isinstance(message, dict):
+                        raise ValueError("Invalid terminal message.")
+                    message_type = message.get("type")
+                    if message_type == "input":
+                        data = str(message.get("data", "")).encode("utf-8")
+                        if len(data) > MAX_REQUEST_BODY:
+                            raise ValueError("Terminal input is too large.")
+                        terminal.write(data)
+                    elif message_type == "resize":
+                        columns = max(20, min(500, int(message.get("columns", 120))))
+                        rows = max(5, min(200, int(message.get("rows", 32))))
+                        terminal.resize(columns, rows)
+                    else:
+                        raise ValueError("Unknown terminal message.")
+        except (BrokenPipeError, ConnectionError, json.JSONDecodeError, UnicodeDecodeError):
+            pass
+        except (OSError, ValueError) as error:
+            sys.stderr.write(f"Terminal session error for {project.slug}: {error}\n")
+            try:
+                send_close(self.connection, 1008)
+            except OSError:
+                pass
+        finally:
+            if terminal is not None:
+                terminal.close()
+            duration_ms = int((time.monotonic() - started) * 1000)
+            self.application.runner.audit_terminal_session(project.slug, "terminal_closed", duration_ms)
 
     def do_POST(self) -> None:
         if self._reject_non_loopback() or not self._require_session():
@@ -248,7 +345,11 @@ def create_server(settings: TerminalSettings) -> ThreadingHTTPServer:
         pass
 
     BoundHandler.application = application
-    return ThreadingHTTPServer((settings.bind, settings.port), BoundHandler)
+
+    class TerminalHTTPServer(ThreadingHTTPServer):
+        daemon_threads = True
+
+    return TerminalHTTPServer((settings.bind, settings.port), BoundHandler)
 
 
 def main() -> None:

@@ -51,12 +51,22 @@ class TerminalRunner:
             for project in self._projects.values()
         ]
 
-    def execute(self, project_slug: str, command: str) -> CommandResult:
+    def project(self, project_slug: str) -> TerminalProject:
         project = self._projects.get(project_slug)
         if project is None:
             raise ValueError("Unknown project.")
         if not project.path.is_dir():
             raise ValueError("The project directory is unavailable.")
+        return project
+
+    def audit_terminal_session(self, project_slug: str, event: str, duration_ms: int | None = None) -> None:
+        fields: dict[str, object] = {"project": project_slug, "event": event}
+        if duration_ms is not None:
+            fields["duration_ms"] = duration_ms
+        self._audit(**fields)
+
+    def execute(self, project_slug: str, command: str) -> CommandResult:
+        project = self.project(project_slug)
         normalized = command.strip()
         if not normalized:
             raise ValueError("Command cannot be empty.")

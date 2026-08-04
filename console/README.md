@@ -278,20 +278,23 @@ make terminal-gaia
 ```
 
 The tunnel maps Home `127.0.0.1:8092` to server `127.0.0.1:8022`. The public
-project view links to this Home-only address. The terminal service runs actual
-Bash commands in the selected allowlisted project directory as `opc`, limits
-each command to 120 seconds, caps returned output, and records only a command
-hash and result metadata in its audit log.
+project view links to this Home-only address. The terminal service opens an
+actual Linux PTY running Bash in the selected allowlisted project directory as
+`opc`. ANSI applications and interactive keyboard input work through the
+bundled xterm.js client, including `nano`, search, save, exit, passwordless
+interactive tools, and terminal resize. PTY session open and close metadata are
+audited without recording typed commands or terminal contents.
 
 When Home automatic reporting is enabled, the same hidden task checks the
 tunnel every five minutes and restores it after login or a dropped SSH
 connection. Tunnel failure is logged separately and does not prevent the Git
 status report from being uploaded. Office reporting never creates this tunnel.
 
-This is a command-oriented shell rather than a full PTY. Interactive programs
-such as editors, password prompts, and `top` are not supported. Commands that
-work without an interactive prompt, including Git, Make, Docker, and Compose,
-run normally with the permissions of `opc`.
+The browser terminal is a persistent shell session rather than a sequence of
+isolated command requests. Switching the project tab closes the previous PTY
+and opens a new one at the selected project path. The shell has the permissions
+of `opc`; it does not provide root access or expose the terminal service secret
+inside the shell environment.
 
 Inspect the private service:
 
