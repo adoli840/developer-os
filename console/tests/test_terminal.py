@@ -142,7 +142,7 @@ class TerminalRunnerTests(unittest.TestCase):
 
         self.assertIn('/vendor/xterm/xterm.js?v=5.5.0', page)
         self.assertIn('/vendor/xterm/addon-fit.js?v=0.10.0', page)
-        self.assertIn('/terminal.css?v=3', page)
+        self.assertIn('/terminal.css?v=4', page)
         self.assertIn('/terminal.js?v=3', page)
         self.assertIn('id="terminal-viewport"', page)
         self.assertIn("new WebSocket(url)", javascript)
@@ -150,6 +150,9 @@ class TerminalRunnerTests(unittest.TestCase):
         self.assertIn('type: "resize"', javascript)
         self.assertIn('cursorBlink: false', javascript)
         self.assertIn('cursorInactiveStyle: "block"', javascript)
+        stylesheet = (repository / "console" / "terminal_static" / "terminal.css").read_text(encoding="utf-8")
+        self.assertIn('.xterm-cursor.xterm-cursor-block', stylesheet)
+        self.assertIn('width: 1ch', stylesheet)
         self.assertIn("PtySession.open(project.path)", server)
         self.assertIn("actual Linux PTY", readme)
         self.assertNotIn("Interactive programs\nsuch as editors", readme)
