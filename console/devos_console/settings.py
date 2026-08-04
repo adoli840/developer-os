@@ -32,7 +32,6 @@ class Settings:
     bind: str
     port: int
     access_token: str
-    memo_access_token: str
     secure_cookie: bool
     public_read_only: bool
     trusted_local: bool
@@ -134,7 +133,6 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
         )
 
     access_token = os.getenv("DEVOS_CONSOLE_TOKEN", "").strip()
-    memo_access_token = os.getenv("DEVOS_MEMO_TOKEN", access_token).strip()
     resolved_bind = bind or os.getenv("DEVOS_BIND", "127.0.0.1")
     if not dev_mode and not access_token:
         raise RuntimeError("DEVOS_CONSOLE_TOKEN is required outside development mode.")
@@ -180,7 +178,6 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
         bind=resolved_bind,
         port=port if port is not None else int(os.getenv("DEVOS_PORT", "8080")),
         access_token=access_token,
-        memo_access_token=memo_access_token,
         secure_cookie=_bool_env("DEVOS_SECURE_COOKIE", not dev_mode),
         public_read_only=public_read_only,
         trusted_local=dev_mode and _is_loopback_bind(resolved_bind) and not public_read_only,

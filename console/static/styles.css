@@ -921,38 +921,8 @@ tbody tr:last-child td {
   background: var(--surface);
 }
 
-.memo-shell[hidden],
-.memo-lock-panel[hidden] {
+.memo-shell[hidden] {
   display: none;
-}
-
-.memo-lock-panel {
-  display: grid;
-  min-height: calc(100vh - 58px);
-  place-items: center;
-  padding: 24px;
-  background: var(--canvas);
-}
-
-.memo-login-form {
-  display: grid;
-  width: min(360px, 100%);
-  gap: 12px;
-  padding: 24px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--surface);
-}
-
-.memo-login-form h1 {
-  margin: 2px 0 6px;
-  font-size: 20px;
-}
-
-.memo-login-form label {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .memo-project-list {
@@ -1008,19 +978,6 @@ tbody tr:last-child td {
   color: var(--muted);
   font-size: 11px;
   white-space: nowrap;
-}
-
-.memo-editor-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.memo-lock-button {
-  min-width: 56px;
-  min-height: 30px;
-  padding: 4px 9px;
-  font-size: 11px;
 }
 
 .memo-editor {

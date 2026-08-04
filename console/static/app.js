@@ -38,9 +38,6 @@ const state = {
   activeMemoProject: MEMO_PROJECTS.some((project) => project.slug === savedUiState.activeMemoProject)
     ? savedUiState.activeMemoProject
     : "developer-os",
-  memoAuthenticated: false,
-  memoCanLogout: false,
-  memoCsrfToken: "",
   memos: emptyMemos(),
   memoSaveStates: emptyMemoStates(),
   memoSaveTimers: new Map(),
@@ -77,12 +74,7 @@ const elements = {
   backupSummary: document.querySelector("#backup-summary"),
   timerSummary: document.querySelector("#timer-summary"),
   usagePanel: document.querySelector("#usage-panel"),
-  memoLockPanel: document.querySelector("#memo-lock-panel"),
   memoShell: document.querySelector("#memo-shell"),
-  memoLoginForm: document.querySelector("#memo-login-form"),
-  memoLoginError: document.querySelector("#memo-login-error"),
-  memoAccessToken: document.querySelector("#memo-access-token"),
-  memoLogoutButton: document.querySelector("#memo-logout-button"),
   memoProjectList: document.querySelector("#memo-project-list"),
   memoActiveProject: document.querySelector("#memo-active-project"),
   memoSaveState: document.querySelector("#memo-save-state"),
@@ -188,8 +180,7 @@ async function initialize() {
     showApplication();
     await Promise.all([
       refreshOverview(),
-      refreshMemoSession().catch((error) => {
-        state.memoAuthenticated = false;
+      loadMemos().then(renderMemo).catch((error) => {
         renderMemo();
         showToast(error.message);
       }),
@@ -197,15 +188,6 @@ async function initialize() {
   } catch {
     showLogin();
   }
-}
-
-async function refreshMemoSession() {
-  const session = await request("/api/memo/session");
-  state.memoAuthenticated = Boolean(session.authenticated);
-  state.memoCanLogout = Boolean(session.can_logout);
-  state.memoCsrfToken = session.csrf_token || "";
-  if (state.memoAuthenticated) await loadMemos();
-  renderMemo();
 }
 
 async function loadMemos() {
@@ -416,10 +398,6 @@ function resourceItemValue(item) {
 }
 
 function renderMemo() {
-  elements.memoLockPanel.hidden = state.memoAuthenticated;
-  elements.memoShell.hidden = !state.memoAuthenticated;
-  if (!state.memoAuthenticated) return;
-
   const active = MEMO_PROJECTS.find((project) => project.slug === state.activeMemoProject) || MEMO_PROJECTS[0];
   state.activeMemoProject = active.slug;
   persistUiState();
@@ -434,7 +412,6 @@ function renderMemo() {
     elements.memoEditor.value = state.memos[active.slug];
   }
   elements.memoSaveState.textContent = state.memoSaveStates[active.slug] || "Saved";
-  elements.memoLogoutButton.hidden = !state.memoCanLogout;
 }
 
 function queueActiveMemoSave() {
@@ -456,7 +433,6 @@ async function saveMemo(project) {
   try {
     await request(`/api/memos/${encodeURIComponent(project)}`, {
       method: "PUT",
-      headers: {"X-Memo-CSRF-Token": state.memoCsrfToken},
       body: JSON.stringify({content}),
     });
     if (state.memoSaveVersions[project] === version) {
@@ -466,23 +442,9 @@ async function saveMemo(project) {
   } catch (error) {
     state.memoSaveStates[project] = "Not saved";
     if (state.activeMemoProject === project) elements.memoSaveState.textContent = "Not saved";
-    if (error.status === 401) {
-      state.memoAuthenticated = false;
-      state.memoCsrfToken = "";
-      renderMemo();
-    }
     showToast(error.message);
     throw error;
   }
-}
-
-async function flushMemoSaves() {
-  const projects = [...state.memoSaveTimers.keys()];
-  for (const project of projects) {
-    window.clearTimeout(state.memoSaveTimers.get(project));
-    state.memoSaveTimers.delete(project);
-  }
-  await Promise.all(projects.map((project) => saveMemo(project)));
 }
 
 function resourceDisposition(value) {
@@ -831,46 +793,6 @@ elements.logoutButton.addEventListener("click", async () => {
     state.csrfToken = "";
     showLogin();
   }
-});
-
-elements.memoLoginForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  elements.memoLoginError.textContent = "";
-  try {
-    const result = await request("/api/memo/login", {
-      method: "POST",
-      body: JSON.stringify({token: elements.memoAccessToken.value}),
-    });
-    state.memoAuthenticated = true;
-    state.memoCanLogout = Boolean(result.can_logout);
-    state.memoCsrfToken = result.csrf_token || "";
-    elements.memoAccessToken.value = "";
-    await loadMemos();
-    renderMemo();
-    elements.memoEditor.focus();
-  } catch (error) {
-    elements.memoLoginError.textContent = error.message;
-  }
-});
-
-elements.memoLogoutButton.addEventListener("click", async () => {
-  try {
-    await flushMemoSaves();
-    await request("/api/memo/logout", {
-      method: "POST",
-      headers: {"X-Memo-CSRF-Token": state.memoCsrfToken},
-      body: "{}",
-    });
-  } catch (error) {
-    showToast(error.message);
-    return;
-  }
-  state.memoAuthenticated = false;
-  state.memoCanLogout = false;
-  state.memoCsrfToken = "";
-  state.memos = emptyMemos();
-  renderMemo();
-  elements.memoAccessToken.focus();
 });
 
 elements.memoProjectList.addEventListener("click", (event) => {

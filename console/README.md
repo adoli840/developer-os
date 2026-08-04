@@ -99,7 +99,6 @@ make console-status
 make console-logs
 make console-backup-status
 make console-usage-status
-make console-memo-token
 ```
 
 The deployment script:
@@ -109,8 +108,7 @@ The deployment script:
 2. Packages only the committed `HEAD` revision with `git archive`; ignored,
    untracked, and secret files cannot enter the release.
 3. Transfers the package to `opc@168.107.18.16`.
-4. Generates separate persistent random console and memo tokens when they do
-   not exist.
+4. Generates a persistent random console token when one does not exist.
 5. Installs and starts `developer-os-console.service`.
 6. Binds the service to `0.0.0.0:8080` in public read-only mode.
 7. Opens `8080/tcp` in Oracle Linux `firewalld`.
@@ -146,8 +144,9 @@ integrity check against the copy, and retains 14 days under
 `/var/backups/developer-os/developer-os-memos`. Its result appears in Recovery
 as `DeveloperOS memos`.
 
-`make console-memo-token` reads the protected memo-only token through SSH for
-entry in the Memo view. It does not print or reuse the full console token.
+The Memo view reads and writes these four bounded records directly without a
+separate token. Anyone who can reach the console address can view and edit
+them; the rest of the private console APIs keep their existing authentication.
 
 OA database backups preserve job, log, generated-file metadata, configuration,
 and mapping knowledge. Files referenced by OA metadata under host-mounted

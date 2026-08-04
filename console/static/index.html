@@ -83,17 +83,7 @@
       </section>
 
       <section class="tab-view" id="tab-memo" aria-label="Project memos">
-        <div class="memo-lock-panel" id="memo-lock-panel" hidden>
-          <form class="memo-login-form" id="memo-login-form">
-            <div class="brand-mark">D</div>
-            <h1>Private memos</h1>
-            <label for="memo-access-token">Memo token</label>
-            <input id="memo-access-token" name="token" type="password" autocomplete="current-password" required>
-            <button class="button primary" type="submit">Unlock</button>
-            <p class="form-error" id="memo-login-error" role="alert"></p>
-          </form>
-        </div>
-        <div class="memo-shell" id="memo-shell" hidden>
+        <div class="memo-shell" id="memo-shell">
           <nav class="memo-project-list" id="memo-project-list" aria-label="Memo projects">
             <button class="memo-project-tab active" data-memo-project="developer-os" type="button">OS</button>
             <button class="memo-project-tab" data-memo-project="btest" type="button">bTest</button>
@@ -103,10 +93,7 @@
           <section class="memo-editor-panel">
             <header class="memo-editor-header">
               <strong id="memo-active-project">OS</strong>
-              <div class="memo-editor-actions">
-                <span id="memo-save-state" role="status" aria-live="polite">Saved</span>
-                <button class="button quiet memo-lock-button" id="memo-logout-button" type="button">Lock</button>
-              </div>
+              <span id="memo-save-state" role="status" aria-live="polite">Saved</span>
             </header>
             <textarea class="memo-editor" id="memo-editor" aria-label="OS memo" maxlength="65536" spellcheck="true"></textarea>
           </section>
@@ -117,6 +104,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/roadmap-assets/roadmap-view.js?v=3.0.2" defer></script>
-  <script src="/app.js?v=8" defer></script>
+  <script src="/app.js?v=9" defer></script>
 </body>
 </html>

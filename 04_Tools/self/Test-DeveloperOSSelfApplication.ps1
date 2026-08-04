@@ -262,8 +262,8 @@ if (
     $memoBackup.Contains("developer-os-memos") -and
     $memoBackup.Contains("PRAGMA integrity_check") -and
     $memoDeployment -and
-    $memoDeployment.Contains('"MemoToken"') -and
-    $memoMakefile -match '(?m)^console-memo-token:' -and
+    -not $memoDeployment.Contains("DEVOS_MEMO_TOKEN") -and
+    -not ($memoMakefile -match '(?m)^console-memo-token:') -and
     $projectRules -and
     $projectRules.Contains("memos.sqlite3")
 ) {

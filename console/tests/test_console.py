@@ -43,20 +43,6 @@ class SessionStoreTests(unittest.TestCase):
         session = store.create_trusted()
         self.assertEqual(store.from_cookie(store.cookie_header(session)), session)
 
-    def test_scoped_cookie_does_not_replace_the_console_cookie(self) -> None:
-        store = SessionStore(
-            "expected-token",
-            secure_cookie=False,
-            cookie_name="devos_memo_session",
-            cookie_path="/api/",
-        )
-        session = store.login("expected-token", "127.0.0.1")
-        cookie = store.cookie_header(session)
-        self.assertIn("devos_memo_session=", cookie)
-        self.assertIn("Path=/api/", cookie)
-        self.assertNotIn("devos_session=", cookie)
-
-
 class MemoStoreTests(unittest.TestCase):
     def test_memos_persist_across_store_instances(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -140,10 +126,12 @@ class ConsoleSurfaceTests(unittest.TestCase):
             'data-memo-project="gaia"',
         ]
         self.assertEqual(memo_items, sorted(memo_items, key=html.index))
-        self.assertIn('id="memo-login-form"', html)
-        self.assertIn('id="memo-logout-button"', html)
+        self.assertNotIn('id="memo-login-form"', html)
+        self.assertNotIn('id="memo-logout-button"', html)
+        self.assertNotIn("Memo token", html)
         self.assertNotIn("localStorage", javascript)
-        self.assertIn('request("/api/memo/session")', javascript)
+        self.assertNotIn("/api/memo/session", javascript)
+        self.assertNotIn("X-Memo-CSRF-Token", javascript)
         self.assertIn('request("/api/memos")', javascript)
         self.assertIn("`/api/memos/${encodeURIComponent(project)}`", javascript)
 
@@ -178,7 +166,7 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn("<h1>Resources</h1>", html)
         self.assertNotIn('id="resource-time"', html)
         self.assertIn('href="/styles.css?v=5"', html)
-        self.assertIn('src="/app.js?v=8"', html)
+        self.assertIn('src="/app.js?v=9"', html)
         self.assertIn('statusBadge(`${repo.behind} behind`, "behind")', javascript)
         self.assertIn(".status.behind", (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8"))
         self.assertIn('const UI_STATE_KEY = "developer-os-console-ui-state-v1"', javascript)
@@ -379,11 +367,10 @@ class LocalSessionTests(unittest.TestCase):
 
 
 class MemoApiTests(unittest.TestCase):
-    def test_public_memo_login_is_scoped_and_persists_text(self) -> None:
+    def test_public_memos_persist_without_unlocking_private_apis(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             values = {
                 "DEVOS_CONSOLE_TOKEN": "test-token",
-                "DEVOS_MEMO_TOKEN": "memo-token",
                 "DEVOS_RUNTIME_DIR": directory,
                 "DEVOS_WORKSPACE_ROOT": directory,
                 "DEVOS_PUBLIC_READ_ONLY": "1",
@@ -409,15 +396,10 @@ class MemoApiTests(unittest.TestCase):
                     return json.load(response)
 
             try:
-                self.assertFalse(call("/api/memo/session")["authenticated"])
-                with self.assertRaises(HTTPError) as wrong_token:
-                    call("/api/memo/login", method="POST", body={"token": "test-token"})
-                login = call("/api/memo/login", method="POST", body={"token": "memo-token"})
                 saved = call(
                     "/api/memos/gaia",
                     method="PUT",
                     body={"content": "게임 AI 아이디어"},
-                    headers={"X-Memo-CSRF-Token": login["csrf_token"]},
                 )
                 memos = call("/api/memos")
                 with self.assertRaises(HTTPError) as error:
@@ -428,7 +410,6 @@ class MemoApiTests(unittest.TestCase):
                 thread.join(timeout=5)
 
         self.assertEqual(saved["item"]["content"], "게임 AI 아이디어")
-        self.assertEqual(wrong_token.exception.code, 401)
         self.assertEqual(
             next(item for item in memos["items"] if item["project"] == "gaia")["content"],
             "게임 AI 아이디어",

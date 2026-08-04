@@ -954,22 +954,19 @@ public endpoint would expose unrelated private APIs.
 Decision:
 
 Store one bounded text memo per registered project in a SQLite database under
-the persistent console state directory. Protect reads and writes with a
-dedicated memo-only token session and CSRF token whose cookie cannot
-authenticate the general console APIs. Include a consistent SQLite copy and
-integrity check in
+the persistent console state directory. Expose only these four fixed records
+through a narrow public read/write API; this does not authenticate or expose
+the general console APIs. Include a consistent SQLite copy and integrity check in
 the daily managed database backup job with 14-day retention.
 
 Reason:
 
 Four small text records do not justify a PostgreSQL service. SQLite provides
-durable transactional storage with no new daemon, and the scoped session keeps
-memo editing separate from public operational reads and private console data.
+durable transactional storage with no new daemon, while the fixed project list
+and bounded content keep memo editing separate from private console data.
 
 Impact:
 
-The Memo view requires a one-time unlock per session on the public console and
-auto-saves to server storage. Recovery reports the memo backup beside project
-database protection. The direct HTTP endpoint still lacks transport
-confidentiality; use HTTPS before treating an untrusted network as acceptable
-for token entry.
+The Memo view opens directly and auto-saves to server storage. Recovery reports
+the memo backup beside project database protection. Anyone who can reach the
+public console can read or replace memo text, so memos must not contain secrets.
