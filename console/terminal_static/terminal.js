@@ -100,7 +100,9 @@ function renderProjects() {
 
 function initializeTerminal() {
   state.terminal = new Terminal({
-    cursorBlink: true,
+    cursorBlink: false,
+    cursorStyle: "block",
+    cursorInactiveStyle: "block",
     fontFamily: '"Cascadia Mono", Consolas, "Liberation Mono", monospace',
     fontSize: 14,
     lineHeight: 1.15,
