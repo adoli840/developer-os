@@ -5,7 +5,7 @@ DEVOS_OPENAI_ENV ?= X:/Settings/env/developer-os.env
 DEVOS_DEPLOY_TARGET := console-deploy
 WORKSTATION_REPORT_INTERVAL_MINUTES ?= 5
 
-.PHONY: self-enable self-check make-check context-test docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
+.PHONY: self-enable self-check make-check context-test docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status console-memo-token terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
 
 self-enable:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/self/Enable-DeveloperOSSelfApplication.ps1
@@ -60,6 +60,9 @@ ifeq ($(OS),Windows_NT)
 else
 	systemctl list-timers developer-os-openai-usage.timer --no-pager; sudo systemctl --no-pager --full status developer-os-openai-usage.service || true; sudo journalctl -u developer-os-openai-usage.service --no-pager -n 60; test -s /var/lib/developer-os-console/openai-usage.json && echo OPENAI_USAGE_SNAPSHOT=present || echo OPENAI_USAGE_SNAPSHOT=missing; test -s /var/lib/developer-os-console/oracle-usage.json && echo ORACLE_USAGE_SNAPSHOT=present || echo ORACLE_USAGE_SNAPSHOT=missing
 endif
+
+console-memo-token:
+	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action MemoToken -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"
 
 terminal-status:
 	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action TerminalStatus -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)"

@@ -21,9 +21,18 @@ class Session:
 
 
 class SessionStore:
-    def __init__(self, access_token: str, *, secure_cookie: bool) -> None:
+    def __init__(
+        self,
+        access_token: str,
+        *,
+        secure_cookie: bool,
+        cookie_name: str = SESSION_COOKIE,
+        cookie_path: str = "/",
+    ) -> None:
         self._access_token = access_token
         self._secure_cookie = secure_cookie
+        self._cookie_name = cookie_name
+        self._cookie_path = cookie_path
         self._sessions: dict[str, Session] = {}
         self._attempts: dict[str, deque[float]] = defaultdict(deque)
         self._lock = Lock()
@@ -66,7 +75,7 @@ class SessionStore:
             cookie.load(cookie_header)
         except Exception:
             return None
-        value = cookie.get(SESSION_COOKIE)
+        value = cookie.get(self._cookie_name)
         if value is None:
             return None
         now = time.time()
@@ -86,10 +95,12 @@ class SessionStore:
     def cookie_header(self, session: Session) -> str:
         secure = "; Secure" if self._secure_cookie else ""
         return (
-            f"{SESSION_COOKIE}={session.session_id}; Path=/; HttpOnly; "
+            f"{self._cookie_name}={session.session_id}; Path={self._cookie_path}; HttpOnly; "
             f"SameSite=Strict; Max-Age={SESSION_TTL_SECONDS}{secure}"
         )
 
-    @staticmethod
-    def expired_cookie_header() -> str:
-        return f"{SESSION_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"
+    def expired_cookie_header(self) -> str:
+        return (
+            f"{self._cookie_name}=; Path={self._cookie_path}; HttpOnly; "
+            "SameSite=Strict; Max-Age=0"
+        )

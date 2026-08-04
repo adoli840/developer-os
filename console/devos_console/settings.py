@@ -32,10 +32,12 @@ class Settings:
     bind: str
     port: int
     access_token: str
+    memo_access_token: str
     secure_cookie: bool
     public_read_only: bool
     trusted_local: bool
     projects: tuple[ProjectSpec, ...]
+    memo_database: Path
     usage_snapshot: Path
     oracle_usage_snapshot: Path
     backup_status_dir: Path
@@ -132,11 +134,18 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
         )
 
     access_token = os.getenv("DEVOS_CONSOLE_TOKEN", "").strip()
+    memo_access_token = os.getenv("DEVOS_MEMO_TOKEN", access_token).strip()
     resolved_bind = bind or os.getenv("DEVOS_BIND", "127.0.0.1")
     if not dev_mode and not access_token:
         raise RuntimeError("DEVOS_CONSOLE_TOKEN is required outside development mode.")
 
     runtime_dir.mkdir(parents=True, exist_ok=True)
+    memo_database = Path(
+        os.getenv(
+            "DEVOS_MEMO_DATABASE",
+            str(runtime_dir / "memos.sqlite3"),
+        )
+    ).expanduser()
     usage_snapshot = Path(
         os.getenv(
             "DEVOS_OPENAI_USAGE_SNAPSHOT",
@@ -171,10 +180,12 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
         bind=resolved_bind,
         port=port if port is not None else int(os.getenv("DEVOS_PORT", "8080")),
         access_token=access_token,
+        memo_access_token=memo_access_token,
         secure_cookie=_bool_env("DEVOS_SECURE_COOKIE", not dev_mode),
         public_read_only=public_read_only,
         trusted_local=dev_mode and _is_loopback_bind(resolved_bind) and not public_read_only,
         projects=tuple(projects),
+        memo_database=memo_database,
         usage_snapshot=usage_snapshot,
         oracle_usage_snapshot=oracle_usage_snapshot,
         backup_status_dir=backup_status_dir,

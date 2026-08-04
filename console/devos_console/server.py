@@ -19,6 +19,7 @@ from .alerts import build_alerts
 from .audit import AuditLog
 from .auth import Session, SessionStore
 from .backups import collect_backup_status
+from .memos import MemoStore
 from .projects import ProjectService
 from .roadmaps import collect_roadmaps
 from .resources import collect_resource_breakdown
@@ -28,8 +29,9 @@ from .usage import read_usage_snapshots
 from .workstations import attach_server_comparisons, collect_workstations
 
 
-MAX_REQUEST_BODY = 16_384
+MAX_REQUEST_BODY = 320 * 1024
 OVERVIEW_CACHE_SECONDS = 60
+MEMO_SESSION_COOKIE = "devos_memo_session"
 
 
 class ConsoleApplication:
@@ -37,6 +39,14 @@ class ConsoleApplication:
         self.settings = settings
         self.audit = AuditLog(settings.runtime_dir / "audit.jsonl")
         self.sessions = SessionStore(settings.access_token, secure_cookie=settings.secure_cookie)
+        self.memo_sessions = SessionStore(
+            getattr(settings, "memo_access_token", settings.access_token),
+            secure_cookie=settings.secure_cookie,
+            cookie_name=MEMO_SESSION_COOKIE,
+            cookie_path="/api/",
+        )
+        memo_database = getattr(settings, "memo_database", settings.runtime_dir / "memos.sqlite3")
+        self.memos = MemoStore(memo_database)
         self.projects = ProjectService(settings.projects)
         self._overview_cache: dict[bool, tuple[float, dict[str, Any]]] = {}
         self._overview_refreshing: set[bool] = set()
@@ -50,6 +60,7 @@ class ConsoleApplication:
                 collect_backup_status,
                 self.settings.projects,
                 self.settings.backup_status_dir,
+                self.settings.memo_database,
             )
             workstations_future = executor.submit(
                 collect_workstations,
@@ -188,13 +199,19 @@ class ConsoleHandler(BaseHTTPRequestHandler):
     def _session(self) -> Session | None:
         return self.application.sessions.from_cookie(self.headers.get("Cookie"))
 
-    def _trusted_local_session(self) -> Session | None:
+    def _memo_session(self) -> Session | None:
+        return self.application.memo_sessions.from_cookie(self.headers.get("Cookie"))
+
+    def _is_trusted_local_request(self) -> bool:
         if not self.application.settings.trusted_local:
-            return None
+            return False
         try:
-            if not ipaddress.ip_address(self.client_address[0]).is_loopback:
-                return None
+            return ipaddress.ip_address(self.client_address[0]).is_loopback
         except ValueError:
+            return False
+
+    def _trusted_local_session(self) -> Session | None:
+        if not self._is_trusted_local_request():
             return None
         return self.application.sessions.create_trusted()
 
@@ -208,6 +225,19 @@ class ConsoleHandler(BaseHTTPRequestHandler):
         token = self.headers.get("X-CSRF-Token", "")
         if token != session.csrf_token:
             self._json(HTTPStatus.FORBIDDEN, {"error": "CSRF validation failed."})
+            return False
+        return True
+
+    def _require_memo_session(self) -> Session | None:
+        session = self._memo_session()
+        if session is None:
+            self._json(HTTPStatus.UNAUTHORIZED, {"error": "Memo unlock required."})
+        return session
+
+    def _require_memo_csrf(self, session: Session) -> bool:
+        token = self.headers.get("X-Memo-CSRF-Token", "")
+        if token != session.csrf_token:
+            self._json(HTTPStatus.FORBIDDEN, {"error": "Memo CSRF validation failed."})
             return False
         return True
 
@@ -249,6 +279,32 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 )
             return
 
+        if parsed.path == "/api/memo/session":
+            session = self._memo_session()
+            can_logout = session is not None and self.application.settings.public_read_only
+            if session is None and (self._session() is not None or self._is_trusted_local_request()):
+                session = self.application.memo_sessions.create_trusted()
+                can_logout = False
+            if session is None:
+                self._json(HTTPStatus.OK, {"authenticated": False})
+            else:
+                self._json(
+                    HTTPStatus.OK,
+                    {
+                        "authenticated": True,
+                        "csrf_token": session.csrf_token,
+                        "can_logout": can_logout,
+                    },
+                    cookie=self.application.memo_sessions.cookie_header(session),
+                )
+            return
+
+        if parsed.path == "/api/memos":
+            if self._require_memo_session() is None:
+                return
+            self._json(HTTPStatus.OK, self.application.memos.list_all())
+            return
+
         if parsed.path.startswith("/api/"):
             project_logs = parsed.path.startswith("/api/projects/") and parsed.path.endswith("/logs")
             if parsed.path not in {"/api/overview", "/api/roadmaps"} and not project_logs:
@@ -287,6 +343,42 @@ class ConsoleHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path == "/api/memo/login":
+            try:
+                body = self._body()
+                token = str(body.get("token", ""))
+            except ValueError as error:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+                return
+            session = self.application.memo_sessions.login(token, self.client_address[0])
+            if session is None:
+                self.application.audit.write("memo_login_failed", remote=self.client_address[0])
+                self._json(HTTPStatus.UNAUTHORIZED, {"error": "Invalid token or too many attempts."})
+                return
+            self.application.audit.write("memo_login_succeeded", remote=self.client_address[0])
+            self._json(
+                HTTPStatus.OK,
+                {
+                    "authenticated": True,
+                    "csrf_token": session.csrf_token,
+                    "can_logout": True,
+                },
+                cookie=self.application.memo_sessions.cookie_header(session),
+            )
+            return
+
+        if parsed.path == "/api/memo/logout":
+            session = self._require_memo_session()
+            if session is None or not self._require_memo_csrf(session):
+                return
+            self.application.memo_sessions.logout(session)
+            self._json(
+                HTTPStatus.OK,
+                {"authenticated": False},
+                cookie=self.application.memo_sessions.expired_cookie_header(),
+            )
+            return
+
         if parsed.path == "/api/login":
             if self.application.settings.public_read_only:
                 self._json(HTTPStatus.FORBIDDEN, {"error": "Login is disabled on the public HTTP endpoint."})
@@ -322,6 +414,32 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             )
             return
         self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
+
+    def do_PUT(self) -> None:
+        parsed = urlparse(self.path)
+        prefix = "/api/memos/"
+        if not parsed.path.startswith(prefix):
+            self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
+            return
+        session = self._require_memo_session()
+        if session is None or not self._require_memo_csrf(session):
+            return
+        project = parsed.path.removeprefix(prefix)
+        if not project or "/" in project:
+            self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
+            return
+        try:
+            body = self._body()
+            item = self.application.memos.save(project, body.get("content"))
+        except ValueError as error:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+        except Exception:
+            self.application.audit.write("memo_save_failed", project=project)
+            self._json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "The memo could not be saved."})
+            return
+        self.application.audit.write("memo_saved", project=project)
+        self._json(HTTPStatus.OK, {"item": item})
 
     def _serve_static(self, request_path: str) -> None:
         roadmap_prefix = "/roadmap-assets/"

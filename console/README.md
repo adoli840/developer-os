@@ -21,15 +21,18 @@ The console reads:
 - Docker Compose container state.
 - Repository HEAD compared with running Docker image revisions.
 - Home and Office local Git status reported separately over SSH while each computer is online.
-- Oracle Linux CPU, memory, and root-disk capacity with always-visible project and host attribution.
+- Oracle Linux CPU, memory, and disk capacity with always-visible project and host attribution.
 - Daily database backup and weekly isolated restore-verification status.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
 - A Recovery view limited to backup, restore-verification, and schedule evidence.
+- A server-database memo workspace for DeveloperOS, bTest, OA, and Gaia ideas.
 - Standard roadmap fields for configured projects, without raw files or source
   paths.
 
-The landing `Resources` view uses the full workspace for CPU, memory, and root
-disk details. Registered project usage is separated from host usage. The
+The landing `Resources` view uses the full workspace with CPU, memory, and disk
+columns ordered from left to right. Each column lists project and host usage
+vertically from the largest category to the smallest. Registered project usage
+is separated from host usage. The
 `Server & other` row further identifies required services, operating-system
 baseline, shared Docker data, protected backups, reviewable usage, and the
 remaining measurement or attribution boundary. Category values are bounded by
@@ -57,9 +60,15 @@ project or track no longer exists, the view safely falls back to its default.
 - Project commands use the separate loopback terminal reached through an
   authenticated SSH local-forward.
 - The direct public HTTP deployment uses `DEVOS_PUBLIC_READ_ONLY=1`; it hides
-  project paths and audit history and disables login.
+  project paths and audit history and disables the full console login.
 - The public roadmap API returns only parsed standard fields. It does not return
   raw Markdown, source paths, or parser diagnostics.
+- Memo text is stored in the server's private SQLite database. A separate memo
+  login uses a memo-only token and creates a cookie accepted only by
+  the memo API; it cannot unlock project paths, logs, or terminal access.
+- The current direct deployment is plain HTTP. Its memo token exchange is
+  suitable only on a trusted network path; HTTPS is required for transport
+  confidentiality on an untrusted network.
 - A separate command console binds to server loopback only and is reachable
   through an SSH local-forward from a trusted workstation.
 
@@ -90,6 +99,7 @@ make console-status
 make console-logs
 make console-backup-status
 make console-usage-status
+make console-memo-token
 ```
 
 The deployment script:
@@ -99,13 +109,16 @@ The deployment script:
 2. Packages only the committed `HEAD` revision with `git archive`; ignored,
    untracked, and secret files cannot enter the release.
 3. Transfers the package to `opc@168.107.18.16`.
-4. Generates a persistent random console token when one does not exist.
+4. Generates separate persistent random console and memo tokens when they do
+   not exist.
 5. Installs and starts `developer-os-console.service`.
 6. Binds the service to `0.0.0.0:8080` in public read-only mode.
 7. Opens `8080/tcp` in Oracle Linux `firewalld`.
 8. Verifies `http://127.0.0.1:8080/healthz`.
-9. Installs daily PostgreSQL backup and weekly restore-verification timers.
-10. Runs an initial OA, Gaia, and bTest backup and isolated restore test.
+9. Installs daily managed database backup and weekly PostgreSQL
+   restore-verification timers.
+10. Runs an initial memo, OA, Gaia, and bTest backup plus the applicable
+    integrity or isolated restore tests.
 11. Installs an hourly provider usage collector using the protected local
     `X:/Settings/env/developer-os.env` file and a dedicated Python environment.
 12. Installs `developer-os-terminal.service` on `127.0.0.1:8022` without
@@ -125,6 +138,16 @@ from the market-data source. bTest backups are retained for 3 days because of
 their larger size and the server's limited root disk.
 Backups are stored under `/var/backups/developer-os` and are readable only by
 root.
+
+DeveloperOS memos live in
+`/var/lib/developer-os-console/memos.sqlite3`, outside versioned release
+directories. The same daily timer uses SQLite's online backup API, runs an
+integrity check against the copy, and retains 14 days under
+`/var/backups/developer-os/developer-os-memos`. Its result appears in Recovery
+as `DeveloperOS memos`.
+
+`make console-memo-token` reads the protected memo-only token through SSH for
+entry in the Memo view. It does not print or reuse the full console token.
 
 OA database backups preserve job, log, generated-file metadata, configuration,
 and mapping knowledge. Files referenced by OA metadata under host-mounted

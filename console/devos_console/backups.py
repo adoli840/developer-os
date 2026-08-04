@@ -51,18 +51,24 @@ def _timer_state(name: str) -> dict[str, Any]:
 def collect_backup_status(
     projects: tuple[ProjectSpec, ...],
     status_dir: Path,
+    memo_database: Path | None = None,
 ) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     items: list[dict[str, Any]] = []
-    for project in projects:
-        if not project.backup_expected:
-            continue
-        path = status_dir / f"{project.slug}.json"
+    protected_data = [
+        (project.slug, project.name)
+        for project in projects
+        if project.backup_expected
+    ]
+    if memo_database is not None:
+        protected_data.insert(0, ("developer-os-memos", "DeveloperOS memos"))
+    for project_slug, project_name in protected_data:
+        path = status_dir / f"{project_slug}.json"
         if not path.is_file():
             items.append(
                 {
-                    "project": project.slug,
-                    "name": project.name,
+                    "project": project_slug,
+                    "name": project_name,
                     "status": "missing",
                     "message": "No successful backup has been recorded.",
                     "last_success_at": None,
@@ -109,8 +115,8 @@ def collect_backup_status(
             verification_status = "stale"
         items.append(
             {
-                "project": project.slug,
-                "name": project.name,
+                "project": project_slug,
+                "name": project_name,
                 "status": status,
                 "message": message,
                 "last_success_at": value.get("last_success_at"),

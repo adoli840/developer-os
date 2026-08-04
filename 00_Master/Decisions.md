@@ -939,3 +939,37 @@ Impact:
 Remove AI snapshot directories, ignore rules, creation triggers, self-checks,
 and roadmap work. Database backups, deployment rollback artifacts, provider
 usage records, and other project-owned operational recovery data are unchanged.
+
+## 2026-08-04 - Store Console Memos In A Scoped SQLite Service
+
+Status: Accepted
+
+Context:
+
+Development ideas for DeveloperOS, bTest, OA, and Gaia must survive browser
+changes and be available from more than one workstation. Browser-local storage
+cannot provide that continuity, while enabling the full console session on the
+public endpoint would expose unrelated private APIs.
+
+Decision:
+
+Store one bounded text memo per registered project in a SQLite database under
+the persistent console state directory. Protect reads and writes with a
+dedicated memo-only token session and CSRF token whose cookie cannot
+authenticate the general console APIs. Include a consistent SQLite copy and
+integrity check in
+the daily managed database backup job with 14-day retention.
+
+Reason:
+
+Four small text records do not justify a PostgreSQL service. SQLite provides
+durable transactional storage with no new daemon, and the scoped session keeps
+memo editing separate from public operational reads and private console data.
+
+Impact:
+
+The Memo view requires a one-time unlock per session on the public console and
+auto-saves to server storage. Recovery reports the memo backup beside project
+database protection. The direct HTTP endpoint still lacks transport
+confidentiality; use HTTPS before treating an untrusted network as acceptable
+for token entry.

@@ -1,5 +1,5 @@
 [Unit]
-Description=DeveloperOS PostgreSQL backups
+Description=DeveloperOS managed database backups
 After=docker.service
 Requires=docker.service
 

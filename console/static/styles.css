@@ -36,7 +36,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
   letter-spacing: 0;
 }
@@ -210,8 +211,12 @@ button {
 }
 
 .full-width-workspace #tab-resources .resource-panel {
-  border-width: 0 0 1px;
+  border-width: 0 1px 1px 0;
   border-radius: 0;
+}
+
+.full-width-workspace #tab-resources .resource-panel:last-child {
+  border-right: 0;
 }
 
 .tab-view {
@@ -270,6 +275,7 @@ button {
 
 .metrics-grid {
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
   margin-bottom: 18px;
 }
@@ -283,16 +289,16 @@ button {
 
 .metric {
   display: grid;
-  grid-template-columns: minmax(180px, 260px) minmax(240px, 1fr);
-  align-items: end;
-  gap: 28px;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: 14px;
   padding: 18px;
   border-bottom: 1px solid var(--line);
 }
 
 .resource-breakdown {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: 1fr;
   gap: 1px;
   background: var(--line);
 }
@@ -810,29 +816,6 @@ tbody tr:last-child td {
   opacity: 0.55;
 }
 
-.mode-badge,
-.sync-state {
-  font-size: 11px;
-  white-space: nowrap;
-}
-
-.mode-badge {
-  padding: 4px 7px;
-  border-radius: 4px;
-  color: var(--green);
-  background: var(--green-soft);
-  font-weight: 720;
-}
-
-.mode-badge.read-only {
-  color: var(--amber);
-  background: var(--amber-soft);
-}
-
-.sync-state {
-  color: var(--muted);
-}
-
 .usage-surface {
   padding: 24px;
 }
@@ -931,6 +914,133 @@ tbody tr:last-child td {
   background: rgba(72, 169, 119, 0.12);
 }
 
+.memo-shell {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  min-height: calc(100vh - 58px);
+  background: var(--surface);
+}
+
+.memo-shell[hidden],
+.memo-lock-panel[hidden] {
+  display: none;
+}
+
+.memo-lock-panel {
+  display: grid;
+  min-height: calc(100vh - 58px);
+  place-items: center;
+  padding: 24px;
+  background: var(--canvas);
+}
+
+.memo-login-form {
+  display: grid;
+  width: min(360px, 100%);
+  gap: 12px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.memo-login-form h1 {
+  margin: 2px 0 6px;
+  font-size: 20px;
+}
+
+.memo-login-form label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.memo-project-list {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 16px 10px;
+  border-right: 1px solid var(--line);
+  background: #12161a;
+}
+
+.memo-project-tab {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 4px;
+  color: var(--muted);
+  background: transparent;
+  font-weight: 700;
+  text-align: left;
+}
+
+.memo-project-tab:hover,
+.memo-project-tab.active {
+  color: var(--ink);
+  background: var(--surface-subtle);
+}
+
+.memo-project-tab.active {
+  box-shadow: inset 3px 0 0 var(--green);
+}
+
+.memo-editor-panel {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: 52px minmax(0, 1fr);
+}
+
+.memo-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.memo-editor-header strong {
+  font-size: 15px;
+}
+
+.memo-editor-header span {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.memo-editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.memo-lock-button {
+  min-width: 56px;
+  min-height: 30px;
+  padding: 4px 9px;
+  font-size: 11px;
+}
+
+.memo-editor {
+  width: 100%;
+  min-height: calc(100vh - 110px);
+  padding: 22px;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  resize: none;
+  color: var(--ink);
+  background: var(--canvas);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.memo-editor:focus {
+  box-shadow: inset 3px 0 0 var(--green);
+}
+
 .toast {
   position: fixed;
   right: 18px;
@@ -987,8 +1097,12 @@ tbody tr:last-child td {
     box-shadow: inset 0 -3px 0 var(--green);
   }
 
-  .resource-breakdown {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .full-width-workspace #tab-resources .resource-panel {
+    border-right: 0;
   }
 
   .two-column {
@@ -1099,6 +1213,27 @@ tbody tr:last-child td {
 
   .resource-breakdown {
     grid-template-columns: 1fr;
+  }
+
+  .memo-shell {
+    grid-template-columns: 84px minmax(0, 1fr);
+  }
+
+  .memo-project-list {
+    padding: 8px 5px;
+  }
+
+  .memo-project-tab {
+    padding: 0 8px;
+    font-size: 12px;
+  }
+
+  .memo-editor-header {
+    padding-inline: 14px;
+  }
+
+  .memo-editor {
+    padding: 16px;
   }
 
 }

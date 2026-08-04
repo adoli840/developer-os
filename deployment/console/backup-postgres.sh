@@ -5,7 +5,8 @@ umask 077
 
 BACKUP_ROOT=/var/backups/developer-os
 STATUS_ROOT=/var/lib/developer-os-console/backup-status
-LOCK_FILE=/run/lock/developer-os-postgres-backup.lock
+MEMO_DATABASE=/var/lib/developer-os-console/memos.sqlite3
+LOCK_FILE=/run/lock/developer-os-database-backup.lock
 declare -A CONTAINERS=(
   [oa]=oa_db
   [gaia]=gaia_db
@@ -29,7 +30,7 @@ install -d -m 0700 -o root -g root "$BACKUP_ROOT"
 install -d -m 0750 -o opc -g opc "$STATUS_ROOT"
 exec 9>"$LOCK_FILE"
 flock -n 9 || {
-  echo "Another PostgreSQL backup is already running." >&2
+  echo "Another managed database backup is already running." >&2
   exit 1
 }
 
@@ -74,6 +75,14 @@ if mode == "success":
             "last_error": None,
         }
     )
+    if project == "developer-os-memos":
+        value.update(
+            {
+                "verification_status": "passed",
+                "last_verification_at": now,
+                "verified_file": filename,
+            }
+        )
 else:
     value["last_failure_at"] = now
     value["last_error"] = message[:500]
@@ -85,6 +94,64 @@ os.replace(temporary, path)
 PY
   chown opc:opc "$status_file"
   chmod 0600 "$status_file"
+}
+
+backup_memos() {
+  local project=developer-os-memos
+  local project_root="$BACKUP_ROOT/$project"
+  local timestamp
+  local filename
+  local temporary
+  local destination
+  local checksum
+  local size
+  local retention_days=14
+  local policy=sqlite-full
+
+  install -d -m 0700 -o root -g root "$project_root"
+  if [ ! -s "$MEMO_DATABASE" ]; then
+    update_status "$project" failure "" "" "" "sqlite3" "Memo database does not exist." "$policy" "$retention_days"
+    return 1
+  fi
+
+  timestamp=$(date -u +%Y%m%dT%H%M%SZ)
+  filename="${project}-${timestamp}.sqlite3"
+  destination="$project_root/$filename"
+  temporary="${destination}.partial"
+  if ! python3 - "$MEMO_DATABASE" "$temporary" <<'PY'
+import os
+import sqlite3
+import sys
+
+source_path, destination_path = sys.argv[1:]
+source = sqlite3.connect(f"file:{source_path}?mode=ro", uri=True, timeout=10)
+destination = sqlite3.connect(destination_path, timeout=10)
+try:
+    source.backup(destination)
+    result = destination.execute("PRAGMA integrity_check").fetchone()
+    if not result or result[0] != "ok":
+        raise RuntimeError("SQLite integrity check failed.")
+finally:
+    destination.close()
+    source.close()
+if not os.path.getsize(destination_path):
+    raise RuntimeError("SQLite backup is empty.")
+PY
+  then
+    rm -f "$temporary"
+    update_status "$project" failure "" "" "" "sqlite3" "SQLite backup or integrity check failed." "$policy" "$retention_days"
+    return 1
+  fi
+
+  mv "$temporary" "$destination"
+  chmod 0600 "$destination"
+  checksum=$(sha256sum "$destination" | awk '{print $1}')
+  size=$(stat -c %s "$destination")
+  printf '%s  %s\n' "$checksum" "$filename" >"${destination}.sha256"
+  chmod 0600 "${destination}.sha256"
+  update_status "$project" success "$filename" "$size" "$checksum" "sqlite3" "" "$policy" "$retention_days"
+  find "$project_root" -type f \( -name '*.sqlite3' -o -name '*.sqlite3.sha256' \) -mtime "+$((retention_days - 1))" -delete
+  echo "$project backup completed: $filename"
 }
 
 backup_one() {
@@ -184,11 +251,15 @@ backup_one() {
 
 projects=("$@")
 if [ ${#projects[@]} -eq 0 ] || [ "${projects[0]}" = "--all" ]; then
-  projects=(oa gaia btest)
+  projects=(developer-os-memos oa gaia btest)
 fi
 
 failed=0
 for project in "${projects[@]}"; do
+  if [ "$project" = "developer-os-memos" ]; then
+    backup_memos || failed=1
+    continue
+  fi
   if [ -z "${CONTAINERS[$project]+value}" ]; then
     echo "Unknown backup project: $project" >&2
     failed=1

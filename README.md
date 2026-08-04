@@ -250,6 +250,7 @@ principal. Neither credential reaches the public console.
 
 The Oracle deployment also installs:
 
+- A private SQLite memo database with daily verified copies and 14-day retention.
 - Daily OA and Gaia full PostgreSQL backups with 14-day retention.
 - Daily bTest PostgreSQL backups with Kline rows excluded and 3-day retention.
 - Weekly isolated restore verification in temporary PostgreSQL containers.

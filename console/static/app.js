@@ -1,5 +1,11 @@
 const UI_STATE_KEY = "developer-os-console-ui-state-v1";
-const PRIMARY_TABS = new Set(["projects", "resources", "roadmap", "recovery", "usage"]);
+const MEMO_PROJECTS = [
+  {slug: "developer-os", name: "OS"},
+  {slug: "btest", name: "bTest"},
+  {slug: "oa", name: "OA"},
+  {slug: "gaia", name: "Gaia"},
+];
+const PRIMARY_TABS = new Set(["projects", "resources", "roadmap", "recovery", "usage", "memo"]);
 
 function readUiState() {
   try {
@@ -11,6 +17,8 @@ function readUiState() {
 }
 
 const savedUiState = readUiState();
+const emptyMemos = () => Object.fromEntries(MEMO_PROJECTS.map((project) => [project.slug, ""]));
+const emptyMemoStates = () => Object.fromEntries(MEMO_PROJECTS.map((project) => [project.slug, "Saved"]));
 
 const state = {
   authenticated: false,
@@ -27,6 +35,16 @@ const state = {
     && !Array.isArray(savedUiState.activeRoadmapTracks)
     ? savedUiState.activeRoadmapTracks
     : {},
+  activeMemoProject: MEMO_PROJECTS.some((project) => project.slug === savedUiState.activeMemoProject)
+    ? savedUiState.activeMemoProject
+    : "developer-os",
+  memoAuthenticated: false,
+  memoCanLogout: false,
+  memoCsrfToken: "",
+  memos: emptyMemos(),
+  memoSaveStates: emptyMemoStates(),
+  memoSaveTimers: new Map(),
+  memoSaveVersions: Object.fromEntries(MEMO_PROJECTS.map((project) => [project.slug, 0])),
   refreshTimer: null,
 };
 
@@ -36,6 +54,7 @@ function persistUiState() {
       activeTab: state.activeTab,
       activeRoadmap: state.activeRoadmap,
       activeRoadmapTracks: state.activeRoadmapTracks,
+      activeMemoProject: state.activeMemoProject,
     }));
   } catch {
     // The console remains usable when browser storage is disabled or unavailable.
@@ -49,9 +68,6 @@ const elements = {
   accessToken: document.querySelector("#access-token"),
   appShell: document.querySelector("#app-shell"),
   workspace: document.querySelector(".workspace"),
-  modeBadge: document.querySelector("#mode-badge"),
-  syncState: document.querySelector("#sync-state"),
-  refreshButton: document.querySelector("#refresh-button"),
   logoutButton: document.querySelector("#logout-button"),
   serverMetrics: document.querySelector("#server-metrics"),
   workstationDetail: document.querySelector("#workstation-detail"),
@@ -61,6 +77,16 @@ const elements = {
   backupSummary: document.querySelector("#backup-summary"),
   timerSummary: document.querySelector("#timer-summary"),
   usagePanel: document.querySelector("#usage-panel"),
+  memoLockPanel: document.querySelector("#memo-lock-panel"),
+  memoShell: document.querySelector("#memo-shell"),
+  memoLoginForm: document.querySelector("#memo-login-form"),
+  memoLoginError: document.querySelector("#memo-login-error"),
+  memoAccessToken: document.querySelector("#memo-access-token"),
+  memoLogoutButton: document.querySelector("#memo-logout-button"),
+  memoProjectList: document.querySelector("#memo-project-list"),
+  memoActiveProject: document.querySelector("#memo-active-project"),
+  memoSaveState: document.querySelector("#memo-save-state"),
+  memoEditor: document.querySelector("#memo-editor"),
   toast: document.querySelector("#toast"),
 };
 
@@ -133,7 +159,7 @@ function showToast(message) {
 
 async function request(path, options = {}) {
   const headers = {"Content-Type": "application/json", ...(options.headers || {})};
-  if (state.csrfToken && options.method && options.method !== "GET") {
+  if (state.csrfToken && !headers["X-CSRF-Token"] && options.method && options.method !== "GET") {
     headers["X-CSRF-Token"] = state.csrfToken;
   }
   const response = await fetch(path, {...options, headers});
@@ -144,7 +170,9 @@ async function request(path, options = {}) {
     body = {error: `Unexpected response (${response.status})`};
   }
   if (!response.ok) {
-    throw new Error(body.error || `Request failed (${response.status})`);
+    const error = new Error(body.error || `Request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
   }
   return body;
 }
@@ -158,10 +186,37 @@ async function initialize() {
     state.trustedLocal = Boolean(session.trusted_local);
     state.csrfToken = session.csrf_token || "";
     showApplication();
-    await refreshOverview();
+    await Promise.all([
+      refreshOverview(),
+      refreshMemoSession().catch((error) => {
+        state.memoAuthenticated = false;
+        renderMemo();
+        showToast(error.message);
+      }),
+    ]);
   } catch {
     showLogin();
   }
+}
+
+async function refreshMemoSession() {
+  const session = await request("/api/memo/session");
+  state.memoAuthenticated = Boolean(session.authenticated);
+  state.memoCanLogout = Boolean(session.can_logout);
+  state.memoCsrfToken = session.csrf_token || "";
+  if (state.memoAuthenticated) await loadMemos();
+  renderMemo();
+}
+
+async function loadMemos() {
+  const result = await request("/api/memos");
+  state.memos = emptyMemos();
+  for (const item of result.items || []) {
+    if (Object.hasOwn(state.memos, item.project) && typeof item.content === "string") {
+      state.memos[item.project] = item.content;
+    }
+  }
+  state.memoSaveStates = emptyMemoStates();
 }
 
 function showLogin() {
@@ -174,28 +229,15 @@ function showApplication() {
   elements.loginShell.hidden = true;
   elements.appShell.hidden = false;
   elements.logoutButton.hidden = !state.authenticated || state.trustedLocal;
-  if (state.publicReadOnly) {
-    elements.modeBadge.textContent = "Public read-only";
-    elements.modeBadge.classList.add("read-only");
-  } else {
-    elements.modeBadge.textContent = state.trustedLocal ? "Local" : "Secure session";
-    elements.modeBadge.classList.remove("read-only");
-  }
 }
 
 async function refreshOverview() {
-  elements.syncState.textContent = "Refreshing";
-  elements.refreshButton.disabled = true;
   try {
     state.overview = await request("/api/overview");
     render();
     if (tabFromPath() === "roadmap") await refreshRoadmaps();
-    elements.syncState.textContent = "Live";
   } catch (error) {
-    elements.syncState.textContent = "Refresh failed";
     showToast(error.message);
-  } finally {
-    elements.refreshButton.disabled = false;
   }
 }
 
@@ -206,6 +248,7 @@ function render() {
   renderRoadmaps(state.roadmaps);
   renderRecovery(state.overview.backups);
   renderUsage(state.overview.usage);
+  renderMemo();
 }
 
 async function refreshRoadmaps() {
@@ -303,7 +346,7 @@ function selectPrimaryTab(tab, updateHistory = true) {
   persistUiState();
   document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
   document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${tab}`));
-  elements.workspace.classList.toggle("full-width-workspace", ["projects", "resources"].includes(tab));
+  elements.workspace.classList.toggle("full-width-workspace", ["projects", "resources", "memo"].includes(tab));
   if (updateHistory) {
     const nextPath = tab === "roadmap" ? "/roadmap" : "/";
     if (window.location.pathname !== nextPath) window.history.pushState({tab}, "", nextPath);
@@ -314,7 +357,7 @@ function renderMetrics(system) {
   const metrics = [
     {key: "cpu", label: "CPU", value: Number.isFinite(system.cpu_percent) ? `${system.cpu_percent}%` : `${system.cpu_count || "-"} cores`, percent: system.cpu_percent || 0},
     {key: "memory", label: "Memory", value: formatBytes(system.memory.used), detail: `of ${formatBytes(system.memory.total)}`, percent: system.memory.percent || 0},
-    {key: "disk", label: "Root disk", value: formatBytes(system.disk.used), detail: `${formatBytes(system.disk.free)} free`, percent: system.disk.percent || 0},
+    {key: "disk", label: "Disk", value: formatBytes(system.disk.used), detail: `${formatBytes(system.disk.free)} free`, percent: system.disk.percent || 0},
   ];
   elements.serverMetrics.innerHTML = `
     ${metrics.map((metric) => `
@@ -336,13 +379,14 @@ function renderMetrics(system) {
 function resourceBreakdown(metric, rows) {
   if (!rows.length) return `<p class="resource-empty">Usage breakdown unavailable.</p>`;
   const formatValue = (value) => metric === "cpu" ? `${Number(value).toFixed(1)}%` : formatBytes(value);
+  const sortedRows = sortResourceItems(rows);
   return `
     <div class="resource-breakdown">
-      ${rows.map((row) => `
+      ${sortedRows.map((row) => `
         <article class="resource-row${row.slug === "other" ? " residual" : ""}">
           <div class="resource-row-heading"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(formatValue(row.value))}</span></div>
           <div class="resource-components">
-            ${(row.components || []).map((component) => `
+            ${sortResourceItems(row.components || []).map((component) => `
               <div class="resource-component">
                 <div class="resource-component-heading">
                   <strong>${escapeHtml(component.name)}</strong>
@@ -357,6 +401,88 @@ function resourceBreakdown(metric, rows) {
       `).join("")}
     </div>
   `;
+}
+
+function sortResourceItems(items) {
+  return [...items].sort((left, right) => {
+    const valueDifference = resourceItemValue(right) - resourceItemValue(left);
+    return valueDifference || String(left?.name || "").localeCompare(String(right?.name || ""));
+  });
+}
+
+function resourceItemValue(item) {
+  const value = Number(item?.value);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function renderMemo() {
+  elements.memoLockPanel.hidden = state.memoAuthenticated;
+  elements.memoShell.hidden = !state.memoAuthenticated;
+  if (!state.memoAuthenticated) return;
+
+  const active = MEMO_PROJECTS.find((project) => project.slug === state.activeMemoProject) || MEMO_PROJECTS[0];
+  state.activeMemoProject = active.slug;
+  persistUiState();
+  elements.memoProjectList.querySelectorAll("button[data-memo-project]").forEach((button) => {
+    const selected = button.dataset.memoProject === active.slug;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+  elements.memoActiveProject.textContent = active.name;
+  elements.memoEditor.setAttribute("aria-label", `${active.name} memo`);
+  if (elements.memoEditor.value !== state.memos[active.slug]) {
+    elements.memoEditor.value = state.memos[active.slug];
+  }
+  elements.memoSaveState.textContent = state.memoSaveStates[active.slug] || "Saved";
+  elements.memoLogoutButton.hidden = !state.memoCanLogout;
+}
+
+function queueActiveMemoSave() {
+  const project = state.activeMemoProject;
+  state.memos[project] = elements.memoEditor.value;
+  state.memoSaveVersions[project] += 1;
+  state.memoSaveStates[project] = "Saving";
+  elements.memoSaveState.textContent = "Saving";
+  window.clearTimeout(state.memoSaveTimers.get(project));
+  state.memoSaveTimers.set(project, window.setTimeout(() => {
+    state.memoSaveTimers.delete(project);
+    saveMemo(project).catch(() => {});
+  }, 450));
+}
+
+async function saveMemo(project) {
+  const content = state.memos[project];
+  const version = state.memoSaveVersions[project];
+  try {
+    await request(`/api/memos/${encodeURIComponent(project)}`, {
+      method: "PUT",
+      headers: {"X-Memo-CSRF-Token": state.memoCsrfToken},
+      body: JSON.stringify({content}),
+    });
+    if (state.memoSaveVersions[project] === version) {
+      state.memoSaveStates[project] = "Saved";
+      if (state.activeMemoProject === project) elements.memoSaveState.textContent = "Saved";
+    }
+  } catch (error) {
+    state.memoSaveStates[project] = "Not saved";
+    if (state.activeMemoProject === project) elements.memoSaveState.textContent = "Not saved";
+    if (error.status === 401) {
+      state.memoAuthenticated = false;
+      state.memoCsrfToken = "";
+      renderMemo();
+    }
+    showToast(error.message);
+    throw error;
+  }
+}
+
+async function flushMemoSaves() {
+  const projects = [...state.memoSaveTimers.keys()];
+  for (const project of projects) {
+    window.clearTimeout(state.memoSaveTimers.get(project));
+    state.memoSaveTimers.delete(project);
+  }
+  await Promise.all(projects.map((project) => saveMemo(project)));
 }
 
 function resourceDisposition(value) {
@@ -560,10 +686,17 @@ function backupStatus(backup) {
   return statusBadge("Needs verification", "warn");
 }
 
+function backupPolicyLabel(value) {
+  if (!value) return "Pending first backup";
+  if (value === "multi-container-excluding-market.klines-data") return "All DBs except Kline rows";
+  if (value === "sqlite-full") return "Full memo database";
+  return "Full database";
+}
+
 function renderRecovery(backups) {
   const backupItems = backups?.items || [];
   elements.backupSummary.innerHTML = `
-    <div class="surface-heading"><div><h2>Database protection</h2><p>Daily dumps with isolated restore verification.</p></div></div>
+    <div class="surface-heading"><div><h2>Database protection</h2><p>Daily backups with integrity or isolated restore verification.</p></div></div>
     <div class="backup-list">
       ${backupItems.length ? backupItems.map((backup) => `
         <div class="backup-row">
@@ -572,7 +705,7 @@ function renderRecovery(backups) {
           <dl>
             <dt>Backup</dt><dd>${escapeHtml(formatDate(backup.last_success_at))}</dd>
             <dt>Restore test</dt><dd>${escapeHtml(formatDate(backup.last_verification_at))}</dd>
-            <dt>Policy</dt><dd>${escapeHtml(!backup.backup_policy ? "Pending first backup" : backup.backup_policy === "multi-container-excluding-market.klines-data" ? "All DBs except Kline rows" : "Full database")}</dd>
+            <dt>Policy</dt><dd>${escapeHtml(backupPolicyLabel(backup.backup_policy))}</dd>
           </dl>
         </div>
       `).join("") : `<p class="muted">No databases are configured for managed backups.</p>`}
@@ -690,7 +823,6 @@ elements.loginForm.addEventListener("submit", async (event) => {
   }
 });
 
-elements.refreshButton.addEventListener("click", refreshOverview);
 elements.logoutButton.addEventListener("click", async () => {
   try {
     await request("/api/logout", {method: "POST", body: "{}"});
@@ -700,6 +832,56 @@ elements.logoutButton.addEventListener("click", async () => {
     showLogin();
   }
 });
+
+elements.memoLoginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  elements.memoLoginError.textContent = "";
+  try {
+    const result = await request("/api/memo/login", {
+      method: "POST",
+      body: JSON.stringify({token: elements.memoAccessToken.value}),
+    });
+    state.memoAuthenticated = true;
+    state.memoCanLogout = Boolean(result.can_logout);
+    state.memoCsrfToken = result.csrf_token || "";
+    elements.memoAccessToken.value = "";
+    await loadMemos();
+    renderMemo();
+    elements.memoEditor.focus();
+  } catch (error) {
+    elements.memoLoginError.textContent = error.message;
+  }
+});
+
+elements.memoLogoutButton.addEventListener("click", async () => {
+  try {
+    await flushMemoSaves();
+    await request("/api/memo/logout", {
+      method: "POST",
+      headers: {"X-Memo-CSRF-Token": state.memoCsrfToken},
+      body: "{}",
+    });
+  } catch (error) {
+    showToast(error.message);
+    return;
+  }
+  state.memoAuthenticated = false;
+  state.memoCanLogout = false;
+  state.memoCsrfToken = "";
+  state.memos = emptyMemos();
+  renderMemo();
+  elements.memoAccessToken.focus();
+});
+
+elements.memoProjectList.addEventListener("click", (event) => {
+  const button = event.target.closest("button[data-memo-project]");
+  if (!button) return;
+  state.activeMemoProject = button.dataset.memoProject;
+  renderMemo();
+  elements.memoEditor.focus();
+});
+
+elements.memoEditor.addEventListener("input", queueActiveMemoSave);
 
 document.querySelectorAll(".nav-item").forEach((button) => {
   button.addEventListener("click", () => {

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet("Deploy", "Status", "Logs", "Restart", "Stop", "Backup", "VerifyBackup", "BackupStatus", "UsageStatus", "TerminalStatus", "TerminalLogs")]
+  [ValidateSet("Deploy", "Status", "Logs", "Restart", "Stop", "Backup", "VerifyBackup", "BackupStatus", "UsageStatus", "MemoToken", "TerminalStatus", "TerminalLogs")]
   [string]$Action = "Deploy",
   [string]$Server = "opc@168.107.18.16",
   [string]$SshKey = "X:/Settings/ssh/ssh-key-ops.key",
@@ -81,6 +81,7 @@ if ($Action -ne "Deploy") {
     "VerifyBackup" { "sudo systemctl start developer-os-backup-verify.service; sudo systemctl --no-pager --full status developer-os-backup-verify.service" }
     "BackupStatus" { "systemctl list-timers developer-os-backup.timer developer-os-backup-verify.timer --no-pager; sudo journalctl -u developer-os-backup.service -u developer-os-backup-verify.service --no-pager -n 80" }
     "UsageStatus" { "systemctl list-timers developer-os-openai-usage.timer --no-pager; sudo systemctl --no-pager --full status developer-os-openai-usage.service || true; sudo journalctl -u developer-os-openai-usage.service --no-pager -n 60; test -s /var/lib/developer-os-console/openai-usage.json && echo OPENAI_USAGE_SNAPSHOT=present || echo OPENAI_USAGE_SNAPSHOT=missing; test -s /var/lib/developer-os-console/oracle-usage.json && echo ORACLE_USAGE_SNAPSHOT=present || echo ORACLE_USAGE_SNAPSHOT=missing" }
+    "MemoToken" { "sudo sed -n 's/^DEVOS_MEMO_TOKEN=//p' /etc/developer-os-console/console.env | head -n 1" }
     "TerminalStatus" { "sudo systemctl --no-pager --full status developer-os-terminal; curl --fail --silent http://127.0.0.1:8022/healthz" }
     "TerminalLogs" { "sudo journalctl -u developer-os-terminal --no-pager -n 120" }
   }
@@ -238,11 +239,20 @@ fi
 if [ -z "`$token" ]; then
   token=`$(openssl rand -hex 32)
 fi
+memo_token=""
+if [ -f "`$shared/console.env" ]; then
+  memo_token=`$(sed -n 's/^DEVOS_MEMO_TOKEN=//p' "`$shared/console.env" | head -n 1)
+fi
+if [ -z "`$memo_token" ]; then
+  memo_token=`$(openssl rand -hex 24)
+fi
 umask 077
 {
   echo "DEVOS_CONSOLE_TOKEN=`$token"
+  echo "DEVOS_MEMO_TOKEN=`$memo_token"
   echo "DEVOS_WORKSPACE_ROOT=/home/opc"
   echo "DEVOS_RUNTIME_DIR=/var/lib/developer-os-console"
+  echo "DEVOS_MEMO_DATABASE=/var/lib/developer-os-console/memos.sqlite3"
   echo "DEVOS_CONSOLE_CONFIG=/etc/developer-os-console/config.json"
   echo "DEVOS_BACKUP_STATUS_DIR=/var/lib/developer-os-console/backup-status"
   echo "DEVOS_WORKSTATION_STATUS_DIR=/var/lib/developer-os-console/workstations"
@@ -306,6 +316,9 @@ sudo systemctl reset-failed developer-os-terminal || true
 sudo systemctl restart developer-os-console developer-os-terminal
 sudo systemctl start developer-os-openai-usage.service
 sudo install -d -m 0750 -o opc -g opc /var/lib/developer-os-console/workstations
+if [ ! -s /var/lib/developer-os-console/backup-status/developer-os-memos.json ]; then
+  sudo /usr/local/sbin/developer-os-backup-postgres developer-os-memos
+fi
 if [ ! -s /var/lib/developer-os-console/backup-status/oa.json ] || [ ! -s /var/lib/developer-os-console/backup-status/gaia.json ] || [ ! -s /var/lib/developer-os-console/backup-status/btest.json ]; then
   sudo systemctl start developer-os-backup.service
   sudo systemctl start developer-os-backup-verify.service

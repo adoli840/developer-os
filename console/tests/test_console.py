@@ -10,11 +10,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from urllib.request import HTTPCookieProcessor, build_opener
+from urllib.error import HTTPError
+from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 from console.devos_console.alerts import build_alerts
 from console.devos_console.auth import SessionStore
 from console.devos_console.backups import collect_backup_status
+from console.devos_console.memos import MemoStore
 from console.devos_console.projects import ProjectService
 from console.devos_console.resources import _cpu_percent_between, _parse_size, collect_resource_breakdown
 from console.devos_console.runner import CommandResult
@@ -41,6 +43,40 @@ class SessionStoreTests(unittest.TestCase):
         session = store.create_trusted()
         self.assertEqual(store.from_cookie(store.cookie_header(session)), session)
 
+    def test_scoped_cookie_does_not_replace_the_console_cookie(self) -> None:
+        store = SessionStore(
+            "expected-token",
+            secure_cookie=False,
+            cookie_name="devos_memo_session",
+            cookie_path="/api/",
+        )
+        session = store.login("expected-token", "127.0.0.1")
+        cookie = store.cookie_header(session)
+        self.assertIn("devos_memo_session=", cookie)
+        self.assertIn("Path=/api/", cookie)
+        self.assertNotIn("devos_session=", cookie)
+
+
+class MemoStoreTests(unittest.TestCase):
+    def test_memos_persist_across_store_instances(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "memos.sqlite3"
+            first = MemoStore(database)
+            first.save("oa", "세금 신고 아이디어")
+            second = MemoStore(database)
+            items = {item["project"]: item for item in second.list_all()["items"]}
+
+        self.assertEqual(items["oa"]["content"], "세금 신고 아이디어")
+        self.assertEqual(list(items), ["developer-os", "btest", "oa", "gaia"])
+
+    def test_unknown_project_and_oversized_content_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = MemoStore(Path(directory) / "memos.sqlite3")
+            with self.assertRaises(ValueError):
+                store.save("other", "text")
+            with self.assertRaises(ValueError):
+                store.save("oa", "x" * (256 * 1024 + 1))
+
 
 class ConsoleSurfaceTests(unittest.TestCase):
     def test_recovery_replaces_operations_and_browser_commands(self) -> None:
@@ -66,6 +102,7 @@ class ConsoleSurfaceTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
         javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
+        stylesheet = (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8")
 
         self.assertIn('data-tab="resources"', html)
         self.assertIn('id="tab-resources"', html)
@@ -74,6 +111,41 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn('id="workstation-summary"', html)
         self.assertNotIn('data-metric=', javascript)
         self.assertIn("resourceBreakdown(metric.key", javascript)
+        self.assertLess(javascript.index('{key: "cpu"'), javascript.index('{key: "memory"'))
+        self.assertLess(javascript.index('{key: "memory"'), javascript.index('{key: "disk"'))
+        self.assertIn('{key: "disk", label: "Disk"', javascript)
+        self.assertNotIn('label: "Root disk"', javascript)
+        self.assertIn("const sortedRows = sortResourceItems(rows);", javascript)
+        self.assertIn("sortResourceItems(row.components || [])", javascript)
+        self.assertIn("grid-template-columns: repeat(3, minmax(0, 1fr));", stylesheet)
+        self.assertIn(".resource-breakdown {\n  display: grid;\n  grid-template-columns: 1fr;", stylesheet)
+
+    def test_header_is_quiet_and_project_memos_use_the_server_database(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
+        javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
+
+        self.assertNotIn('id="mode-badge"', html)
+        self.assertNotIn('id="sync-state"', html)
+        self.assertNotIn('id="refresh-button"', html)
+        self.assertNotIn("elements.modeBadge", javascript)
+        self.assertNotIn("elements.syncState", javascript)
+        self.assertNotIn("elements.refreshButton", javascript)
+        self.assertIn('data-tab="memo"', html)
+        self.assertIn('id="tab-memo"', html)
+        memo_items = [
+            'data-memo-project="developer-os"',
+            'data-memo-project="btest"',
+            'data-memo-project="oa"',
+            'data-memo-project="gaia"',
+        ]
+        self.assertEqual(memo_items, sorted(memo_items, key=html.index))
+        self.assertIn('id="memo-login-form"', html)
+        self.assertIn('id="memo-logout-button"', html)
+        self.assertNotIn("localStorage", javascript)
+        self.assertIn('request("/api/memo/session")', javascript)
+        self.assertIn('request("/api/memos")', javascript)
+        self.assertIn("`/api/memos/${encodeURIComponent(project)}`", javascript)
 
     def test_projects_use_one_compact_home_office_comparison_table(self) -> None:
         repository = Path(__file__).resolve().parents[2]
@@ -105,8 +177,8 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn("SERVER CAPACITY", html)
         self.assertNotIn("<h1>Resources</h1>", html)
         self.assertNotIn('id="resource-time"', html)
-        self.assertIn('href="/styles.css?v=3"', html)
-        self.assertIn('src="/app.js?v=4"', html)
+        self.assertIn('href="/styles.css?v=5"', html)
+        self.assertIn('src="/app.js?v=7"', html)
         self.assertIn('statusBadge(`${repo.behind} behind`, "behind")', javascript)
         self.assertIn(".status.behind", (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8"))
         self.assertIn('const UI_STATE_KEY = "developer-os-console-ui-state-v1"', javascript)
@@ -227,6 +299,7 @@ class SettingsTests(unittest.TestCase):
                 settings = load_settings()
         self.assertTrue(settings.public_read_only)
         self.assertEqual(settings.port, 8080)
+        self.assertEqual(settings.memo_database, Path(directory) / "memos.sqlite3")
 
     def test_btest_backup_is_enabled_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -303,6 +376,64 @@ class LocalSessionTests(unittest.TestCase):
             [workstation.workstation_id for workstation in settings.workstations],
             ["home", "office"],
         )
+
+
+class MemoApiTests(unittest.TestCase):
+    def test_public_memo_login_is_scoped_and_persists_text(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_CONSOLE_TOKEN": "test-token",
+                "DEVOS_MEMO_TOKEN": "memo-token",
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+                "DEVOS_PUBLIC_READ_ONLY": "1",
+                "DEVOS_SECURE_COOKIE": "0",
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings(port=0)
+            server = create_server(settings)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            opener = build_opener(HTTPCookieProcessor(CookieJar()))
+            base_url = f"http://127.0.0.1:{server.server_address[1]}"
+
+            def call(path: str, *, method: str = "GET", body: dict | None = None, headers: dict | None = None) -> dict:
+                payload = None if body is None else json.dumps(body).encode("utf-8")
+                request = Request(
+                    f"{base_url}{path}",
+                    data=payload,
+                    method=method,
+                    headers={"Content-Type": "application/json", **(headers or {})},
+                )
+                with opener.open(request, timeout=5) as response:
+                    return json.load(response)
+
+            try:
+                self.assertFalse(call("/api/memo/session")["authenticated"])
+                with self.assertRaises(HTTPError) as wrong_token:
+                    call("/api/memo/login", method="POST", body={"token": "test-token"})
+                login = call("/api/memo/login", method="POST", body={"token": "memo-token"})
+                saved = call(
+                    "/api/memos/gaia",
+                    method="PUT",
+                    body={"content": "게임 AI 아이디어"},
+                    headers={"X-Memo-CSRF-Token": login["csrf_token"]},
+                )
+                memos = call("/api/memos")
+                with self.assertRaises(HTTPError) as error:
+                    call("/api/projects/oa/logs")
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=5)
+
+        self.assertEqual(saved["item"]["content"], "게임 AI 아이디어")
+        self.assertEqual(wrong_token.exception.code, 401)
+        self.assertEqual(
+            next(item for item in memos["items"] if item["project"] == "gaia")["content"],
+            "게임 AI 아이디어",
+        )
+        self.assertEqual(error.exception.code, 401)
 
 
 class ProjectStatusTests(unittest.TestCase):
@@ -447,6 +578,31 @@ class ResourceBreakdownTests(unittest.TestCase):
 
 
 class BackupStatusTests(unittest.TestCase):
+    def test_memo_database_backup_is_included_when_configured(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            status_dir = Path(directory)
+            now = datetime.now(timezone.utc).isoformat()
+            (status_dir / "developer-os-memos.json").write_text(
+                json.dumps(
+                    {
+                        "last_success_at": now,
+                        "last_file": "developer-os-memos.sqlite3",
+                        "size_bytes": 100,
+                        "verification_status": "passed",
+                        "last_verification_at": now,
+                        "backup_policy": "sqlite-full",
+                        "retention_days": 14,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with patch("console.devos_console.backups._timer_state", return_value={"available": True, "active": True}):
+                result = collect_backup_status((), status_dir, status_dir / "memos.sqlite3")
+
+        self.assertEqual(result["items"][0]["name"], "DeveloperOS memos")
+        self.assertEqual(result["items"][0]["backup_policy"], "sqlite-full")
+        self.assertEqual(result["items"][0]["status"], "healthy")
+
     def test_recent_verified_backup_is_healthy(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             status_dir = Path(directory)

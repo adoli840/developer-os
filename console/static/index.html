@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DeveloperOS Console</title>
-  <link rel="stylesheet" href="/styles.css?v=3">
+  <link rel="stylesheet" href="/styles.css?v=5">
   <link rel="stylesheet" href="/roadmap-assets/roadmap-view.css?v=3.0.2">
 </head>
 <body>
@@ -31,9 +31,6 @@
         </div>
       </div>
       <div class="topbar-actions">
-        <span class="mode-badge" id="mode-badge">Secure session</span>
-        <span class="sync-state" id="sync-state">Waiting</span>
-        <button class="button quiet" id="refresh-button" type="button">Refresh</button>
         <button class="button quiet" id="logout-button" type="button">Sign out</button>
       </div>
     </header>
@@ -44,6 +41,7 @@
       <button class="nav-item" data-tab="roadmap" type="button">Roadmap</button>
       <button class="nav-item" data-tab="recovery" type="button">Recovery</button>
       <button class="nav-item" data-tab="usage" type="button">Usage</button>
+      <button class="nav-item" data-tab="memo" type="button">Memo</button>
     </aside>
 
     <main class="workspace">
@@ -83,11 +81,42 @@
         </div>
         <div class="usage-providers" id="usage-panel"></div>
       </section>
+
+      <section class="tab-view" id="tab-memo" aria-label="Project memos">
+        <div class="memo-lock-panel" id="memo-lock-panel" hidden>
+          <form class="memo-login-form" id="memo-login-form">
+            <div class="brand-mark">D</div>
+            <h1>Private memos</h1>
+            <label for="memo-access-token">Memo token</label>
+            <input id="memo-access-token" name="token" type="password" autocomplete="current-password" required>
+            <button class="button primary" type="submit">Unlock</button>
+            <p class="form-error" id="memo-login-error" role="alert"></p>
+          </form>
+        </div>
+        <div class="memo-shell" id="memo-shell" hidden>
+          <nav class="memo-project-list" id="memo-project-list" aria-label="Memo projects">
+            <button class="memo-project-tab active" data-memo-project="developer-os" type="button">OS</button>
+            <button class="memo-project-tab" data-memo-project="btest" type="button">bTest</button>
+            <button class="memo-project-tab" data-memo-project="oa" type="button">OA</button>
+            <button class="memo-project-tab" data-memo-project="gaia" type="button">Gaia</button>
+          </nav>
+          <section class="memo-editor-panel">
+            <header class="memo-editor-header">
+              <strong id="memo-active-project">OS</strong>
+              <div class="memo-editor-actions">
+                <span id="memo-save-state" role="status" aria-live="polite">Saved</span>
+                <button class="button quiet memo-lock-button" id="memo-logout-button" type="button">Lock</button>
+              </div>
+            </header>
+            <textarea class="memo-editor" id="memo-editor" aria-label="OS memo" maxlength="65536" spellcheck="true"></textarea>
+          </section>
+        </div>
+      </section>
     </main>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/roadmap-assets/roadmap-view.js?v=3.0.2" defer></script>
-  <script src="/app.js?v=4" defer></script>
+  <script src="/app.js?v=7" defer></script>
 </body>
 </html>

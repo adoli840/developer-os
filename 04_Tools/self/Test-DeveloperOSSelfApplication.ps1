@@ -244,10 +244,32 @@ if ($null -eq $python) {
         Pop-Location
     }
     if ($pythonExitCode -eq 0) {
-        Add-CheckResult PASS "Console monitoring" "DeveloperOS is monitored and correctly has no database-backup expectation"
+        Add-CheckResult PASS "Console monitoring" "DeveloperOS is monitored without a project PostgreSQL backup expectation"
     } else {
         Add-CheckResult FAIL "Console monitoring" "DeveloperOS console registration is invalid"
     }
+}
+
+$memoStore = Read-Text "console\devos_console\memos.py"
+$memoBackup = Read-Text "deployment\console\backup-postgres.sh"
+$memoDeployment = Read-Text "deployment\console\Manage-DeveloperOSConsole.ps1"
+$memoMakefile = Read-Text "Makefile"
+$projectRules = Read-Text "PROJECT_RULES.md"
+if (
+    $memoStore -and
+    $memoStore.Contains("project_memos") -and
+    $memoBackup -and
+    $memoBackup.Contains("developer-os-memos") -and
+    $memoBackup.Contains("PRAGMA integrity_check") -and
+    $memoDeployment -and
+    $memoDeployment.Contains('"MemoToken"') -and
+    $memoMakefile -match '(?m)^console-memo-token:' -and
+    $projectRules -and
+    $projectRules.Contains("memos.sqlite3")
+) {
+    Add-CheckResult PASS "Memo database protection" "the scoped SQLite memo store has a daily consistent backup and integrity check"
+} else {
+    Add-CheckResult FAIL "Memo database protection" "the SQLite memo store or its recovery contract is incomplete"
 }
 
 $terminalConfigPath = Join-Path $developerOSRoot "console\terminal-config.example.json"
@@ -313,7 +335,7 @@ if ($rootCompose.Count -eq 0) {
     Add-CheckResult FAIL "Docker lifecycle" "a root Compose file now exists; review PROJECT_RULES.md and enable the shared Docker contract"
 }
 
-Add-CheckResult SKIP "PostgreSQL backup" "DeveloperOS owns no application database and backup_expected is false"
+Add-CheckResult SKIP "PostgreSQL backup" "DeveloperOS owns no application PostgreSQL database and backup_expected is false"
 Add-CheckResult SKIP "Generic Docker deployment" "DeveloperOS uses the specialized console systemd deployment"
 Add-CheckResult SKIP "Root TODO and Decisions" "canonical records live in 00_Master/Backlog.md and 00_Master/Decisions.md"
 

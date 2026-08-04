@@ -24,8 +24,14 @@ real container application is introduced and this exception is reviewed.
 DeveloperOS owns no application PostgreSQL database. Its source and durable
 policy are preserved by Git; console runtime snapshots, workstation reports,
 usage snapshots, and logs are derived operational state. Keep
-`backup_expected=false` for DeveloperOS and do not create an empty database only
-for backup parity.
+`backup_expected=false` for DeveloperOS and do not create an empty PostgreSQL
+database only for backup parity.
+
+The console memo workspace is an intentional lightweight exception. It stores
+four bounded text records in `/var/lib/developer-os-console/memos.sqlite3` and
+the daily managed backup job creates a consistent SQLite copy with an integrity
+check and 14-day retention. This does not change the PostgreSQL exclusion or
+make other runtime snapshots authoritative.
 
 Secrets and machine-specific environment files remain outside Git and follow
 their own workstation or server recovery procedures.

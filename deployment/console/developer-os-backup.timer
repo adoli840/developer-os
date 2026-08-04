@@ -1,5 +1,5 @@
 [Unit]
-Description=Daily DeveloperOS PostgreSQL backups
+Description=Daily DeveloperOS managed database backups
 
 [Timer]
 OnCalendar=*-*-* 18:30:00 UTC

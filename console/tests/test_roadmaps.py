@@ -413,10 +413,12 @@ class RoadmapRouteTests(unittest.TestCase):
                 bind="127.0.0.1",
                 port=0,
                 access_token="test-token",
+                memo_access_token="memo-token",
                 secure_cookie=False,
                 public_read_only=True,
                 trusted_local=False,
                 projects=(project_spec(project_path),),
+                memo_database=runtime_path / "memos.sqlite3",
                 usage_snapshot=runtime_path / "usage.json",
                 oracle_usage_snapshot=runtime_path / "oracle-usage.json",
                 backup_status_dir=runtime_path / "backups",
@@ -452,7 +454,7 @@ class RoadmapRouteTests(unittest.TestCase):
         self.assertNotIn('id="roadmap-time"', page)
         self.assertIn('src="/roadmap-assets/roadmap-view.js?v=3.0.2"', page)
         self.assertIn('href="/roadmap-assets/roadmap-view.css?v=3.0.2"', page)
-        self.assertIn('src="/app.js?v=4"', page)
+        self.assertIn('src="/app.js?v=7"', page)
         self.assertIn("DeveloperOSRoadmapView", renderer)
         self.assertIn('const VERSION = "3.0.2"', renderer)
         self.assertIn("grid-auto-columns: minmax(218px, 1fr)", renderer_css)
