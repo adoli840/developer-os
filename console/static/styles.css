@@ -1133,6 +1133,10 @@ tbody tr:last-child td {
     position: sticky;
     z-index: 1;
     left: 0;
+    width: 1%;
+    min-width: 0;
+    padding-inline: 8px;
+    white-space: nowrap;
   }
 
   .project-comparison-table .terminal-heading,
