@@ -142,6 +142,7 @@ class TerminalRunnerTests(unittest.TestCase):
 
         self.assertIn('/vendor/xterm/xterm.js?v=5.5.0', page)
         self.assertIn('/vendor/xterm/addon-fit.js?v=0.10.0', page)
+        self.assertIn('/terminal.css?v=3', page)
         self.assertIn('id="terminal-viewport"', page)
         self.assertIn("new WebSocket(url)", javascript)
         self.assertIn("state.terminal.onData", javascript)
