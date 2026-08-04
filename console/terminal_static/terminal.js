@@ -11,8 +11,66 @@ const elements = {
   contextPath: document.querySelector("#context-path"),
   terminalViewport: document.querySelector("#terminal-viewport"),
   connection: document.querySelector("#connection-state"),
+  copyButton: document.querySelector("#copy-button"),
+  pasteButton: document.querySelector("#paste-button"),
   clearButton: document.querySelector("#clear-button"),
 };
+
+function showActionResult(button, label) {
+  const original = button.dataset.label || button.textContent;
+  button.dataset.label = original;
+  button.textContent = label;
+  window.setTimeout(() => {
+    button.textContent = original;
+    delete button.dataset.label;
+  }, 1200);
+}
+
+async function writeClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.append(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) throw new Error("Clipboard copy is unavailable.");
+}
+
+async function copySelection() {
+  const selection = state.terminal?.getSelection() || "";
+  if (!selection) {
+    showActionResult(elements.copyButton, "Select text");
+    state.terminal?.focus();
+    return;
+  }
+  try {
+    await writeClipboard(selection);
+    showActionResult(elements.copyButton, "Copied");
+  } catch {
+    showActionResult(elements.copyButton, "Copy failed");
+  } finally {
+    state.terminal?.focus();
+  }
+}
+
+async function pasteClipboard() {
+  try {
+    if (!navigator.clipboard?.readText) throw new Error("Clipboard paste is unavailable.");
+    const text = await navigator.clipboard.readText();
+    if (text) state.terminal.paste(text);
+    showActionResult(elements.pasteButton, text ? "Pasted" : "Clipboard empty");
+  } catch {
+    showActionResult(elements.pasteButton, "Paste blocked");
+  } finally {
+    state.terminal?.focus();
+  }
+}
 
 function selectedProject() {
   return state.projects.find((project) => project.slug === state.selectedProject);
@@ -119,6 +177,23 @@ function initializeTerminal() {
   state.terminal.loadAddon(state.fitAddon);
   state.terminal.open(elements.terminalViewport);
   state.fitAddon.fit();
+  state.terminal.attachCustomKeyEventHandler((event) => {
+    if (event.type !== "keydown") return true;
+    const commandModifier = event.ctrlKey || event.metaKey;
+    const copyShortcut = commandModifier && event.shiftKey && event.code === "KeyC"
+      || event.ctrlKey && !event.shiftKey && event.code === "Insert";
+    const pasteShortcut = commandModifier && event.shiftKey && event.code === "KeyV"
+      || event.shiftKey && !event.ctrlKey && event.code === "Insert";
+    if (copyShortcut) {
+      void copySelection();
+      return false;
+    }
+    if (pasteShortcut) {
+      void pasteClipboard();
+      return false;
+    }
+    return true;
+  });
   state.terminal.onData((data) => send({type: "input", data}));
   state.terminal.onResize(() => sendSize());
   new ResizeObserver(() => state.fitAddon.fit()).observe(elements.terminalViewport);
@@ -148,6 +223,8 @@ elements.clearButton.addEventListener("click", () => {
   state.terminal.clear();
   state.terminal.focus();
 });
+elements.copyButton.addEventListener("click", () => void copySelection());
+elements.pasteButton.addEventListener("click", () => void pasteClipboard());
 
 window.addEventListener("beforeunload", () => state.socket?.close());
 

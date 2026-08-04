@@ -131,7 +131,7 @@ button {
 }
 
 .project-tab,
-.clear-button {
+.terminal-action {
   min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 4px;
@@ -141,9 +141,15 @@ button {
 }
 
 .project-tab:hover,
-.clear-button:hover {
+.terminal-action:hover {
   border-color: #59635f;
   color: var(--text);
+}
+
+.terminal-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .project-tab.active {
@@ -313,7 +319,7 @@ button {
     grid-row: 2;
   }
 
-  .clear-button {
+  .terminal-actions {
     grid-column: 2;
     grid-row: 1;
   }

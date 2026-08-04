@@ -285,6 +285,11 @@ bundled xterm.js client, including `nano`, search, save, exit, passwordless
 interactive tools, and terminal resize. PTY session open and close metadata are
 audited without recording typed commands or terminal contents.
 
+Selected terminal text can be copied with the `Copy` button,
+`Ctrl+Shift+C`, or `Ctrl+Insert`. Clipboard text can be pasted with the `Paste`
+button, `Ctrl+Shift+V`, or `Shift+Insert`. Plain `Ctrl+C` remains the normal
+Linux interrupt signal.
+
 When Home automatic reporting is enabled, the same hidden task checks the
 tunnel every five minutes and restores it after login or a dropped SSH
 connection. Tunnel failure is logged separately and does not prevent the Git

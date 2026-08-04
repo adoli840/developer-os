@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="dark">
   <title>DeveloperOS Server Terminal</title>
   <link rel="stylesheet" href="/vendor/xterm/xterm.css?v=5.5.0">
-  <link rel="stylesheet" href="/terminal.css?v=4">
+  <link rel="stylesheet" href="/terminal.css?v=5">
 </head>
 <body>
   <header class="topbar">
@@ -27,7 +27,11 @@
     <section class="context-bar" aria-label="Terminal context">
       <div class="project-tabs" id="project-tabs"></div>
       <div class="context-path" id="context-path">Connecting</div>
-      <button class="clear-button" id="clear-button" type="button">Clear</button>
+      <div class="terminal-actions" aria-label="Terminal actions">
+        <button class="terminal-action" id="copy-button" type="button" title="Copy selection (Ctrl+Shift+C)">Copy</button>
+        <button class="terminal-action" id="paste-button" type="button" title="Paste clipboard (Ctrl+Shift+V)">Paste</button>
+        <button class="terminal-action" id="clear-button" type="button">Clear</button>
+      </div>
     </section>
 
     <section class="terminal-viewport" id="terminal-viewport" aria-label="Interactive Linux terminal"></section>
@@ -35,6 +39,6 @@
 
   <script src="/vendor/xterm/xterm.js?v=5.5.0"></script>
   <script src="/vendor/xterm/addon-fit.js?v=0.10.0"></script>
-  <script src="/terminal.js?v=3"></script>
+  <script src="/terminal.js?v=4"></script>
 </body>
 </html>
