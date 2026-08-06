@@ -25,7 +25,11 @@ ROADMAP_STATUSES = (
     "Cancelled",
 )
 ROADMAP_DETAIL_STATUSES = ("Done", "In Progress", "Blocked", "Prohibited")
-ROADMAP_BLOCKER_TYPES = ("None", "Operator", "Processing", "Future")
+ROADMAP_BLOCKER_TYPES = ("None", "Dev", "Past", "Future")
+ROADMAP_BLOCKER_ALIASES = {
+    "operator": "Dev",
+    "processing": "Past",
+}
 REQUIRED_SECTIONS = (
     "Direction",
     "Current Milestone",
@@ -103,6 +107,11 @@ def parse_roadmap(text: str, *, slug: str, name: str) -> dict[str, Any]:
         raise ValueError("Next Status Transitions must contain an ordered item.")
     if not risks:
         raise ValueError("Risks And Blockers must contain a bullet item.")
+    dependencies = (
+        _dependency_rows(sections["Roadmap Dependencies"], topics)
+        if "Roadmap Dependencies" in sections
+        else []
+    )
 
     return {
         "slug": slug,
@@ -117,6 +126,7 @@ def parse_roadmap(text: str, *, slug: str, name: str) -> dict[str, Any]:
             "completion_signal": milestone["Completion signal"],
         },
         "topics": topics,
+        "dependencies": dependencies,
         "detail_mode": detail_mode,
         "current_priority": priorities,
         "latest_status_change": {
@@ -470,6 +480,53 @@ def _detail_rows(
     return rows
 
 
+def _dependency_rows(
+    lines: list[str],
+    topics: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    topic_names = {topic["topic"] for topic in topics}
+    detail_names = {
+        item["item"]
+        for topic in topics
+        for item in topic.get("items", [])
+    }
+    known_nodes = topic_names | detail_names
+    rows: list[dict[str, str]] = []
+    seen_edges: set[tuple[str, str]] = set()
+    header_seen = False
+    for line in lines:
+        stripped = line.strip()
+        if not stripped.startswith("|") or not stripped.endswith("|"):
+            continue
+        cells = [cell.strip() for cell in stripped[1:-1].split("|")]
+        if cells == ["From", "To", "Description"]:
+            header_seen = True
+            continue
+        if all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells):
+            continue
+        if len(cells) != 3 or not all(cells):
+            raise ValueError("Roadmap Dependencies contains a malformed row.")
+        source, target, description = cells
+        if source not in known_nodes:
+            raise ValueError(f"Roadmap Dependencies references an unknown source: {source}.")
+        if target not in known_nodes:
+            raise ValueError(f"Roadmap Dependencies references an unknown target: {target}.")
+        edge_key = (source.casefold(), target.casefold())
+        if edge_key in seen_edges:
+            raise ValueError("Roadmap Dependencies must not duplicate an edge.")
+        seen_edges.add(edge_key)
+        rows.append(
+            {
+                "from": source,
+                "to": target,
+                "description": description,
+            }
+        )
+    if not header_seen:
+        raise ValueError("Roadmap Dependencies must use the standard table header.")
+    return rows
+
+
 def _derived_detail_items(topic: dict[str, str]) -> list[dict[str, str]]:
     status = _detail_status_for_topic(topic["status"])
     return [
@@ -535,6 +592,8 @@ def _canonical_detail_status(value: str) -> str:
 
 def _canonical_blocker_type(value: str) -> str:
     normalized = value.strip().casefold()
+    if normalized in ROADMAP_BLOCKER_ALIASES:
+        return ROADMAP_BLOCKER_ALIASES[normalized]
     for blocker_type in ROADMAP_BLOCKER_TYPES:
         if blocker_type.casefold() == normalized:
             return blocker_type

@@ -18,6 +18,16 @@ DeveloperOS itself.
 A roadmap topic is a trackable project objective, milestone, capability, or
 subproblem whose state helps determine project direction.
 
+Roadmap content must stay tied to the project's purpose. Include work that
+directly advances the product, domain outcome, user workflow, data quality,
+runtime reliability, verification strength, or operating safety needed by that
+purpose. Do not add topics whose only value is supporting the act of
+development itself, such as adopting this roadmap policy, changing a container
+startup convention, reorganizing build commands, or other internal developer
+workflow cleanup. Those belong in Git history, project documentation, DeveloperOS
+policy, or a separate engineering task record unless they materially change the
+project's own user-facing or domain-facing capability.
+
 Use a small status set unless a project already has an established equivalent:
 
 - `Planned`
@@ -148,15 +158,33 @@ Detail `Status` uses the presentation states `Done`, `In Progress`, `Blocked`,
 or `Prohibited`. `Blocker Type` is `None` except for blocked items, which must
 choose exactly one of:
 
-- `Operator`: progress requires a developer decision, credential, approval, or
+- `Dev`: progress requires a developer decision, credential, approval, or
   other human response.
-- `Processing`: progress waits for historical processing such as learning,
+- `Past`: progress waits for historical processing such as learning,
   backtesting, migration, or batch computation.
 - `Future`: progress waits for future evidence such as paper, shadow, soak, or
   scheduled observation time.
 
 `Description` is a short explanatory sentence shown on hover and keyboard
 focus. It must explain the item rather than repeat its title.
+
+Projects that need the roadmap to show what should be done next should add
+`## Roadmap Dependencies` after `Roadmap Details` and before
+`Current Priority`. It uses this exact table:
+
+```markdown
+| From | To | Description |
+|---|---|---|
+| Repository contract | Public release | The release should wait until the reviewed project boundary is stable. |
+```
+
+`From` and `To` must name an existing roadmap topic or an existing detail item.
+Use dependency rows for any prerequisite relationship between detail items,
+detail items and topics, or topics. A dependency graph may branch, converge, or
+cycle when the real project does; do not force it into a single linear
+pipeline. Items with no meaningful prerequisite can remain disconnected. The
+graph should optimize the developer's next-action choice, not the compactness
+of the page.
 
 `Current Milestone` must contain `Objective`, `Status`, and
 `Completion signal` fields. `Roadmap Topics` must use this exact table header:
@@ -223,6 +251,9 @@ For each mapped root topic, its `Roadmap Details` rows and the linked track's
   becomes `Prohibited`; and `Planned` or `In Progress` becomes `In Progress`.
 - A blocked Overall row declares its shared blocker type. The same blocker
   signal and description apply to the linked large track card.
+- Track dependency rows remain track-local unless an overview dependency names
+  mapped overview cards directly. Do not invent cross-track dependencies merely
+  to make the diagram look connected.
 
 The parser must reject schema version 2 data when any linked card count, order,
 name, presentation status, or description differs. The Overall view renders
@@ -259,6 +290,10 @@ The view must:
   strip from the primary view. These fields remain required canonical planning
   data and public structured data, but they do not consume the first viewport.
 - Place the compact status and bottleneck legend directly below the cards.
+- When `Roadmap Dependencies` exists, render a prerequisite flow view near the
+  card area. The view may use arrows, lanes, grouped lists, or a graph layout,
+  but it must preserve direction, allow branching and cycles, and leave
+  independent items visibly unconnected.
 - Show priorities, latest status change, next transitions, and risks or
   blockers after the card area and legend.
 - Work at both desktop and mobile widths.
@@ -271,9 +306,14 @@ The view must:
   identity defined above without merging track child-detail tables.
 - Use the DeveloperOS roadmap presentation families consistently: green for
   done, blue for in progress, orange for blocked, and red for prohibited.
-- Distinguish operator blockers with an attention animation, processing
-  blockers with a gray-to-orange horizontal gradient, and future blockers with
-  an orange-to-green horizontal gradient. Respect reduced-motion preferences.
+- Distinguish `Dev` blockers with the existing attention animation, `Past`
+  blockers with a right-half orange base and a left-to-center orange progress
+  wash, and `Future` blockers with a left-half orange base and a center-to-right
+  orange progress wash. Respect reduced-motion preferences.
+- Keep large topic cards compact. They should provide the topic name, status,
+  and blocker signal without occupying the full first viewport. Detail items
+  may be collapsed by default behind topic or detail-card activation when doing
+  so improves scan efficiency.
 - Render every declared detail item and expose its description on pointer hover
   and keyboard focus.
 - Use the versioned presentation assets under `04_Tools/roadmap-web` or a

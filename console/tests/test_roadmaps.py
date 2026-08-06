@@ -42,10 +42,18 @@ Build a small, reliable example project.
 |---|---|---|---|---|
 | Foundation | Parser | Done | None | The canonical roadmap parser accepts the standard fields. |
 | Foundation | Visual renderer | In Progress | None | The public view renders every declared detail item. |
-| Foundation | Operator approval | Blocked | Operator | The developer must approve the final publication boundary. |
-| Publishing | Historical build | Blocked | Processing | Existing source data is still being processed. |
+| Foundation | Operator approval | Blocked | Dev | The developer must approve the final publication boundary. |
+| Publishing | Historical build | Blocked | Past | Existing source data is still being processed. |
 | Publishing | Paper observation | Blocked | Future | Evidence depends on future paper-runtime observations. |
 | Publishing | Production bypass | Prohibited | None | Publication must never bypass the reviewed source document. |
+
+## Roadmap Dependencies
+
+| From | To | Description |
+|---|---|---|
+| Parser | Visual renderer | The renderer depends on parsed public roadmap data. |
+| Visual renderer | Parser | Parser changes must preserve renderer compatibility. |
+| Operator approval | Publishing | Publishing waits for the developer's release boundary decision. |
 
 ## Current Priority
 
@@ -112,7 +120,7 @@ def linked_track_roadmap() -> str:
 |---|---|---|---|---|
 | Parser | Format contract | Done | None | Keep the canonical parser aligned with the shared format. |
 | Visual renderer | Browser bundle | In Progress | None | Render the linked cards at desktop and mobile widths. |
-| Operator approval | Publication decision | Blocked | Operator | Wait for the explicit publication decision. |
+| Operator approval | Publication decision | Blocked | Dev | Wait for the explicit publication decision. |
 """
     value = re.sub(
         r"## Roadmap Topics\n.*?(?=\n## Roadmap Details)",
@@ -159,13 +167,37 @@ class RoadmapParserTests(unittest.TestCase):
         self.assertEqual(len(result["topics"]), 2)
         self.assertEqual(result["detail_mode"], "explicit")
         self.assertEqual(len(result["topics"][0]["items"]), 3)
-        self.assertEqual(result["topics"][0]["items"][2]["blocker_type"], "Operator")
+        self.assertEqual(result["topics"][0]["items"][2]["blocker_type"], "Dev")
+        self.assertEqual(
+            result["dependencies"][0],
+            {
+                "from": "Parser",
+                "to": "Visual renderer",
+                "description": "The renderer depends on parsed public roadmap data.",
+            },
+        )
         self.assertNotIn("path", result)
         self.assertNotIn("raw", result)
 
     def test_unknown_status_is_rejected(self) -> None:
         invalid = STANDARD_ROADMAP.replace("- Status: In Progress", "- Status: Almost")
         with self.assertRaisesRegex(ValueError, "Unsupported roadmap status"):
+            parse_roadmap(invalid, slug="example", name="Example")
+
+    def test_legacy_blocker_names_are_normalized(self) -> None:
+        legacy = STANDARD_ROADMAP.replace(" Blocked | Dev |", " Blocked | Operator |")
+        legacy = legacy.replace(" Blocked | Past |", " Blocked | Processing |")
+        result = parse_roadmap(legacy, slug="example", name="Example")
+
+        self.assertEqual(result["topics"][0]["items"][2]["blocker_type"], "Dev")
+        self.assertEqual(result["topics"][1]["items"][0]["blocker_type"], "Past")
+
+    def test_unknown_dependency_node_is_rejected(self) -> None:
+        invalid = STANDARD_ROADMAP.replace(
+            "| Parser | Visual renderer |",
+            "| Missing node | Visual renderer |",
+        )
+        with self.assertRaisesRegex(ValueError, "unknown source"):
             parse_roadmap(invalid, slug="example", name="Example")
 
     def test_duplicate_topic_names_are_rejected(self) -> None:
@@ -178,7 +210,7 @@ class RoadmapParserTests(unittest.TestCase):
 
     def test_blocked_detail_requires_a_specific_blocker_type(self) -> None:
         invalid = STANDARD_ROADMAP.replace(
-            "| Foundation | Operator approval | Blocked | Operator |",
+            "| Foundation | Operator approval | Blocked | Dev |",
             "| Foundation | Operator approval | Blocked | None |",
         )
         with self.assertRaisesRegex(ValueError, "must declare a blocker type"):
@@ -288,7 +320,7 @@ class RoadmapParserTests(unittest.TestCase):
             [topic["topic"] for topic in track["topics"]],
         )
         self.assertEqual(track["topics"][2]["display_status"], "Blocked")
-        self.assertEqual(track["topics"][2]["blocker_type"], "Operator")
+        self.assertEqual(track["topics"][2]["blocker_type"], "Dev")
         self.assertEqual(
             track["topics"][2]["description"],
             "The developer must approve the final publication boundary.",
@@ -451,12 +483,12 @@ class RoadmapRouteTests(unittest.TestCase):
         self.assertIn('id="roadmap-track-tabs"', page)
         self.assertNotIn('id="roadmap-summary"', page)
         self.assertNotIn('id="roadmap-time"', page)
-        self.assertIn('src="/roadmap-assets/roadmap-view.js?v=3.0.2"', page)
-        self.assertIn('href="/roadmap-assets/roadmap-view.css?v=3.0.2"', page)
+        self.assertIn('src="/roadmap-assets/roadmap-view.js?v=3.1.0"', page)
+        self.assertIn('href="/roadmap-assets/roadmap-view.css?v=3.1.0"', page)
         self.assertIn('src="/app.js?v=9"', page)
         self.assertIn("DeveloperOSRoadmapView", renderer)
-        self.assertIn('const VERSION = "3.0.2"', renderer)
-        self.assertIn("grid-auto-columns: minmax(218px, 1fr)", renderer_css)
+        self.assertIn('const VERSION = "3.1.0"', renderer)
+        self.assertIn("grid-auto-columns: minmax(190px, 1fr)", renderer_css)
         self.assertIn("grid-auto-flow: column", renderer_css)
         self.assertNotIn("min-width: max-content", renderer_css)
         self.assertNotIn("roadmap-milestone-strip", renderer)

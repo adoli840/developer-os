@@ -1,7 +1,7 @@
 (function initializeDeveloperOSRoadmapView(global) {
   "use strict";
 
-  const VERSION = "3.0.2";
+  const VERSION = "3.1.0";
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -23,8 +23,10 @@
     const status = item.display_status || item.status;
     if (statusFamily(status) !== "blocked") return "";
     return {
-      Operator: "blocker-operator",
-      Processing: "blocker-processing",
+      Dev: "blocker-dev",
+      Operator: "blocker-dev",
+      Past: "blocker-past",
+      Processing: "blocker-past",
       Future: "blocker-future",
     }[item.blocker_type] || "";
   }
@@ -49,6 +51,48 @@
         <i class="roadmap-blocker-swatch blocker-${kind}" aria-hidden="true"></i>
         ${escapeHtml(label)}
       </span>
+    `;
+  }
+
+  function nodeItems(project) {
+    const nodes = new Map();
+    (project.topics || []).forEach((topic) => {
+      nodes.set(topic.topic, {name: topic.topic, kind: "topic"});
+      detailItems(topic, project.detail_mode).forEach((item) => {
+        nodes.set(item.item, {name: item.item, kind: "detail"});
+      });
+    });
+    return Array.from(nodes.values());
+  }
+
+  function renderDependencies(project) {
+    const dependencies = Array.isArray(project.dependencies) ? project.dependencies : [];
+    const nodes = nodeItems(project);
+    if (!dependencies.length) return "";
+    const connected = new Set();
+    dependencies.forEach((edge) => {
+      connected.add(edge.from);
+      connected.add(edge.to);
+    });
+    const independent = nodes.filter((node) => !connected.has(node.name));
+    return `
+      <section class="roadmap-flow" aria-label="Roadmap dependencies">
+        <div class="roadmap-flow-edges">
+          ${dependencies.map((edge) => `
+            <div class="roadmap-flow-edge" tabindex="0" aria-label="${escapeHtml(`${edge.from} before ${edge.to}. ${edge.description}`)}">
+              <span class="roadmap-flow-node">${escapeHtml(edge.from)}</span>
+              <span class="roadmap-flow-arrow" aria-hidden="true">-></span>
+              <span class="roadmap-flow-node">${escapeHtml(edge.to)}</span>
+              <small>${escapeHtml(edge.description)}</small>
+            </div>
+          `).join("")}
+        </div>
+        ${independent.length ? `
+          <div class="roadmap-flow-independent" aria-label="Independent roadmap items">
+            ${independent.map((node) => `<span>${escapeHtml(node.name)}</span>`).join("")}
+          </div>
+        ` : ""}
+      </section>
     `;
   }
 
@@ -91,9 +135,10 @@
       <article class="roadmap-stage ${statusFamily(status)}" role="listitem">
         <div class="roadmap-stage-card ${blocker}"
              tabindex="0"
+             role="button"
+             aria-expanded="false"
              aria-label="${escapeHtml(ariaLabel)}"
              data-roadmap-description="${escapeHtml(description)}">
-          <span class="roadmap-stage-number" aria-hidden="true">${index + 1}</span>
           <h4>${escapeHtml(topic.topic)}</h4>
           <span class="roadmap-stage-status">${escapeHtml(status)}</span>
         </div>
@@ -136,6 +181,24 @@
       item.addEventListener("mouseleave", hide);
       item.addEventListener("focus", () => show(item));
       item.addEventListener("blur", hide);
+    });
+  }
+
+  function bindStageExpansion(container) {
+    container.querySelectorAll(".roadmap-stage-card").forEach((card) => {
+      const stage = card.closest(".roadmap-stage");
+      if (!stage) return;
+      const toggle = () => {
+        const expanded = stage.classList.toggle("expanded");
+        card.setAttribute("aria-expanded", String(expanded));
+      };
+      card.addEventListener("click", toggle);
+      card.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggle();
+        }
+      });
     });
   }
 
@@ -185,12 +248,14 @@
         <div class="roadmap-legend-group">
           <h3>Bottleneck type</h3>
           <div class="roadmap-legend-grid roadmap-blocker-legend">
-            ${blockerLegendItem("Operator response", "operator")}
-            ${blockerLegendItem("Processing", "processing")}
-            ${blockerLegendItem("Future evidence", "future")}
+            ${blockerLegendItem("Bottle by dev", "dev")}
+            ${blockerLegendItem("Bottle by past", "past")}
+            ${blockerLegendItem("Bottle by future", "future")}
           </div>
         </div>
       </aside>
+
+      ${renderDependencies(project)}
 
       <div class="roadmap-columns">
         <section class="roadmap-band"><h3>Current priority</h3>${orderedList(project.current_priority)}</section>
@@ -209,6 +274,7 @@
       </div>
     `;
     bindDescriptionTooltips(container);
+    bindStageExpansion(container);
   }
 
   global.DeveloperOSRoadmapView = Object.freeze({VERSION, renderDetail});

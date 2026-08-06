@@ -21,7 +21,7 @@ than the complete stage sequence.
 
 ## Version
 
-The current browser bundle is `3.0.2` and consists of:
+The current browser bundle is `3.1.0` and consists of:
 
 - `assets/roadmap-view.js`
 - `assets/roadmap-view.css`
