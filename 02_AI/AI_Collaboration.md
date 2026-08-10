@@ -6,6 +6,22 @@ This workspace treats GPT and Codex as one development team with different respo
 
 The shared goal is to maximize developer productivity while minimizing AI cost, especially Codex token usage.
 
+Before meaningful work, use `ModelRoutingPolicy.md` to recommend `Luna`,
+`Luna to Sol`, or `Sol`. The recommendation is recorded with its reason and
+review boundary and route sequence; it is not an automatic model invocation.
+Project-local rules may raise the minimum route.
+
+For high-impact work, use `DevelopmentProtocol.md` as the shared seven-step
+GPT-User-Codex process. GPT and Codex/Sol are peer reviewers, and the user is
+the final design owner. A GPT proposal is an input to verify against the real
+repository, not an unquestionable implementation command.
+
+For multi-stage requests, Codex presents the route sequence first, waits for
+the developer's `luna` or `sol` confirmation at each route boundary, and
+continues all useful work within the confirmed route before handing off. The
+workflow minimizes unnecessary confirmations without forcing unrelated work
+into one route.
+
 ## Collaboration Model
 
 ```text

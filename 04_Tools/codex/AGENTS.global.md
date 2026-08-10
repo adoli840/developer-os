@@ -16,6 +16,19 @@ For every repository under `X:\Projects`:
 - Treat
   `X:\Projects\DeveloperOS\00_Master\ProjectRoadmapPolicy.md` as a mandatory
   roadmap status-transition rule.
+- Before meaningful work, read
+  `X:\Projects\DeveloperOS\02_AI\ModelRoutingPolicy.md` and record a
+  `Luna`, `Luna to Sol`, or `Sol` recommendation with its reason and review
+  boundary, plus the route sequence for each natural work stage.
+  Project-local rules may raise the minimum route.
+- For high-impact or high-reversal-cost work, read
+  `X:\Projects\DeveloperOS\02_AI\DevelopmentProtocol.md` and apply the
+  GPT-User-Codex seven-step protocol. Small, clear, reversible changes may use
+  the abbreviated path described there.
+- For multi-stage work, present the route sequence first. Ask the developer to
+  confirm a model change with `luna` or `sol`, complete the useful work for the
+  confirmed route, and request the next confirmation only at a natural
+  handoff boundary. Optimize work order, not the number of model changes.
 - Evaluate roadmap transitions after meaningful work without waiting for a
   separate request. Update the canonical roadmap only when a topic's status,
   scope, priority, completion signal, or material blocker changes. Use an

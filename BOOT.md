@@ -64,16 +64,16 @@ direction, priority, dependency, milestone, or release state also changed.
 
 | Task Type | Read These DeveloperOS Documents |
 |---|---|
-| Coding task | `00_Master/CodingStandards.md`, `02_AI/AI_Workflow_Safety_Policy.md`, `02_AI/AI_Collaboration.md` |
+| Coding task | `00_Master/CodingStandards.md`, `02_AI/AI_Workflow_Safety_Policy.md`, `02_AI/AI_Collaboration.md`, `02_AI/ModelRoutingPolicy.md`, `02_AI/DevelopmentProtocol.md` |
 | Bug fix | `00_Master/CodingStandards.md`, `02_AI/Review.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
 | Docker, Compose, image, or container lifecycle | `00_Master/DockerImageBuildPolicy.md`, `00_Master/CodingStandards.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
 | Dataset, database, model, or artifact synchronization | `00_Master/DataSynchronizationPolicy.md`, `00_Master/Architecture.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
-| Architecture task | `00_Master/Architecture.md`, `00_Master/Decisions.md`, `02_AI/AI_Collaboration.md` |
-| Architecture review | `00_Master/ArchitectureReview.md`, `00_Master/Architecture.md`, `00_Master/Decisions.md` |
+| Architecture task | `00_Master/Architecture.md`, `00_Master/Decisions.md`, `02_AI/AI_Collaboration.md`, `02_AI/DevelopmentProtocol.md` |
+| Architecture review | `00_Master/ArchitectureReview.md`, `00_Master/Architecture.md`, `00_Master/Decisions.md`, `02_AI/DevelopmentProtocol.md` |
 | Documentation task | `02_AI/LanguagePolicy.md`, `02_AI/Prompts.md`, `00_Master/GovernanceModel.md` |
 | Project planning task | `00_Master/Dashboard.md`, `00_Master/Roadmap.md`, `00_Master/PM_Role.md` |
-| AI collaboration or handoff | `02_AI/AI_Collaboration.md`, `02_AI/Rules.md`, `02_AI/Memory.md` |
-| High-risk refactoring | `02_AI/AI_Workflow_Safety_Policy.md`, then `00_Master/CodingStandards.md` and relevant architecture documents |
+| AI collaboration or handoff | `02_AI/AI_Collaboration.md`, `02_AI/ModelRoutingPolicy.md`, `02_AI/DevelopmentProtocol.md`, `02_AI/Rules.md`, `02_AI/Memory.md` |
+| High-risk refactoring | `02_AI/AI_Workflow_Safety_Policy.md`, `02_AI/DevelopmentProtocol.md`, then `00_Master/CodingStandards.md` and relevant architecture documents |
 | Git recovery decision | `02_AI/AI_Workflow_Safety_Policy.md` |
 | New project bootstrap | `03_Blueprints/README.md`, `03_Blueprints/ProjectBootstrapPrompt.md`, relevant blueprint folder |
 | Governance question | `00_Master/GovernanceModel.md`, `00_Master/Decisions.md`, `README.md` |
@@ -83,6 +83,9 @@ direction, priority, dependency, milestone, or release state also changed.
 Before high-risk work, read `02_AI/AI_Workflow_Safety_Policy.md` first.
 
 High-risk work includes multi-file refactoring, file deletion, structural changes, database schema changes, changes over 100 lines, or changes across 3 or more files.
+
+For high-impact work, apply `02_AI/DevelopmentProtocol.md`. Its seven-step
+process is not required for small, clear, reversible, low-risk changes.
 
 ## Minimal Context Rule
 

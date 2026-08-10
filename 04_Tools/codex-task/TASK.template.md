@@ -10,6 +10,37 @@ Read `X:\Projects\DeveloperOS\BOOT.md` before starting work.
 
 {{TASK}}
 
+## Model Routing
+
+Read `X:\Projects\DeveloperOS\02_AI\ModelRoutingPolicy.md` and begin with:
+
+```text
+Model recommendation: Luna | Luna to Sol | Sol
+Route sequence: <recommended route for each natural work stage>
+Reason: <complexity, risk, clarity, and rework evidence>
+Review boundary: <what must be checked before completion>
+```
+
+Raise the recommendation when project-local rules or a Sol trigger applies.
+For multi-stage work, present the route sequence before editing. Wait for the
+developer's `luna` or `sol` confirmation before a route change, complete the
+useful work for the confirmed route, and request the next handoff only at a
+natural boundary. Do not batch unrelated Luna work merely to avoid a handoff.
+
+## High-Impact Development Protocol
+
+For architecture, data models, migrations, recursive algorithms, automated
+trading paths, production safety, authentication, authorization, security,
+large refactors, core contract changes, irreversible changes, or ambiguous
+requirements, follow
+`X:\Projects\DeveloperOS\02_AI\DevelopmentProtocol.md`.
+
+Before irreversible implementation, report the current state, interpretation,
+affected files, dependencies, risks, reusable capabilities, implementation
+plan, tests, migration or database impact, and production impact. Afterward,
+report changed files, evidence, remaining scope, unperformed work, and the Sol
+review result. Small, clear, reversible changes may use the abbreviated path.
+
 ## Project Boundary
 
 This file belongs to the current application project.

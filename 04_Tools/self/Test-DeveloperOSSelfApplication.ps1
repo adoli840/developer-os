@@ -111,6 +111,8 @@ if (
 }
 
 $workflowPolicy = Read-Text "02_AI\AI_Workflow_Safety_Policy.md"
+$modelRoutingPolicy = Read-Text "02_AI\ModelRoutingPolicy.md"
+$developmentProtocol = Read-Text "02_AI\DevelopmentProtocol.md"
 $gitIgnore = Read-Text ".gitignore"
 $retiredSnapshotPaths = @(".snapshots", "05_Snapshots", "04_Tools\snapshots")
 $existingSnapshotPaths = @(
@@ -128,6 +130,31 @@ if (
     Add-CheckResult PASS "Git recovery" "AI work snapshots are retired and source-code recovery is Git-only"
 } else {
     Add-CheckResult FAIL "Git recovery" "legacy AI snapshot policy, ignore rules, or storage paths remain"
+}
+
+if (
+    $modelRoutingPolicy -and
+    $modelRoutingPolicy.Contains("### Luna") -and
+    $modelRoutingPolicy.Contains("### Luna to Sol") -and
+    $modelRoutingPolicy.Contains("### Sol") -and
+    $modelRoutingPolicy.Contains("Required Startup Note") -and
+    $modelRoutingPolicy.Contains("Route sequence:")
+) {
+    Add-CheckResult PASS "Model routing" "Luna, Luna-to-Sol, and Sol task recommendations are defined"
+} else {
+    Add-CheckResult FAIL "Model routing" "the task-based model routing policy is missing or incomplete"
+}
+
+if (
+    $developmentProtocol -and
+    $developmentProtocol.Contains("# GPT-User-Codex Seven-Step Development Protocol") -and
+    $developmentProtocol.Contains("## Seven Steps") -and
+    $developmentProtocol.Contains("## Roles And Peer Review") -and
+    $developmentProtocol.Contains("## Planning And Result Reports")
+) {
+    Add-CheckResult PASS "Development protocol" "the high-impact GPT-User-Codex seven-step protocol is defined"
+} else {
+    Add-CheckResult FAIL "Development protocol" "the high-impact development protocol is missing or incomplete"
 }
 
 $null = & git -C $developerOSRoot check-ignore -q -- ".developer-os/context-index.json"
@@ -151,7 +178,7 @@ if (
 
 $globalAgents = Join-Path ([System.IO.Path]::GetFullPath($CodexHome)) "AGENTS.md"
 $globalAgentsText = if (Test-Path -LiteralPath $globalAgents -PathType Leaf) { Get-Content -Raw -LiteralPath $globalAgents } else { "" }
-if ($globalAgentsText.Contains("<!-- BEGIN DEVELOPEROS MANAGED GUIDANCE -->") -and $globalAgentsText.Contains("X:\Projects\DeveloperOS\BOOT.md") -and $globalAgentsText.Contains("DockerImageBuildPolicy.md") -and $globalAgentsText.Contains("make context")) {
+if ($globalAgentsText.Contains("<!-- BEGIN DEVELOPEROS MANAGED GUIDANCE -->") -and $globalAgentsText.Contains("X:\Projects\DeveloperOS\BOOT.md") -and $globalAgentsText.Contains("DockerImageBuildPolicy.md") -and $globalAgentsText.Contains("ModelRoutingPolicy.md") -and $globalAgentsText.Contains("DevelopmentProtocol.md") -and $globalAgentsText.Contains("route sequence") -and $globalAgentsText.Contains("make context")) {
     Add-CheckResult PASS "Global Codex guidance" "DeveloperOS routing and image build minimization are installed in $globalAgents"
 } else {
     Add-CheckResult FAIL "Global Codex guidance" "the managed DeveloperOS block or Docker policy routing is not installed"
@@ -313,7 +340,7 @@ if ($rootMakefile -and $rootMakefile -match "(?m)^console-deploy:" -and $rootMak
 }
 
 $taskTemplate = Read-Text "04_Tools\codex-task\TASK.template.md"
-if ((Test-Path -LiteralPath (Join-Path $developerOSRoot "04_Tools\codex-task\New-CodexTask.ps1")) -and $taskTemplate -and $taskTemplate.Contains("ProjectRoadmapPolicy.md") -and $taskTemplate.Contains("DockerImageBuildPolicy.md") -and $taskTemplate.Contains("make context")) {
+if ((Test-Path -LiteralPath (Join-Path $developerOSRoot "04_Tools\codex-task\New-CodexTask.ps1")) -and $taskTemplate -and $taskTemplate.Contains("ProjectRoadmapPolicy.md") -and $taskTemplate.Contains("DockerImageBuildPolicy.md") -and $taskTemplate.Contains("ModelRoutingPolicy.md") -and $taskTemplate.Contains("DevelopmentProtocol.md") -and $taskTemplate.Contains("Route sequence:") -and $taskTemplate.Contains("make context")) {
     Add-CheckResult PASS "Codex task generation" "the shared task generator includes context routing, roadmap continuity, and image build minimization"
 } else {
     Add-CheckResult FAIL "Codex task generation" "the task generator or required global policy instruction is missing"

@@ -1,6 +1,6 @@
 ﻿# DeveloperOS Roadmap
 
-Updated: 2026-08-06
+Updated: 2026-08-09
 
 ## Direction
 
@@ -29,6 +29,8 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
 | Workspace release commands | Done | Shared deploy and local-to-server sync facades delegate only to explicit project-owned hooks and preserve Git revision identity | Add project hooks only after their deployment or data contracts are verified |
 | Provider usage visibility | Done | OpenAI cost plus Oracle cost, actual A1 free-tier consumption, remaining quantities, and transparent month-end projections are published through credential-free snapshots | Monitor collector freshness and projection accuracy without exposing account service limits |
+| AI model routing guidance | Done | Meaningful work receives a documented Luna, Luna-to-Sol, or Sol recommendation, and multi-stage work uses explicit user-confirmed handoffs at natural boundaries | Observe recommendations and refine thresholds only when evidence shows repeated misrouting |
+| High-impact development protocol | Done | High-failure-cost work uses the shared GPT-User-Codex seven-step process with peer review and final user decision, while low-risk work remains lightweight | Observe protocol use and refine only when review evidence shows a recurring gap |
 
 ## Roadmap Details
 
@@ -54,12 +56,20 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Project data synchronization governance | Opt-in data ownership | Done | None | Each project explicitly selects transferable data and authority direction. |
 | Workspace release commands | Shared release facade | Done | None | Common commands delegate to verified project-owned deployment and synchronization hooks. |
 | Provider usage visibility | Credential-free snapshots | Done | None | Public usage views consume protected server snapshots without receiving provider credentials. |
+| AI model routing guidance | Task-based route policy | Done | None | Complexity, risk, clarity, rework cost, and token budget determine the recommended route before meaningful work. |
+| AI model routing guidance | Interactive handoff workflow | Done | None | Multi-stage work uses confirmed Luna and Sol handoffs at natural implementation and review boundaries. |
+| High-impact development protocol | Seven-step work boundary | Done | None | High-impact work separates problem definition, GPT design, Codex planning and implementation, Sol review, GPT review, and the user's final decision. |
 
 ## Roadmap Dependencies
 
 | From | To | Description |
 |---|---|---|
 | Governance entry point | Area map contract | Project context boundaries depend on agents loading the workspace governance entry point. |
+| Governance entry point | Task-based route policy | AI route recommendations depend on the same startup guidance and precedence rules. |
+| Task-based route policy | Interactive handoff workflow | The route sequence and handoff boundaries depend on the initial task classification. |
+| Governance entry point | Seven-step work boundary | High-impact protocol selection depends on the common startup and precedence rules. |
+| Seven-step work boundary | Task-based route policy | The protocol uses model routing to select implementation and independent review stages. |
+| Task-based route policy | Shared parser contract | Shared implementation work uses the route recommendation before changing parser contracts. |
 | Area map contract | Incremental Git index | The cache can index selectively only after a project declares its source areas. |
 | Area map contract | Task selector | Task routing requires reviewed project-owned area definitions. |
 | Incremental Git index | Task selector | The selector uses the incremental index to avoid repeated broad inspection. |
@@ -96,11 +106,11 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Latest Status Change
 
-- Topic: Docker image build minimization
-- Change: Reopened from Done to In Progress
-- Evidence or reason: The shared Make contract passes for DeveloperOS, OA,
-  Gaia, and bTest, but the workspace Docker policy check reports four bTest
-  build-cache cleanup files outside its recognized deployment boundary.
+- Topic: High-impact development protocol
+- Change: Added the shared GPT-User-Codex seven-step protocol
+- Evidence or reason: The protocol is stored in `02_AI/DevelopmentProtocol.md`,
+  routed through `BOOT.md`, the global Codex guidance, and the task template,
+  and covered by the DeveloperOS self-check.
 
 ## Next Status Transitions
 

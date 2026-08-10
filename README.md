@@ -342,6 +342,8 @@ their standard-format track files in `ROADMAPS.json`.
 - `00_Master/Metrics.md`
 - `00_Master/Decisions.md`
 - `02_AI/AI_Collaboration.md`
+- `02_AI/ModelRoutingPolicy.md`
+- `02_AI/DevelopmentProtocol.md`
 - `02_AI/AI_Workflow_Safety_Policy.md`
 - `02_AI/LanguagePolicy.md`
 

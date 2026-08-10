@@ -970,3 +970,36 @@ Impact:
 The Memo view opens directly and auto-saves to server storage. Recovery reports
 the memo backup beside project database protection. Anyone who can reach the
 public console can read or replace memo text, so memos must not contain secrets.
+
+## 2026-08-09 - Use A Seven-Step GPT-User-Codex Protocol For High-Impact Work
+
+Status: Accepted
+
+Context:
+
+High-impact work can fail when one AI carries an initial assumption through
+design, implementation, and approval without an independent challenge. The
+developer needs GPT's domain-level reasoning, Codex's repository-grounded
+implementation evidence, Sol's adversarial review, and a clear final decision
+boundary.
+
+Decision:
+
+Use the shared seven-step protocol for work with high failure cost or material
+design judgment: problem and purpose definition, GPT design, Codex plan, Codex
+implementation and report, independent Sol review, independent GPT review, and
+the user's final decision. Keep small, clear, reversible changes lightweight.
+Treat GPT and Codex/Sol as peer reviewers and treat the user as final design
+owner. Project-specific rules and stricter safety policies take precedence.
+
+Reason:
+
+Independent context and explicit human arbitration reduce self-reinforcing
+assumptions while avoiding unnecessary ceremony for low-risk work.
+
+Impact:
+
+The canonical policy is `02_AI/DevelopmentProtocol.md`. `BOOT.md`, global
+Codex guidance, and the Codex task template route high-impact work to it. New
+projects under `X:\Projects` inherit the default through DeveloperOS guidance;
+their local rules may strengthen or specialize it.
