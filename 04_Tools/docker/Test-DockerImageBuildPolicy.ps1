@@ -95,7 +95,7 @@ function Test-OperationalFile {
             $script:failures.Add("$($Repository.Name): ${relative}:$lineNumber starts Compose without --no-build")
         }
 
-        $isBuildCommand = $line -match 'docker\s+(?:build|buildx\s+build)' -or $line -match '"buildx"\s*,\s*"build"'
+        $isBuildCommand = $line -match 'docker\s+(?:build(?=\s|$)|buildx\s+build(?=\s|$))' -or $line -match '"buildx"\s*,\s*"build"'
         if ($isBuildCommand -and (Split-Path -Leaf $Path) -notmatch 'deploy') {
             $script:failures.Add("$($Repository.Name): ${relative}:$lineNumber builds outside an explicit deployment helper")
         }
@@ -156,7 +156,9 @@ foreach ($repository in $repositories) {
     foreach ($directoryName in @("scripts", "deploy", "deployment")) {
         $directory = Join-Path $repository.Path $directoryName
         if (Test-Path -LiteralPath $directory -PathType Container) {
-            $operationalFiles += Get-ChildItem -LiteralPath $directory -Recurse -File -Include "*.ps1", "*.sh"
+            $operationalFiles += Get-ChildItem -LiteralPath $directory -Recurse -File | Where-Object {
+                $_.Extension -in @(".ps1", ".sh")
+            }
         }
     }
     if ($repository.Name -eq "DeveloperOS") {

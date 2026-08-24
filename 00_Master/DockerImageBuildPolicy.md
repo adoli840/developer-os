@@ -93,6 +93,20 @@ shared Make contract test.
 Project exceptions must be narrow, explicit in `PROJECT_RULES.md`, and explain
 why no-build startup cannot apply. Convenience is not an exception.
 
+## Local Native Docker Boundary
+
+Windows project lifecycle commands use the DeveloperOS-owned native launcher,
+not the ambient Windows Docker context or Docker Desktop CLI integration. The
+launcher fixes Ubuntu WSL, `/run/docker-wsl.sock`, `/usr/bin/docker`, the
+packaged native Compose binary, and `/home/devops/.docker-native`. Projects may
+own Compose and lifecycle behavior but must not independently change or restart
+this shared daemon, socket, data root, CLI, plugin, or credential boundary.
+
+Remote Docker commands that execute after SSH remain server-local. Do not
+rewrite them to invoke the workstation WSL launcher or forward local registry
+credentials to the server. The full ownership and integration contract is in
+`04_Tools/docker/NativeDockerInfrastructure.md`.
+
 ## DeveloperOS Self-Application
 
 DeveloperOS has no root Docker Compose application. Its console runs directly

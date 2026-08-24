@@ -23,9 +23,15 @@ DEVOS_COMPOSE_FILE ?= $(firstword $(wildcard docker-compose.yml compose.yml dock
 DEVOS_BUILD_COMPOSE_FILE ?= $(DEVOS_COMPOSE_FILE)
 DEVOS_IMAGE_BUILD_COMPOSE_FILE ?= $(or $(firstword $(wildcard docker-compose.build.yml compose.build.yml docker-compose.build.yaml compose.build.yaml)),$(DEVOS_BUILD_COMPOSE_FILE))
 DEVOS_COMPOSE_ENV ?= $(if $(wildcard docker-config),--env-file docker-config) $(if $(wildcard .env),--env-file .env)
-DEVOS_COMPOSE = $(strip docker compose $(DEVOS_COMPOSE_ENV) $(if $(DEVOS_COMPOSE_FILE),-f $(DEVOS_COMPOSE_FILE)))
-DEVOS_BUILD_COMPOSE = $(strip docker compose $(DEVOS_COMPOSE_ENV) $(if $(DEVOS_BUILD_COMPOSE_FILE),-f $(DEVOS_BUILD_COMPOSE_FILE)))
-DEVOS_IMAGE_BUILD_COMPOSE = $(strip docker compose $(DEVOS_COMPOSE_ENV) $(if $(DEVOS_IMAGE_BUILD_COMPOSE_FILE),-f $(DEVOS_IMAGE_BUILD_COMPOSE_FILE)))
+DEVELOPEROS_NATIVE_DOCKER ?= X:/Projects/DeveloperOS/04_Tools/bin/devos-native-docker.cmd
+ifeq ($(OS),Windows_NT)
+DEVOS_DOCKER ?= "$(DEVELOPEROS_NATIVE_DOCKER)"
+else
+DEVOS_DOCKER ?= docker
+endif
+DEVOS_COMPOSE = $(strip $(DEVOS_DOCKER) compose $(DEVOS_COMPOSE_ENV) $(if $(DEVOS_COMPOSE_FILE),-f $(DEVOS_COMPOSE_FILE)))
+DEVOS_BUILD_COMPOSE = $(strip $(DEVOS_DOCKER) compose $(DEVOS_COMPOSE_ENV) $(if $(DEVOS_BUILD_COMPOSE_FILE),-f $(DEVOS_BUILD_COMPOSE_FILE)))
+DEVOS_IMAGE_BUILD_COMPOSE = $(strip $(DEVOS_DOCKER) compose $(DEVOS_COMPOSE_ENV) $(if $(DEVOS_IMAGE_BUILD_COMPOSE_FILE),-f $(DEVOS_IMAGE_BUILD_COMPOSE_FILE)))
 DEVOS_RUN_UP_FLAGS ?= up --no-build
 DEVOS_IMAGE_PUSH_TARGET ?= developeros-image-push
 DEVOS_PULL_IMAGE ?= $(DOCKERHUB_USERNAME)/$(DOCKERHUB_IMAGE):$(DOCKERHUB_TAG)
@@ -133,21 +139,21 @@ rebuild:
 	$(MAKE) --no-print-directory up
 
 dh-tag:
-	docker tag $(IMAGE_NAME) $(DOCKERHUB_USERNAME)/$(DOCKERHUB_IMAGE):$(DOCKERHUB_TAG)
+	$(DEVOS_DOCKER) tag $(IMAGE_NAME) $(DOCKERHUB_USERNAME)/$(DOCKERHUB_IMAGE):$(DOCKERHUB_TAG)
 
 dh-push: dh-tag
-	docker push $(DOCKERHUB_USERNAME)/$(DOCKERHUB_IMAGE):$(DOCKERHUB_TAG)
+	$(DEVOS_DOCKER) push $(DOCKERHUB_USERNAME)/$(DOCKERHUB_IMAGE):$(DOCKERHUB_TAG)
 
 dh-pull:
-	docker pull $(DEVOS_PULL_IMAGE)
-	$(if $(strip $(DEVOS_PULL_LOCAL_IMAGE)),docker tag $(DEVOS_PULL_IMAGE) $(DEVOS_PULL_LOCAL_IMAGE),@echo Image pull complete.)
+	$(DEVOS_DOCKER) pull $(DEVOS_PULL_IMAGE)
+	$(if $(strip $(DEVOS_PULL_LOCAL_IMAGE)),$(DEVOS_DOCKER) tag $(DEVOS_PULL_IMAGE) $(DEVOS_PULL_LOCAL_IMAGE),@echo Image pull complete.)
 
 developeros-image-build:
 	$(DEVELOPEROS_REQUIRE_IMAGE_BUILD_COMPOSE)
 	$(DEVOS_IMAGE_BUILD_COMPOSE) build
 
 developeros-image-push: developeros-image-build dh-tag
-	docker push $(DOCKERHUB_USERNAME)/$(DOCKERHUB_IMAGE):$(DOCKERHUB_TAG)
+	$(DEVOS_DOCKER) push $(DOCKERHUB_USERNAME)/$(DOCKERHUB_IMAGE):$(DOCKERHUB_TAG)
 
 dh-b-push:
 	$(MAKE) --no-print-directory $(DEVOS_IMAGE_PUSH_TARGET)
@@ -165,4 +171,4 @@ deploy:
 	$(if $(filter after-deploy,$(strip $(DEVOS_DEPLOY_SYNC))),$(MAKE) --no-print-directory sync,@echo "Post-deploy data synchronization is not enabled; skipped.")
 
 db-%:
-	docker exec -it $(DB_CONTAINER) psql -U $(POSTGRES_USER) -d $*
+	$(DEVOS_DOCKER) exec -it $(DB_CONTAINER) psql -U $(POSTGRES_USER) -d $*

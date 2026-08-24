@@ -15,6 +15,10 @@ and the shared `make context` command. The generated index stays local at
 - `.developer-os/context-index.json`: ignored, generated symbol and file index
 - `04_Tools/context/project_context.py`: shared incremental generator and task
   selector
+- `04_Tools/context/context_identity.py`: project-and-lane-isolated context seal
+  and dirty-tree identity contracts
+- `04_Tools/context/context_observability.py`: opt-in metrics-only context build
+  observer
 
 Start a project map from
 `03_Blueprints/Project/PROJECT_AREAS.json`.
@@ -53,6 +57,26 @@ contracts, or failing evidence cross an area boundary.
 
 Set `CONTEXT_FORMAT=json` for machine-readable selection or
 `CONTEXT_REFRESH=1` to rebuild every indexed text file.
+
+## Observability Sidecar
+
+`ContextEfficiencySnapshotV1` measures the existing selector without changing
+its result, order, or cache. It records counts, byte and line totals, inclusion
+reasons, repeated selection, identity reuse, dirty scanning, validation status,
+duration, and packet/output sizes. It stores task and packet hashes but never
+source content, task text, session text, credentials, or inferred token usage.
+
+```powershell
+python -m 04_Tools.context.context_observability `
+  --project-root . `
+  --lane MAINLINE_CODEX_REVIEW `
+  --task "audit context routing" `
+  --output .developer-os/context-efficiency/sample.json
+```
+
+The observer performs a non-persisting index build, so it does not rewrite the
+normal `.developer-os/context-index.json`. Provider token counts are accepted
+only when explicitly identified as actual provider usage.
 
 ## Incremental Behavior
 

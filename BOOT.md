@@ -69,6 +69,7 @@ direction, priority, dependency, milestone, or release state also changed.
 | Docker, Compose, image, or container lifecycle | `00_Master/DockerImageBuildPolicy.md`, `00_Master/CodingStandards.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
 | Dataset, database, model, or artifact synchronization | `00_Master/DataSynchronizationPolicy.md`, `00_Master/Architecture.md`, `02_AI/AI_Workflow_Safety_Policy.md` |
 | Local workstation storage location, drive allocation, cache, scratch, archive, or durable output placement | `00_Master/Workspace.md`, then the task-specific data, backup, or safety policy |
+| Project database, runtime, credential, migration, or infrastructure authority | `00_Master/ProjectOperationalAuthorityPolicy.md`, project `PROJECT_RULES.md`, `02_AI/ModelRoutingPolicy.md`, and the task-specific safety policy |
 | Architecture task | `00_Master/Architecture.md`, `00_Master/Decisions.md`, `02_AI/AI_Collaboration.md`, `02_AI/DevelopmentProtocol.md` |
 | Architecture review | `00_Master/ArchitectureReview.md`, `00_Master/Architecture.md`, `00_Master/Decisions.md`, `02_AI/DevelopmentProtocol.md` |
 | Documentation task | `02_AI/LanguagePolicy.md`, `02_AI/Prompts.md`, `00_Master/GovernanceModel.md` |

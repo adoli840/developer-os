@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>DeveloperOS Console</title>
-  <link rel="stylesheet" href="/styles.css?v=6">
+  <link rel="stylesheet" href="/styles.css?v=12">
   <link rel="stylesheet" href="/roadmap-assets/roadmap-view.css?v=3.1.0">
 </head>
 <body>
@@ -37,10 +37,11 @@
 
     <aside class="sidebar" aria-label="Console sections">
       <button class="nav-item active" data-tab="projects" type="button">Projects</button>
+      <button class="nav-item" data-tab="orchestration" type="button">Orchestration</button>
       <button class="nav-item" data-tab="resources" type="button">Resources</button>
       <button class="nav-item" data-tab="roadmap" type="button">Roadmap</button>
       <button class="nav-item" data-tab="recovery" type="button">Recovery</button>
-      <button class="nav-item" data-tab="usage" type="button">Usage</button>
+      <button class="nav-item" data-tab="oracle" type="button">Oracle</button>
       <button class="nav-item" data-tab="memo" type="button">Memo</button>
     </aside>
 
@@ -51,6 +52,111 @@
 
       <section class="tab-view active" id="tab-projects">
         <div class="workstation-list" id="workstation-detail"></div>
+      </section>
+
+      <section class="tab-view" id="tab-orchestration" aria-label="Project orchestration">
+        <div class="orchestration-shell">
+          <header class="orchestration-header">
+            <div>
+              <p class="eyebrow">CONTROL PLANE</p>
+              <h1>Orchestration</h1>
+            </div>
+            <label class="field compact-field" for="orchestration-project">
+              <span>Project</span>
+              <select id="orchestration-project"></select>
+            </label>
+          </header>
+
+          <section class="orchestration-command-bar">
+            <div class="mode-control" id="orchestration-modes" aria-label="Orchestration mode"></div>
+            <div class="control-actions" id="orchestration-controls"></div>
+          </section>
+
+          <section class="orchestration-status-grid" id="orchestration-status"></section>
+
+          <section class="mainline-authority-panel" id="mainline-authority-panel" hidden></section>
+
+          <section class="api-mainline-start-panel" id="api-mainline-start-panel" hidden>
+            <header class="panel-title">
+              <div><p class="eyebrow">API MAINLINE</p><h2>Initial Request</h2></div>
+              <span id="api-mainline-start-status">NOT PREPARED</span>
+            </header>
+            <form class="api-mainline-start-form" id="api-mainline-start-form">
+              <label class="field">
+                <span>Initial Request</span>
+                <textarea name="initial_request" required maxlength="131072" placeholder="Enter the first bTest request"></textarea>
+              </label>
+              <div class="api-mainline-start-actions">
+                <dl class="api-mainline-start-facts" id="api-mainline-start-facts"></dl>
+                <div class="api-mainline-start-buttons">
+                  <button class="button primary" type="submit">Start</button>
+                  <button class="button primary" id="api-mainline-approve" type="button" hidden>Approve</button>
+                  <button class="button quiet" id="api-mainline-cancel" type="button" hidden>Cancel</button>
+                </div>
+              </div>
+              <p class="muted">Start prepares a candidate. Approve explicitly authorizes exactly one API turn; generated Codex work remains prepared only.</p>
+            </form>
+          </section>
+
+          <section class="auto-pilot-panel" id="auto-safe-continue-panel" hidden>
+            <header class="panel-title">
+              <div><p class="eyebrow">BOUNDED AUTOMATION</p><h2>Auto Safe-Continue Pilot</h2></div>
+              <span id="auto-safe-continue-status">LOCKED</span>
+            </header>
+            <dl class="auto-pilot-facts" id="auto-safe-continue-facts"></dl>
+          </section>
+
+          <section class="activity-timeline-panel" id="activity-timeline-panel" hidden>
+            <header class="panel-title"><h2>Activity Timeline</h2><span id="activity-timeline-count">0</span></header>
+            <div class="activity-timeline" id="activity-timeline"></div>
+          </section>
+
+          <div class="orchestration-columns">
+            <section class="orchestration-panel">
+              <header class="panel-title"><h2>Nodes</h2><span id="node-count">0</span></header>
+              <div class="node-list" id="orchestration-nodes"></div>
+              <form class="inline-editor" id="node-form">
+                <div class="editor-grid node-editor-grid">
+                  <label class="field"><span>ID</span><input name="node_id" required maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,63}"></label>
+                  <label class="field"><span>Name</span><input name="display_name" required maxlength="80"></label>
+                  <label class="field"><span>Role</span><select name="role"><option>MAINLINE</option><option>FUTURE_DESIGN</option><option>CODEX_WORKER</option><option>REVIEWER</option><option>USER</option></select></label>
+                  <label class="field"><span>Transport</span><select name="transport_kind"><option>CHATGPT_SESSION</option><option>CODEX_THREAD</option><option>OPENAI_RESPONSES</option><option>USER_ASSISTED</option><option>MOCK</option></select></label>
+                  <label class="field wide"><span>Transport reference</span><input name="transport_ref" type="password" autocomplete="off" maxlength="2048"></label>
+                  <label class="field"><span>Allowed sources</span><input name="allowed_sources" placeholder="node-a, node-b"></label>
+                  <label class="field"><span>Allowed destinations</span><input name="allowed_destinations" placeholder="node-c, user"></label>
+                </div>
+                <button class="button primary" type="submit">Add node</button>
+              </form>
+            </section>
+
+            <section class="orchestration-panel">
+              <header class="panel-title"><h2>Routes</h2><span id="route-count">0</span></header>
+              <div class="route-list" id="orchestration-routes"></div>
+              <form class="inline-editor" id="route-form">
+                <div class="editor-grid route-editor-grid">
+                  <label class="field"><span>ID</span><input name="route_id" required maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9._-]{0,63}"></label>
+                  <label class="field"><span>From</span><select name="source_node_id" required></select></label>
+                  <label class="field"><span>To</span><select name="destination_node_id" required></select></label>
+                  <label class="field"><span>Handoff</span><select name="handoff_type"><option>TASK</option><option>REPORT</option><option>REVIEW</option><option>DECISION</option><option>HANDOFF</option></select></label>
+                </div>
+                <button class="button primary" type="submit">Add route</button>
+              </form>
+            </section>
+          </div>
+
+          <section class="orchestration-panel dispatch-preview-panel">
+            <header class="panel-title"><h2>Dispatch Preview</h2><span id="dispatch-preview-count">0</span></header>
+            <div class="dispatch-preview-list" id="dispatch-previews"></div>
+            <form class="inline-editor dispatch-preview-editor" id="dispatch-preview-form">
+              <div class="editor-grid dispatch-preview-grid">
+                <label class="field"><span>Handoff ID</span><input name="handoff_id" required maxlength="128"></label>
+                <label class="field"><span>Route</span><select name="route_id" required></select></label>
+                <label class="field wide"><span>Message</span><textarea name="message" required maxlength="131072"></textarea></label>
+              </div>
+              <button class="button primary" type="submit">Prepare preview</button>
+            </form>
+          </section>
+        </div>
       </section>
 
       <section class="tab-view" id="tab-recovery">
@@ -72,14 +178,14 @@
         <div class="roadmap-detail" id="roadmap-detail" role="tabpanel" aria-live="polite"></div>
       </section>
 
-      <section class="tab-view" id="tab-usage">
+      <section class="tab-view" id="tab-oracle" aria-label="Oracle usage">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">COST VISIBILITY</p>
-            <h1>Usage</h1>
+            <p class="eyebrow">ORACLE CLOUD</p>
+            <h1>Oracle usage</h1>
           </div>
         </div>
-        <div class="usage-providers" id="usage-panel"></div>
+        <div class="oracle-usage-panel" id="oracle-usage-panel"></div>
       </section>
 
       <section class="tab-view" id="tab-memo" aria-label="Project memos">
@@ -104,6 +210,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="/roadmap-assets/roadmap-view.js?v=3.1.0" defer></script>
-  <script src="/app.js?v=9" defer></script>
+  <script src="/app.js?v=18" defer></script>
 </body>
 </html>

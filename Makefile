@@ -1,11 +1,11 @@
 PYTHON ?= python
 CONSOLE_SERVER ?= opc@168.107.18.16
 CONSOLE_SSH_KEY ?= X:/Settings/ssh/ssh-key-ops.key
-DEVOS_OPENAI_ENV ?= X:/Settings/env/developer-os.env
+DEVOS_OPENAI_ENV ?= X:/Projects/DeveloperOS/.env
 DEVOS_DEPLOY_TARGET := console-deploy
 WORKSTATION_REPORT_INTERVAL_MINUTES ?= 5
 
-.PHONY: self-enable self-check make-check context-test docker-policy-check console-run console-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
+.PHONY: self-enable self-check make-check context-test docker-policy-check native-docker-audit native-docker-seal native-docker-test native-docker-check console-run console-test orchestration-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
 
 self-enable:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/self/Enable-DeveloperOSSelfApplication.ps1
@@ -18,16 +18,31 @@ make-check:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Test-DockerImageBuildPolicy.ps1
 
 context-test:
-	$(PYTHON) -m unittest 04_Tools.context.tests.test_project_context -v
+	$(PYTHON) -m unittest 04_Tools.context.tests.test_project_context 04_Tools.context.tests.test_context_identity 04_Tools.context.tests.test_context_observability -v
 
 docker-policy-check:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Test-DockerImageBuildPolicy.ps1
+
+native-docker-audit:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Seal-NativeDockerInfrastructure.ps1 -Action Audit
+
+native-docker-seal:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Seal-NativeDockerInfrastructure.ps1 -Action Apply
+
+native-docker-test:
+	$(PYTHON) -m unittest discover -s 04_Tools/docker/tests -p "test_*.py" -v
+
+native-docker-check:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Test-NativeDockerInfrastructure.ps1
 
 console-run:
 	$(PYTHON) -m console.devos_console --dev --bind 127.0.0.1 --port 8080
 
 console-test:
 	$(PYTHON) -m unittest discover -s console/tests -v
+
+orchestration-test:
+	$(PYTHON) -m unittest console.tests.test_orchestration -v
 
 console-deploy:
 	powershell -ExecutionPolicy Bypass -File deployment/console/Manage-DeveloperOSConsole.ps1 -Action Deploy -Server "$(CONSOLE_SERVER)" -SshKey "$(CONSOLE_SSH_KEY)" -OpenAiEnv "$(DEVOS_OPENAI_ENV)"

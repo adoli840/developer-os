@@ -24,6 +24,7 @@ from console.devos_console.server import ConsoleApplication, create_server
 from console.devos_console.settings import ProjectSpec, WorkstationSpec, load_settings
 from console.devos_console.usage import read_oracle_usage_snapshot, read_usage_snapshot, read_usage_snapshots
 from console.devos_console.workstations import attach_server_comparisons, collect_workstations
+from console.devos_orchestration.workspace_guard import WorkspaceBindingSeal
 
 
 class SessionStoreTests(unittest.TestCase):
@@ -75,6 +76,21 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertIn('id="tab-recovery"', html)
         self.assertIn('data-tab="roadmap"', html)
         self.assertIn('id="tab-roadmap"', html)
+        self.assertIn('data-tab="oracle"', html)
+        self.assertIn('id="tab-oracle"', html)
+        self.assertIn('id="oracle-usage-panel"', html)
+        self.assertIn('"/oracle"', javascript)
+        self.assertIn("renderOracleUsage", javascript)
+        self.assertIn("Oracle infrastructure usage", javascript)
+        self.assertNotIn('data-tab="usage"', html)
+        self.assertNotIn('id="tab-usage"', html)
+        self.assertNotIn("OpenAI billing and usage", javascript)
+        self.assertNotIn("renderOpenAIUsage", javascript)
+        self.assertNotIn("renderUsage", javascript)
+        self.assertNotIn("Available API credit", javascript)
+        self.assertNotIn("Month-to-date API cost", javascript)
+        self.assertNotIn("Monthly limit", javascript)
+        self.assertNotIn("OpenAI billing and usage", javascript)
         self.assertNotIn('data-tab="operations"', html)
         self.assertNotIn('data-tab="commands"', html)
         self.assertIn("/api/roadmaps", javascript)
@@ -165,8 +181,8 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn("SERVER CAPACITY", html)
         self.assertNotIn("<h1>Resources</h1>", html)
         self.assertNotIn('id="resource-time"', html)
-        self.assertIn('href="/styles.css?v=6"', html)
-        self.assertIn('src="/app.js?v=9"', html)
+        self.assertIn('href="/styles.css?v=12"', html)
+        self.assertIn('src="/app.js?v=18"', html)
         self.assertIn("width: 1%;\n    min-width: 0;\n    padding-inline: 8px;\n    white-space: nowrap;", (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8"))
         self.assertIn('statusBadge(`${repo.behind} behind`, "behind")', javascript)
         self.assertIn(".status.behind", (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8"))
@@ -176,6 +192,64 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertIn("activeRoadmapTracks: state.activeRoadmapTracks", javascript)
         self.assertIn('state.activeRoadmapTracks[state.activeRoadmap] || "overall"', javascript)
         self.assertIn('state.activeTab !== "roadmap"', javascript)
+
+    def test_orchestration_control_plane_is_private_and_execution_locked(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
+        javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
+        stylesheet = (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8")
+        server = (repository / "console" / "devos_console" / "server.py").read_text(encoding="utf-8")
+
+        self.assertIn('data-tab="orchestration"', html)
+        self.assertIn('id="tab-orchestration"', html)
+        self.assertIn("AUTO SAFE-CONTINUE", javascript)
+        self.assertIn('id="auto-safe-continue-panel"', html)
+        self.assertIn('id="activity-timeline"', html)
+        self.assertIn("Cumulative worst case", javascript)
+        self.assertIn("state.activityTimeline", javascript)
+        self.assertIn('class="mode-option locked"', javascript)
+        self.assertIn('request("/api/orchestration")', javascript)
+        self.assertIn("/api/orchestration/", server)
+        self.assertIn(".orchestration-columns", stylesheet)
+        self.assertIn('id="dispatch-preview-form"', html)
+        self.assertIn('id="mainline-authority-panel"', html)
+        self.assertIn("DeveloperOS API Mainline (ON)", javascript)
+        self.assertIn('id="api-mainline-start-form"', html)
+        self.assertIn('id="api-mainline-approve"', html)
+        self.assertIn('id="api-mainline-cancel"', html)
+        self.assertIn("Initial Request", html)
+        self.assertIn("API Mainline candidate prepared", javascript)
+        self.assertIn("STALE / INPUT CHANGED", javascript)
+        self.assertIn("/api-mainline-start", server)
+        self.assertIn("api-mainline-handoff", server)
+        self.assertIn("approve_and_execute", server)
+        self.assertIn("conversation_initialized", javascript)
+        self.assertNotIn("conversation_id", javascript)
+        self.assertIn("Prepare preview", html)
+        self.assertIn("data-dispatch-approve", javascript)
+        self.assertIn("data-dispatch-reject", javascript)
+        self.assertIn("Actual send", javascript)
+        self.assertIn("/dispatch-previews/${encodeURIComponent(handoffId)}/${action}", javascript)
+        self.assertIn("Return destination", javascript)
+        self.assertIn("Transport capability", javascript)
+        self.assertIn("Return envelope", javascript)
+        self.assertIn("Copy Exact Message", javascript)
+        self.assertIn("Mark Delivered", javascript)
+        self.assertIn("data-delivery-cancel", javascript)
+        self.assertIn("Source dispatch", javascript)
+        self.assertIn("Result hash", javascript)
+        self.assertIn("async function copyExactText", javascript)
+        self.assertIn('document.execCommand("copy")', javascript)
+        self.assertIn("SUPPORTED_LOCKED", Path("console/devos_orchestration/codex_transport.py").read_text(encoding="utf-8"))
+        self.assertIn("Development Client", javascript)
+        self.assertIn("Orchestration Runtime", javascript)
+        self.assertIn("External-change guard", javascript)
+        self.assertIn("Approve &amp; Send", javascript)
+        self.assertIn("STALE_PREPARED_HANDOFF", javascript)
+        self.assertIn("approve-send", javascript)
+        self.assertIn("LOCKED_USER_APPROVAL_REQUIRED", Path("console/devos_orchestration/codex_transport.py").read_text(encoding="utf-8"))
+        self.assertIn('type="password"', html)
+        self.assertNotIn("send_message(", javascript)
 
 
 class OverviewCacheTests(unittest.TestCase):
@@ -206,18 +280,20 @@ class UsageSnapshotTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             result = read_usage_snapshot(Path(directory) / "missing.json")
         self.assertEqual(result["status"], "not_configured")
-        self.assertIsNone(result["remaining_usd"])
+        self.assertIsNone(result["credit_balance_usd"])
 
-    def test_snapshot_calculates_remaining_budget(self) -> None:
+    def test_snapshot_does_not_derive_credit_balance_from_cost_and_limit(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "usage.json"
             path.write_text(
-                json.dumps({"cost_usd": 12.25, "budget_usd": 30}),
+                json.dumps({"cost_usd": 12.25, "monthly_limit_usd": 30}),
                 encoding="utf-8",
             )
             result = read_usage_snapshot(path)
         self.assertEqual(result["status"], "snapshot")
-        self.assertEqual(result["remaining_usd"], 17.75)
+        self.assertEqual(result["monthly_limit_usd"], 30)
+        self.assertIsNone(result["credit_balance_usd"])
+        self.assertEqual(result["credit_balance_status"], "unsupported")
 
     def test_oracle_snapshot_keeps_free_usage_and_projection(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -262,12 +338,13 @@ class UsageSnapshotTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "usage.json"
             path.write_text(
-                json.dumps({"cost_usd": 2, "budget_usd": 5}),
+                json.dumps({"cost_usd": 2, "monthly_limit_usd": 5}),
                 encoding="utf-8-sig",
             )
             result = read_usage_snapshot(path)
         self.assertEqual(result["status"], "snapshot")
-        self.assertEqual(result["remaining_usd"], 3)
+        self.assertEqual(result["monthly_limit_usd"], 5)
+        self.assertIsNone(result["credit_balance_usd"])
 
 
 class SettingsTests(unittest.TestCase):
@@ -405,6 +482,8 @@ class MemoApiTests(unittest.TestCase):
                 memos = call("/api/memos")
                 with self.assertRaises(HTTPError) as error:
                     call("/api/projects/oa/logs")
+                with self.assertRaises(HTTPError) as orchestration_error:
+                    call("/api/orchestration")
             finally:
                 server.shutdown()
                 server.server_close()
@@ -416,6 +495,228 @@ class MemoApiTests(unittest.TestCase):
             "게임 AI 아이디어",
         )
         self.assertEqual(error.exception.code, 401)
+        self.assertEqual(orchestration_error.exception.code, 401)
+
+
+class OrchestrationApiTests(unittest.TestCase):
+    def test_trusted_local_api_mutates_control_plane_without_exposing_transport_ref(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+                "DEVOS_SECURE_COOKIE": "0",
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings(dev_mode=True, bind="127.0.0.1", port=0)
+            server = create_server(settings)
+            application = server.RequestHandlerClass.application
+            application.orchestration.capability_provider = lambda _node: {
+                "connection_status": "DISCOVERED_LOCKED",
+                "protocol_version": "codex-cli-test",
+                "protocol_schema_sha256": "d" * 64,
+            }
+            application.dispatch_previews.workspace_verifier = lambda seal: seal
+            dispatch_calls = []
+            return_calls = []
+            return_approval_calls = []
+            application.semi_auto_dispatch = SimpleNamespace(
+                approve_and_send=lambda project, handoff_id, envelope: (
+                    dispatch_calls.append((project, handoff_id, envelope))
+                    or {"handoff_id": handoff_id, "state": "COMPLETED", "actual_send_count": 1}
+                ),
+            )
+            application.api_mainline_returns = SimpleNamespace(
+                latest_sealed_cost_preflight=lambda project: {
+                    "hard_worst_case_cost_usd": "0.313524750",
+                    "proposed_single_call_cap_usd": "0.32",
+                },
+                directory=Path(directory) / "api-mainline-returns",
+                list_for_project=lambda project: [{
+                    "return_id": "return-1", "project": project,
+                    "source_dispatch_id": "approved-handoff", "state": "PREPARED",
+                    "transport_capability": "PREVIEW_READY_LIVE_API_LOCKED",
+                    "actual_mainline_send_count": 0, "network_calls": 0,
+                }],
+                prepare=lambda project, return_id: (
+                    return_calls.append((project, return_id))
+                    or {"return_id": return_id, "state": "PREPARED", "network_calls": 0}
+                ),
+                approve_and_execute=lambda project, return_id, candidate, manifest: (
+                    return_approval_calls.append((project, return_id, candidate, manifest))
+                    or {
+                        "status": "COMPLETED", "parsed_action": "USER_REQUIRED",
+                        "gate": "USER_REQUIRED", "destination": "USER", "network_calls": 1,
+                        "retry_count": 0, "fallback_count": 0, "dispatch_count": 0,
+                    }
+                ),
+            )
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            opener = build_opener(HTTPCookieProcessor(CookieJar()))
+            base_url = f"http://127.0.0.1:{server.server_address[1]}"
+
+            def call(
+                path: str,
+                *,
+                method: str = "GET",
+                body: dict | None = None,
+                csrf: str = "",
+            ) -> dict:
+                payload = None if body is None else json.dumps(body).encode("utf-8")
+                headers = {"Content-Type": "application/json"}
+                if csrf:
+                    headers["X-CSRF-Token"] = csrf
+                request = Request(f"{base_url}{path}", data=payload, method=method, headers=headers)
+                with opener.open(request, timeout=5) as response:
+                    return json.load(response)
+
+            try:
+                session = call("/api/session")
+                csrf = session["csrf_token"]
+                initial = call("/api/orchestration")
+                created = call(
+                    "/api/orchestration/developer-os/nodes",
+                    method="POST",
+                    csrf=csrf,
+                    body={
+                        "node_id": "mainline",
+                        "display_name": "Mainline",
+                        "role": "MAINLINE",
+                        "transport_kind": "CHATGPT_SESSION",
+                        "transport_ref": "private-session-id",
+                        "enabled": True,
+                        "allowed_sources": [],
+                        "allowed_destinations": [],
+                    },
+                )
+                call(
+                    "/api/orchestration/developer-os/nodes",
+                    method="POST",
+                    csrf=csrf,
+                    body={
+                        "node_id": "worker",
+                        "display_name": "Codex worker",
+                        "role": "CODEX_WORKER",
+                        "transport_kind": "CODEX_THREAD",
+                        "transport_ref": WorkspaceBindingSeal(
+                            project="developer-os",
+                            windows_workspace="X:/Projects/DeveloperOS",
+                            wsl_workspace="/mnt/x/Projects/DeveloperOS",
+                            runtime="WSL_CODEX_APP_SERVER",
+                            distro="Ubuntu",
+                            workspace_identity_sha256="a" * 64,
+                            git_branch="main",
+                            git_head="b" * 40,
+                            git_status_sha256="c" * 64,
+                            git_status_entry_count=1,
+                        ).as_transport_ref(),
+                        "enabled": True,
+                        "allowed_sources": ["mainline"],
+                        "allowed_destinations": [],
+                    },
+                )
+                call(
+                    "/api/orchestration/developer-os/routes",
+                    method="POST",
+                    csrf=csrf,
+                    body={
+                        "route_id": "mainline-worker",
+                        "source_node_id": "mainline",
+                        "destination_node_id": "worker",
+                        "enabled": True,
+                        "handoff_type": "TASK",
+                    },
+                )
+                preview = call(
+                    "/api/orchestration/developer-os/dispatch-preview",
+                    method="POST",
+                    csrf=csrf,
+                    body={
+                        "handoff_id": "handoff-1",
+                        "route_id": "mainline-worker",
+                        "message": "preview only",
+                    },
+                )
+                preview_list = call("/api/orchestration/developer-os/dispatch-previews")
+                api_mainline_return = call(
+                    "/api/orchestration/btest/api-mainline-return",
+                    method="POST",
+                    csrf=csrf,
+                    body={"return_id": "return-1"},
+                )
+                api_mainline_return_approval = call(
+                    "/api/orchestration/btest/api-mainline-returns/return-1/approve",
+                    method="POST",
+                    csrf=csrf,
+                    body={
+                        "candidate_sha256": "c" * 64,
+                        "approval_manifest_sha256": "m" * 64,
+                    },
+                )
+                approval = call(
+                    "/api/orchestration/developer-os/dispatch-previews/handoff-1/approve",
+                    method="POST",
+                    csrf=csrf,
+                    body={"envelope_sha256": preview["preview"]["envelope_sha256"]},
+                )
+                explicit_send = call(
+                    "/api/orchestration/btest/dispatch-previews/approved-handoff/approve-send",
+                    method="POST",
+                    csrf=csrf,
+                    body={"envelope_sha256": "e" * 64},
+                )
+                call(
+                    "/api/orchestration/btest/mode",
+                    method="POST",
+                    csrf=csrf,
+                    body={"mode": "SHADOW_REVIEW"},
+                )
+                api_mainline_start = call(
+                    "/api/orchestration/btest/api-mainline-start",
+                    method="POST",
+                    csrf=csrf,
+                    body={"initial_request": "User-provided first bTest request"},
+                )
+                api_mainline_start_status = call(
+                    "/api/orchestration/btest/api-mainline-start",
+                )
+                with self.assertRaises(HTTPError) as error:
+                    call(
+                        "/api/orchestration/developer-os/mode",
+                        method="POST",
+                        csrf=csrf,
+                        body={"mode": "AUTO_SAFE_CONTINUE"},
+                    )
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=5)
+
+        self.assertFalse(initial["dispatch_enabled"])
+        btest = next(item for item in initial["projects"] if item["project"] == "btest")
+        self.assertEqual(btest["mainline_state"]["authority"], "NATIVE_MAINLINE")
+        self.assertTrue(any(node["node_id"] == "BTEST_MAINLINE_API" for node in btest["nodes"]))
+        self.assertFalse(initial["api_mainline_network_enabled"])
+        self.assertEqual(created["project"]["nodes"][0]["capabilities"]["health"], "DEGRADED")
+        self.assertNotIn("transport_ref", created["project"]["nodes"][0])
+        self.assertEqual(preview["preview"]["actual_send_count"], 0)
+        self.assertEqual(preview_list["previews"][0]["state"], "PREPARED")
+        self.assertEqual(preview_list["returns"], [])
+        self.assertEqual(preview_list["deliveries"], [])
+        self.assertEqual(preview_list["mainline_returns"][0]["state"], "PREPARED")
+        self.assertEqual(api_mainline_return["mainline_return"]["state"], "PREPARED")
+        self.assertEqual(return_calls, [("btest", "return-1")])
+        self.assertEqual(api_mainline_return_approval["mainline_return"]["parsed_action"], "USER_REQUIRED")
+        self.assertEqual(return_approval_calls, [("btest", "return-1", "c" * 64, "m" * 64)])
+        self.assertEqual(approval["preview"]["state"], "DISPATCHABLE")
+        self.assertEqual(approval["preview"]["actual_send_count"], 0)
+        self.assertEqual(explicit_send["preview"]["state"], "COMPLETED")
+        self.assertEqual(dispatch_calls, [("btest", "approved-handoff", "e" * 64)])
+        self.assertEqual(api_mainline_start["start"]["status"], "READY")
+        self.assertEqual(api_mainline_start["start"]["approval_state"], "USER_APPROVAL_REQUIRED")
+        self.assertEqual(api_mainline_start["start"]["network_calls"], 0)
+        self.assertEqual(api_mainline_start_status["start"], api_mainline_start["start"])
+        self.assertEqual(error.exception.code, 400)
 
 
 class ProjectStatusTests(unittest.TestCase):

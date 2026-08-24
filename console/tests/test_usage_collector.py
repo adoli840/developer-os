@@ -70,14 +70,16 @@ class UsageCollectorTests(unittest.TestCase):
 
     def test_snapshot_is_written_atomically_without_credentials(self) -> None:
         now = datetime(2026, 7, 31, 12, 30, tzinfo=timezone.utc)
-        snapshot = build_snapshot(cost=Decimal("7.125"), budget=Decimal("50"), now=now)
+        snapshot = build_snapshot(cost=Decimal("7.125"), monthly_limit=Decimal("50"), now=now)
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "openai-usage.json"
             write_snapshot(path, snapshot)
             stored = json.loads(path.read_text(encoding="utf-8"))
 
         self.assertEqual(stored["cost_usd"], 7.125)
-        self.assertEqual(stored["budget_usd"], 50.0)
+        self.assertEqual(stored["monthly_limit_usd"], 50.0)
+        self.assertIsNone(stored["credit_balance_usd"])
+        self.assertEqual(stored["credit_balance_status"], "unsupported")
         self.assertEqual(stored["period_start"], "2026-07-01")
         self.assertEqual(stored["period_end"], "2026-07-31")
         self.assertNotIn("key", stored)

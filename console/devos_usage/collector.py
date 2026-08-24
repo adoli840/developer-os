@@ -79,11 +79,14 @@ def fetch_monthly_cost(
     raise RuntimeError("OpenAI Costs API pagination exceeded the safety limit.")
 
 
-def build_snapshot(*, cost: Decimal, budget: Decimal, now: datetime) -> dict[str, Any]:
+def build_snapshot(*, cost: Decimal, monthly_limit: Decimal, now: datetime) -> dict[str, Any]:
     start, month_end = _month_bounds(now)
     return {
         "cost_usd": float(round(cost, 6)),
-        "budget_usd": float(round(budget, 2)),
+        "monthly_limit_usd": float(round(monthly_limit, 2)),
+        "credit_balance_usd": None,
+        "credit_balance_status": "unsupported",
+        "credit_balance_message": "CREDIT BALANCE: unavailable from supported API",
         "period_start": start.date().isoformat(),
         "period_end": (month_end.date() - timedelta(days=1)).isoformat(),
         "updated_at": now.astimezone(timezone.utc).isoformat().replace("+00:00", "Z"),
@@ -97,8 +100,8 @@ def main() -> int:
         print("OpenAI usage collection is not configured; skipped.")
     else:
         try:
-            budget = Decimal(os.environ["OPENAI_MONTHLY_BUDGET_USD"].strip())
-            if not budget.is_finite() or budget < 0:
+            monthly_limit = Decimal(os.environ["OPENAI_MONTHLY_BUDGET_USD"].strip())
+            if not monthly_limit.is_finite() or monthly_limit < 0:
                 raise InvalidOperation
             now = datetime.now(timezone.utc)
             snapshot_path = Path(
@@ -108,7 +111,7 @@ def main() -> int:
                 )
             )
             cost = fetch_monthly_cost(admin_key, now=now)
-            write_snapshot(snapshot_path, build_snapshot(cost=cost, budget=budget, now=now))
+            write_snapshot(snapshot_path, build_snapshot(cost=cost, monthly_limit=monthly_limit, now=now))
             print("OpenAI usage snapshot refreshed.")
         except (KeyError, InvalidOperation):
             failures.append("OPENAI_MONTHLY_BUDGET_USD must be a non-negative finite number.")

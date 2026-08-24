@@ -109,6 +109,14 @@ make sync
 make deploy
 ```
 
+On Windows, these shared Docker targets run through the DeveloperOS-owned
+native launcher at `04_Tools/bin/devos-native-docker.cmd`. It fixes Ubuntu,
+`/run/docker-wsl.sock`, `/usr/bin/docker`, the packaged native Compose plugin,
+and `/home/devops/.docker-native` independently of Docker Desktop and the
+current Windows Docker context. Project-local wrappers should converge on this
+launcher; commands executed after SSH on a remote server remain server-local.
+See `04_Tools/docker/NativeDockerInfrastructure.md`.
+
 `make run` and `make up` use `--no-build`. `make b-run` builds once with the
 normal Docker cache and then starts without requesting another build. See
 `00_Master/DockerImageBuildPolicy.md` for rebuild criteria and release rules.
@@ -241,11 +249,19 @@ address for the roadmap view. See `console/README.md` for its security boundary,
 recovery evidence, private-terminal boundary, and provider usage snapshot
 behavior.
 
+The authenticated console also includes an Orchestration control plane. It
+stores per-project modes, logical prompt nodes, directed routes, operator
+controls, and redacted audit events in the existing console runtime directory.
+Phase 2A is configuration-only: `SHADOW_REVIEW` and `SEMI_AUTO` describe policy
+state but start no background work, and `AUTO_SAFE_CONTINUE` remains locked.
+Transport references are stored only in the backend state and are never returned
+to the browser or written to the audit log.
+
 OpenAI organization costs and Oracle Cloud costs plus Ampere A1 monthly free
 usage are collected by a separate hourly server service. Oracle usage is shown
 as consumed, remaining, and projected month-end quantities using Oracle's
 public free ranges and overage rates. The OpenAI Admin key remains outside Git
-in `X:/Settings/env/developer-os.env`; Oracle uses the server's instance
+in the ignored repository-local `X:/Projects/DeveloperOS/.env`; Oracle uses the server's instance
 principal. Neither credential reaches the public console.
 
 The Oracle deployment also installs:

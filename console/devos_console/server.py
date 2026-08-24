@@ -27,6 +27,34 @@ from .settings import Settings, load_settings
 from .system_info import collect_system_info
 from .usage import read_usage_snapshots
 from .workstations import attach_server_comparisons, collect_workstations
+from console.devos_orchestration.control_plane import (
+    ControlPlaneError,
+    OrchestrationControlStore,
+)
+from console.devos_orchestration.codex_transport import CodexTransportHealth
+from console.devos_orchestration.dispatch_preview import DispatchPreviewStore
+from console.devos_orchestration.return_handoff import ReturnHandoffStore
+from console.devos_orchestration.exact_delivery import ExactDeliveryStore
+from console.devos_orchestration.api_mainline_bootstrap import (
+    BOOTSTRAP_CANDIDATE_FILE,
+    read_public_bootstrap_summary,
+)
+from console.devos_orchestration.api_mainline_start import (
+    ApiMainlineStartError,
+    ApiMainlineStartStore,
+)
+from console.devos_orchestration.api_mainline_run import (
+    ApiMainlineRunError,
+    ApiMainlineRunStore,
+)
+from console.devos_orchestration.api_mainline_return import ApiMainlineReturnStore
+from console.devos_orchestration.mainline_dispatch import MainlineDispatchBridge
+from console.devos_orchestration.semi_auto_dispatch import SemiAutoCodexDispatcher
+from console.devos_orchestration.auto_safe_continue import (
+    cumulative_cost_preflight,
+    pilot_policy,
+)
+from console.devos_orchestration.activity_timeline import project_activity_timeline
 
 
 MAX_REQUEST_BODY = 320 * 1024
@@ -38,6 +66,60 @@ class ConsoleApplication:
         self.sessions = SessionStore(settings.access_token, secure_cookie=settings.secure_cookie)
         memo_database = getattr(settings, "memo_database", settings.runtime_dir / "memos.sqlite3")
         self.memos = MemoStore(memo_database)
+        self.codex_transport = CodexTransportHealth()
+        self.orchestration = OrchestrationControlStore(
+            settings.runtime_dir / "orchestration-control.json",
+            [project.slug for project in settings.projects],
+            self.audit,
+            capability_provider=self.codex_transport.for_node,
+            bootstrap_candidate_provider=lambda project: read_public_bootstrap_summary(
+                settings.runtime_dir / "orchestration" / BOOTSTRAP_CANDIDATE_FILE
+            ),
+        )
+        self.api_mainline_starts = ApiMainlineStartStore(
+            settings.runtime_dir / "api-mainline-starts",
+            self.orchestration,
+        )
+        self.api_mainline_runs = ApiMainlineRunStore(
+            settings.runtime_dir / "api-mainline-runs",
+            self.api_mainline_starts,
+            self.orchestration,
+        )
+        self.dispatch_previews = DispatchPreviewStore(
+            settings.runtime_dir / "dispatch-previews",
+            self.orchestration,
+        )
+        self.return_handoffs = ReturnHandoffStore(
+            settings.runtime_dir / "return-handoffs",
+            settings.runtime_dir / "dispatch-previews",
+            self.orchestration,
+        )
+        self.exact_deliveries = ExactDeliveryStore(
+            settings.runtime_dir / "exact-deliveries",
+            settings.runtime_dir / "return-handoffs",
+        )
+        self.api_mainline_returns = ApiMainlineReturnStore(
+            settings.runtime_dir / "api-mainline-returns",
+            settings.runtime_dir / "return-handoffs",
+            self.orchestration,
+            dispatch_directory=settings.runtime_dir / "dispatch-previews",
+        )
+        btest_project = next((item for item in settings.projects if item.slug == "btest"), None)
+        self.mainline_dispatch = (
+            MainlineDispatchBridge(
+                self.api_mainline_runs,
+                self.dispatch_previews,
+                self.orchestration,
+                btest_project.path,
+            )
+            if btest_project is not None
+            else None
+        )
+        self.semi_auto_dispatch = SemiAutoCodexDispatcher(
+            self.dispatch_previews,
+            self.orchestration,
+            settings.runtime_dir,
+        ) if btest_project is not None else None
         self.projects = ProjectService(settings.projects)
         self._overview_cache: dict[bool, tuple[float, dict[str, Any]]] = {}
         self._overview_refreshing: set[bool] = set()
@@ -260,7 +342,17 @@ class ConsoleHandler(BaseHTTPRequestHandler):
 
         if parsed.path.startswith("/api/"):
             project_logs = parsed.path.startswith("/api/projects/") and parsed.path.endswith("/logs")
-            if parsed.path not in {"/api/overview", "/api/roadmaps"} and not project_logs:
+            preview_list = (
+                parsed.path.startswith("/api/orchestration/")
+                and parsed.path.endswith("/dispatch-previews")
+                and len(parsed.path.strip("/").split("/")) == 4
+            )
+            api_mainline_start = (
+                parsed.path.startswith("/api/orchestration/")
+                and parsed.path.endswith("/api-mainline-start")
+                and len(parsed.path.strip("/").split("/")) == 4
+            )
+            if parsed.path not in {"/api/overview", "/api/roadmaps", "/api/orchestration"} and not project_logs and not preview_list and not api_mainline_start:
                 self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
                 return
             public_read = (
@@ -275,6 +367,40 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                     return
                 if parsed.path == "/api/roadmaps":
                     self._json(HTTPStatus.OK, self.application.roadmaps())
+                    return
+                if parsed.path == "/api/orchestration":
+                    self._json(HTTPStatus.OK, self.application.orchestration.list_projects())
+                    return
+                if preview_list:
+                    project = parsed.path.strip("/").split("/")[2]
+                    cost_basis = self.application.api_mainline_returns.latest_sealed_cost_preflight(project)
+                    pilot = pilot_policy(cumulative_cost_preflight(
+                        cost_basis["hard_worst_case_cost_usd"],
+                        cost_basis.get("proposed_single_call_cap_usd"),
+                    )) if cost_basis else pilot_policy({
+                        "status": "SEALED_COST_PREFLIGHT_REQUIRED",
+                        "approved_pilot_cap_usd": None,
+                    })
+                    self._json(HTTPStatus.OK, {
+                        "previews": self.application.dispatch_previews.list_for_project(project),
+                        "returns": self.application.return_handoffs.list_for_project(project),
+                        "deliveries": self.application.exact_deliveries.list_for_project(project),
+                        "mainline_returns": self.application.api_mainline_returns.list_for_project(project),
+                        "auto_safe_continue_pilot": pilot,
+                        "activity_timeline": project_activity_timeline(
+                            project,
+                            self.application.dispatch_previews.directory,
+                            self.application.api_mainline_returns.directory,
+                            self.application.settings.runtime_dir / "auto-safe-continue",
+                        ),
+                    })
+                    return
+                if api_mainline_start:
+                    project = parsed.path.strip("/").split("/")[2]
+                    self._json(HTTPStatus.OK, {
+                        "start": self.application.api_mainline_starts.status(project),
+                        "run": self.application.api_mainline_runs.status(project),
+                    })
                     return
                 if project_logs:
                     slug = parsed.path.split("/")[3]
@@ -330,10 +456,156 @@ class ConsoleHandler(BaseHTTPRequestHandler):
                 cookie=self.application.sessions.expired_cookie_header(),
             )
             return
+        if parsed.path.startswith("/api/orchestration/"):
+            try:
+                body = self._body()
+                parts = parsed.path.strip("/").split("/")
+                if (
+                    len(parts) == 5
+                    and parts[3] == "api-mainline-start"
+                    and parts[4] in {"approve", "cancel"}
+                ):
+                    project, action = parts[2], parts[4]
+                    arguments = (
+                        project,
+                        str(body.get("candidate_file_sha256") or ""),
+                        str(body.get("approval_manifest_sha256") or ""),
+                    )
+                    value = (
+                        self.application.api_mainline_runs.approve_and_execute(*arguments)
+                        if action == "approve"
+                        else self.application.api_mainline_runs.cancel(*arguments)
+                    )
+                    self._json(HTTPStatus.OK, {"run": value})
+                    return
+                if (
+                    len(parts) == 6
+                    and parts[3] == "api-mainline-returns"
+                    and parts[5] == "approve"
+                ):
+                    value = self.application.api_mainline_returns.approve_and_execute(
+                        parts[2],
+                        parts[4],
+                        str(body.get("candidate_sha256") or ""),
+                        str(body.get("approval_manifest_sha256") or ""),
+                    )
+                    self._json(HTTPStatus.OK, {"mainline_return": value})
+                    return
+                if (
+                    len(parts) == 6
+                    and parts[3] == "dispatch-previews"
+                    and parts[5] in {"approve", "approve-send", "reject"}
+                ):
+                    project, handoff_id, action = parts[2], parts[4], parts[5]
+                    if action == "approve-send":
+                        if self.application.semi_auto_dispatch is None:
+                            raise ControlPlaneError("CODEX_DISPATCH_UNAVAILABLE")
+                        value = self.application.semi_auto_dispatch.approve_and_send(
+                            project, handoff_id, str(body.get("envelope_sha256") or ""),
+                        )
+                    else:
+                        value = self.application.dispatch_previews.decide(
+                            project,
+                            handoff_id,
+                            action,
+                            str(body.get("envelope_sha256") or ""),
+                        )
+                    self._json(HTTPStatus.OK, {"preview": value})
+                    return
+                if (
+                    len(parts) == 6
+                    and parts[3] == "deliveries"
+                    and parts[5] in {"content", "copied", "delivered", "cancel"}
+                ):
+                    project, delivery_id, action = parts[2], parts[4], parts[5]
+                    if action == "content":
+                        self._json(HTTPStatus.OK, self.application.exact_deliveries.exact_content(
+                            project,
+                            delivery_id,
+                            str(body.get("delivery_packet_sha256") or ""),
+                        ))
+                        return
+                    value = self.application.exact_deliveries.transition(
+                        project,
+                        delivery_id,
+                        action,
+                        str(body.get("delivery_packet_sha256") or ""),
+                    )
+                    self._json(HTTPStatus.OK, {"delivery": value})
+                    return
+                if len(parts) != 4:
+                    raise ControlPlaneError("INVALID_ORCHESTRATION_PATH")
+                project, resource = parts[2], parts[3]
+                if resource == "mode":
+                    value = self.application.orchestration.set_mode(project, body.get("mode"))
+                elif resource == "control":
+                    value = self.application.orchestration.control(project, body.get("action"))
+                elif resource == "nodes":
+                    value = self.application.orchestration.add_node(project, body)
+                elif resource == "routes":
+                    value = self.application.orchestration.add_route(project, body)
+                elif resource == "dispatch-preview":
+                    preview = self.application.dispatch_previews.prepare(project, body)
+                    self._json(HTTPStatus.CREATED, {
+                        "preview": preview,
+                        "project": next(
+                            item for item in self.application.orchestration.list_projects()["projects"]
+                            if item["project"] == project
+                        ),
+                    })
+                    return
+                elif resource == "api-mainline-start":
+                    value = self.application.api_mainline_starts.prepare(
+                        project,
+                        body.get("initial_request"),
+                    )
+                    self._json(HTTPStatus.CREATED, {"start": value})
+                    return
+                elif resource == "api-mainline-handoff":
+                    if self.application.mainline_dispatch is None:
+                        raise ControlPlaneError("API_MAINLINE_DISPATCH_UNAVAILABLE")
+                    preview = self.application.mainline_dispatch.prepare(project)
+                    self._json(HTTPStatus.CREATED, {"preview": preview})
+                    return
+                elif resource == "api-mainline-return":
+                    preview = self.application.api_mainline_returns.prepare(
+                        project,
+                        str(body.get("return_id") or ""),
+                    )
+                    self._json(HTTPStatus.CREATED, {"mainline_return": preview})
+                    return
+                else:
+                    raise ControlPlaneError("INVALID_ORCHESTRATION_PATH")
+            except (ApiMainlineRunError, ApiMainlineStartError, ControlPlaneError, ValueError) as error:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+                return
+            self._json(HTTPStatus.OK, {"project": value})
+            return
         self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
 
     def do_PUT(self) -> None:
         parsed = urlparse(self.path)
+        if parsed.path.startswith("/api/orchestration/"):
+            session = self._require_session()
+            if session is None or not self._require_csrf(session):
+                return
+            try:
+                body = self._body()
+                parts = parsed.path.strip("/").split("/")
+                if len(parts) != 5:
+                    raise ControlPlaneError("INVALID_ORCHESTRATION_PATH")
+                project, resource, identifier = parts[2], parts[3], parts[4]
+                if resource == "nodes":
+                    value = self.application.orchestration.update_node(project, identifier, body)
+                elif resource == "routes":
+                    value = self.application.orchestration.update_route(project, identifier, body)
+                else:
+                    raise ControlPlaneError("INVALID_ORCHESTRATION_PATH")
+            except (ControlPlaneError, ValueError) as error:
+                self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+                return
+            self._json(HTTPStatus.OK, {"project": value})
+            return
         prefix = "/api/memos/"
         if not parsed.path.startswith(prefix):
             self._json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
@@ -354,6 +626,27 @@ class ConsoleHandler(BaseHTTPRequestHandler):
             return
         self.application.audit.write("memo_saved", project=project)
         self._json(HTTPStatus.OK, {"item": item})
+
+    def do_DELETE(self) -> None:
+        parsed = urlparse(self.path)
+        session = self._require_session()
+        if session is None or not self._require_csrf(session):
+            return
+        try:
+            parts = parsed.path.strip("/").split("/")
+            if len(parts) != 5 or parts[:2] != ["api", "orchestration"]:
+                raise ControlPlaneError("INVALID_ORCHESTRATION_PATH")
+            project, resource, identifier = parts[2], parts[3], parts[4]
+            if resource == "nodes":
+                value = self.application.orchestration.delete_node(project, identifier)
+            elif resource == "routes":
+                value = self.application.orchestration.delete_route(project, identifier)
+            else:
+                raise ControlPlaneError("INVALID_ORCHESTRATION_PATH")
+        except ControlPlaneError as error:
+            self._json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
+            return
+        self._json(HTTPStatus.OK, {"project": value})
 
     def _serve_static(self, request_path: str) -> None:
         roadmap_prefix = "/roadmap-assets/"

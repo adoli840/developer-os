@@ -5,7 +5,7 @@ const MEMO_PROJECTS = [
   {slug: "oa", name: "OA"},
   {slug: "gaia", name: "Gaia"},
 ];
-const PRIMARY_TABS = new Set(["projects", "resources", "roadmap", "recovery", "usage", "memo"]);
+const PRIMARY_TABS = new Set(["projects", "orchestration", "resources", "roadmap", "recovery", "oracle", "memo"]);
 
 function readUiState() {
   try {
@@ -27,6 +27,16 @@ const state = {
   csrfToken: "",
   overview: null,
   roadmaps: null,
+  orchestration: null,
+  dispatchPreviews: [],
+  returnHandoffs: [],
+  exactDeliveries: [],
+  apiMainlineReturns: [],
+  autoSafeContinuePilot: null,
+  activityTimeline: [],
+  apiMainlineStart: null,
+  apiMainlineRun: null,
+  apiMainlineStartInputChanged: false,
   activeTab: PRIMARY_TABS.has(savedUiState.activeTab) ? savedUiState.activeTab : "projects",
   activeRoadmap: typeof savedUiState.activeRoadmap === "string" ? savedUiState.activeRoadmap : "",
   activeRoadmapTrack: "overall",
@@ -37,6 +47,9 @@ const state = {
     : {},
   activeMemoProject: MEMO_PROJECTS.some((project) => project.slug === savedUiState.activeMemoProject)
     ? savedUiState.activeMemoProject
+    : "developer-os",
+  activeOrchestrationProject: typeof savedUiState.activeOrchestrationProject === "string"
+    ? savedUiState.activeOrchestrationProject
     : "developer-os",
   memos: emptyMemos(),
   memoSaveStates: emptyMemoStates(),
@@ -52,6 +65,7 @@ function persistUiState() {
       activeRoadmap: state.activeRoadmap,
       activeRoadmapTracks: state.activeRoadmapTracks,
       activeMemoProject: state.activeMemoProject,
+      activeOrchestrationProject: state.activeOrchestrationProject,
     }));
   } catch {
     // The console remains usable when browser storage is disabled or unavailable.
@@ -66,6 +80,33 @@ const elements = {
   appShell: document.querySelector("#app-shell"),
   workspace: document.querySelector(".workspace"),
   logoutButton: document.querySelector("#logout-button"),
+  orchestrationNav: document.querySelector('.nav-item[data-tab="orchestration"]'),
+  orchestrationProject: document.querySelector("#orchestration-project"),
+  orchestrationModes: document.querySelector("#orchestration-modes"),
+  orchestrationControls: document.querySelector("#orchestration-controls"),
+  orchestrationStatus: document.querySelector("#orchestration-status"),
+  mainlineAuthorityPanel: document.querySelector("#mainline-authority-panel"),
+  apiMainlineStartPanel: document.querySelector("#api-mainline-start-panel"),
+  apiMainlineStartForm: document.querySelector("#api-mainline-start-form"),
+  apiMainlineStartStatus: document.querySelector("#api-mainline-start-status"),
+  apiMainlineStartFacts: document.querySelector("#api-mainline-start-facts"),
+  apiMainlineApprove: document.querySelector("#api-mainline-approve"),
+  apiMainlineCancel: document.querySelector("#api-mainline-cancel"),
+  autoSafeContinuePanel: document.querySelector("#auto-safe-continue-panel"),
+  autoSafeContinueStatus: document.querySelector("#auto-safe-continue-status"),
+  autoSafeContinueFacts: document.querySelector("#auto-safe-continue-facts"),
+  activityTimelinePanel: document.querySelector("#activity-timeline-panel"),
+  activityTimelineCount: document.querySelector("#activity-timeline-count"),
+  activityTimeline: document.querySelector("#activity-timeline"),
+  orchestrationNodes: document.querySelector("#orchestration-nodes"),
+  orchestrationRoutes: document.querySelector("#orchestration-routes"),
+  nodeCount: document.querySelector("#node-count"),
+  routeCount: document.querySelector("#route-count"),
+  nodeForm: document.querySelector("#node-form"),
+  routeForm: document.querySelector("#route-form"),
+  dispatchPreviewCount: document.querySelector("#dispatch-preview-count"),
+  dispatchPreviews: document.querySelector("#dispatch-previews"),
+  dispatchPreviewForm: document.querySelector("#dispatch-preview-form"),
   serverMetrics: document.querySelector("#server-metrics"),
   workstationDetail: document.querySelector("#workstation-detail"),
   roadmapTabs: document.querySelector("#roadmap-tabs"),
@@ -73,7 +114,7 @@ const elements = {
   roadmapDetail: document.querySelector("#roadmap-detail"),
   backupSummary: document.querySelector("#backup-summary"),
   timerSummary: document.querySelector("#timer-summary"),
-  usagePanel: document.querySelector("#usage-panel"),
+  oracleUsagePanel: document.querySelector("#oracle-usage-panel"),
   memoShell: document.querySelector("#memo-shell"),
   memoProjectList: document.querySelector("#memo-project-list"),
   memoActiveProject: document.querySelector("#memo-active-project"),
@@ -178,16 +219,37 @@ async function initialize() {
     state.trustedLocal = Boolean(session.trusted_local);
     state.csrfToken = session.csrf_token || "";
     showApplication();
-    await Promise.all([
+    const startup = [
       refreshOverview(),
       loadMemos().then(renderMemo).catch((error) => {
         renderMemo();
         showToast(error.message);
       }),
-    ]);
+    ];
+    if (!state.publicReadOnly) startup.push(loadOrchestration());
+    await Promise.all(startup);
   } catch {
     showLogin();
   }
+}
+
+async function copyExactText(value) {
+  if (window.isSecureContext && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const input = document.createElement("textarea");
+  input.value = value;
+  input.readOnly = true;
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  input.style.pointerEvents = "none";
+  document.body.appendChild(input);
+  input.select();
+  input.setSelectionRange(0, value.length);
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("The exact message could not be copied.");
 }
 
 async function loadMemos() {
@@ -211,6 +273,8 @@ function showApplication() {
   elements.loginShell.hidden = true;
   elements.appShell.hidden = false;
   elements.logoutButton.hidden = !state.authenticated || state.trustedLocal;
+  elements.orchestrationNav.hidden = state.publicReadOnly;
+  if (state.publicReadOnly && state.activeTab === "orchestration") selectPrimaryTab("projects");
 }
 
 async function refreshOverview() {
@@ -229,8 +293,318 @@ function render() {
   renderWorkstations(state.overview.workstations || [], state.overview.projects || []);
   renderRoadmaps(state.roadmaps);
   renderRecovery(state.overview.backups);
-  renderUsage(state.overview.usage);
+  renderOracleUsage(state.overview.usage);
   renderMemo();
+  renderOrchestration();
+}
+
+async function loadOrchestration() {
+  state.orchestration = await request("/api/orchestration");
+  await loadDispatchPreviews();
+  await loadApiMainlineStart();
+  renderOrchestration();
+}
+
+async function loadDispatchPreviews() {
+  if (!state.activeOrchestrationProject) return;
+  const result = await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/dispatch-previews`);
+  state.dispatchPreviews = result.previews || [];
+  state.returnHandoffs = result.returns || [];
+  state.exactDeliveries = result.deliveries || [];
+  state.apiMainlineReturns = result.mainline_returns || [];
+  state.autoSafeContinuePilot = result.auto_safe_continue_pilot || null;
+  state.activityTimeline = result.activity_timeline?.events || [];
+}
+
+async function loadApiMainlineStart() {
+  if (!state.activeOrchestrationProject) return;
+  const result = await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/api-mainline-start`);
+  state.apiMainlineStart = result.start || null;
+  state.apiMainlineRun = result.run || null;
+  state.apiMainlineStartInputChanged = false;
+}
+
+function activeOrchestrationProject() {
+  return state.orchestration?.projects?.find((project) => project.project === state.activeOrchestrationProject)
+    || state.orchestration?.projects?.[0]
+    || null;
+}
+
+function replaceOrchestrationProject(project) {
+  if (!state.orchestration || !project) return;
+  const index = state.orchestration.projects.findIndex((item) => item.project === project.project);
+  if (index >= 0) state.orchestration.projects[index] = project;
+  renderOrchestration();
+}
+
+function orchestrationStatusKind(status) {
+  if (["IDLE", "RUNNING"].includes(status)) return "good";
+  if (["WAITING_FOR_USER", "PAUSED", "BLOCKED"].includes(status)) return "warn";
+  if (["ERROR", "STOPPED"].includes(status)) return "bad";
+  return "neutral";
+}
+
+function capabilityKind(health) {
+  if (["HEALTHY", "AVAILABLE"].includes(health)) return "good";
+  if (health === "DEGRADED") return "warn";
+  return "neutral";
+}
+
+function splitNodeIds(value) {
+  return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function renderCodexBinding(transport) {
+  if (!transport) return "";
+  const binding = transport.workspace_binding;
+  return `
+    <dl class="codex-binding-detail">
+      <dt>Development Client</dt><dd>${escapeHtml(transport.development_client || "Codex Desktop")}</dd>
+      <dt>Orchestration Runtime</dt><dd>${escapeHtml(transport.orchestration_runtime || "Unavailable")}</dd>
+      <dt>Dispatch</dt><dd>${escapeHtml((transport.dispatch_status || "LOCKED").replaceAll("_", " / "))}</dd>
+      ${binding ? `
+        <dt>Workspace</dt><dd>${escapeHtml(binding.windows_workspace)} ↔ ${escapeHtml(binding.wsl_workspace)}</dd>
+        <dt>Git</dt><dd>${escapeHtml(binding.git_branch)} @ ${escapeHtml(binding.git_head.slice(0, 12))} · ${binding.git_status_entry_count} status entries</dd>
+        <dt>External-change guard</dt><dd>${escapeHtml(binding.workspace_guard)}</dd>
+      ` : `<dt>Workspace</dt><dd>Unbound</dd>`}
+    </dl>
+  `;
+}
+
+function renderOrchestration() {
+  if (!state.orchestration) return;
+  const projects = state.orchestration.projects || [];
+  if (!projects.some((project) => project.project === state.activeOrchestrationProject)) {
+    state.activeOrchestrationProject = projects[0]?.project || "";
+  }
+  persistUiState();
+  elements.orchestrationProject.innerHTML = projects.map((project) => `
+    <option value="${escapeHtml(project.project)}"${project.project === state.activeOrchestrationProject ? " selected" : ""}>${escapeHtml(MEMO_PROJECTS.find((item) => item.slug === project.project)?.name || project.project)}</option>
+  `).join("");
+  const project = activeOrchestrationProject();
+  if (!project) return;
+
+  const modes = state.orchestration.selectable_modes || [];
+  elements.orchestrationModes.innerHTML = `
+    ${modes.map((mode) => `<button class="mode-option${project.mode === mode ? " active" : ""}" type="button" data-orchestration-mode="${escapeHtml(mode)}" aria-pressed="${project.mode === mode}">${escapeHtml(mode.replaceAll("_", " "))}</button>`).join("")}
+    <button class="mode-option locked" type="button" disabled title="Pilot locked until cumulative cost cap approval">AUTO SAFE-CONTINUE PILOT</button>
+  `;
+  elements.orchestrationControls.innerHTML = [
+    ["ENABLE", "Enable", project.orchestration_enabled && project.status !== "STOPPED"],
+    ["PAUSE", "Pause", !project.orchestration_enabled || ["DISABLED", "STOPPED", "PAUSED"].includes(project.status)],
+    ["RESUME", "Resume", project.status !== "PAUSED"],
+    ["STOP", "Stop", project.mode === "OFF" || ["DISABLED", "STOPPED"].includes(project.status)],
+  ].map(([action, label, disabled]) => `<button class="button${action === "STOP" ? " danger" : ""}" data-orchestration-action="${action}" type="button"${disabled ? " disabled" : ""}>${label}</button>`).join("");
+
+  elements.orchestrationStatus.innerHTML = [
+    ["Status", statusBadge(project.status, orchestrationStatusKind(project.status))],
+    ["Mode", escapeHtml(project.mode.replaceAll("_", " "))],
+    ["Current cycle", escapeHtml(project.current_cycle || "None")],
+    ["Last Gate", escapeHtml(project.last_gate || "None")],
+    ["Waiting reason", escapeHtml(project.waiting_reason || "None")],
+  ].map(([label, value]) => `<div class="orchestration-status-item"><span>${label}</span><strong>${value}</strong></div>`).join("");
+
+  const mainline = project.mainline_state;
+  const bootstrap = mainline?.api_mainline?.bootstrap_candidate || {};
+  elements.mainlineAuthorityPanel.hidden = !mainline;
+  elements.mainlineAuthorityPanel.innerHTML = mainline ? `
+    <div class="mainline-authority-heading">
+      <div><span>Mainline authority</span><strong>${escapeHtml(
+        mainline.authority === "BTEST_MAINLINE_API"
+          ? "DeveloperOS API Mainline (ON)"
+          : "Native GPT (OFF)"
+      )}</strong></div>
+      ${statusBadge(mainline.api_mainline.status.replaceAll("_", " "), "neutral")}
+    </div>
+    <div class="mainline-authority-facts">
+      <div><span>API Mainline</span><strong>${mainline.api_mainline.conversation_initialized ? "Initialized" : "Not initialized"}</strong></div>
+      <div><span>Current Gate</span><strong>${escapeHtml(mainline.api_mainline.current_gate || "None")}</strong></div>
+      <div><span>Current destination</span><strong>${escapeHtml(mainline.api_mainline.current_destination || "None")}</strong></div>
+      <div><span>Capabilities</span><strong>${Object.entries(mainline.api_mainline.capabilities).map(([name, status]) => `${escapeHtml(name)}: ${escapeHtml(status.replaceAll("_", " "))}`).join(" / ")}</strong></div>
+      <div><span>Bootstrap candidate</span><strong>${escapeHtml(bootstrap.status || "NOT PREPARED")}</strong></div>
+      <div><span>Bootstrap model / cap</span><strong>${bootstrap.model ? `${escapeHtml(bootstrap.model)} / $${escapeHtml(bootstrap.proposed_hard_cap_usd || "-")}` : "Unavailable"}</strong></div>
+      <div><span>Canonical state</span><strong><code>${escapeHtml((bootstrap.canonical_state_sha256 || "").slice(0, 16) || "Unavailable")}</code></strong></div>
+      <div><span>Live initialization</span><strong>LOCKED / USER APPROVAL REQUIRED</strong></div>
+    </div>
+  ` : "";
+
+  const apiAuthorityActive = project.project === "btest"
+    && project.orchestration_enabled
+    && mainline?.authority === "BTEST_MAINLINE_API";
+  const start = state.apiMainlineStart || {};
+  const run = state.apiMainlineRun || {};
+  const startStatus = state.apiMainlineStartInputChanged && start.status === "READY"
+    ? "STALE / INPUT CHANGED"
+    : (start.status || "NOT PREPARED");
+  elements.apiMainlineStartPanel.hidden = project.project !== "btest";
+  elements.apiMainlineStartStatus.textContent = startStatus.replaceAll("_", " ");
+  elements.apiMainlineStartFacts.innerHTML = `
+    <dt>Authority</dt><dd>${apiAuthorityActive ? "BTEST_MAINLINE_API" : "API MAINLINE REQUIRED"}</dd>
+    <dt>Estimated maximum</dt><dd>${start.proposed_hard_cap_usd ? `$${escapeHtml(start.proposed_hard_cap_usd)}` : "Calculated on Start"}</dd>
+    <dt>Candidate</dt><dd><code>${escapeHtml((start.candidate_file_sha256 || "").slice(0, 16) || "Not prepared")}</code></dd>
+    <dt>Live initialization</dt><dd>${escapeHtml(run.status || "USER APPROVAL REQUIRED")}</dd>
+    <dt>Mainline action</dt><dd>${escapeHtml(run.parsed_action || "None")}</dd>
+    <dt>Destination</dt><dd>${escapeHtml(run.destination || "None")}</dd>
+    <dt>User required</dt><dd>${run.parsed_action === "USER_REQUIRED" ? "Yes" : "No"}</dd>
+  `;
+  elements.apiMainlineStartForm.querySelector('button[type="submit"]').disabled = !apiAuthorityActive;
+  const approvalReady = apiAuthorityActive && startStatus === "READY" && start.approval_state === "USER_APPROVAL_REQUIRED";
+  elements.apiMainlineApprove.hidden = !approvalReady;
+  elements.apiMainlineCancel.hidden = !approvalReady;
+
+  const pilot = state.autoSafeContinuePilot || {};
+  const cost = pilot.cost_preflight || {};
+  elements.autoSafeContinuePanel.hidden = project.project !== "btest";
+  elements.autoSafeContinueStatus.textContent = (cost.status || pilot.live_auto_run || "LOCKED").replaceAll("_", " ");
+  elements.autoSafeContinueFacts.innerHTML = `
+    <dt>Live execution</dt><dd>${escapeHtml(pilot.live_auto_run || "LOCKED")}</dd>
+    <dt>Maximum cycles</dt><dd>${escapeHtml(String(pilot.max_auto_cycles ?? 2))}</dd>
+    <dt>Per-call worst case</dt><dd>${cost.per_call_hard_worst_case_usd ? `$${escapeHtml(cost.per_call_hard_worst_case_usd)}` : "Preflight required"}</dd>
+    <dt>Cumulative worst case</dt><dd>${cost.cumulative_hard_worst_case_usd ? `$${escapeHtml(cost.cumulative_hard_worst_case_usd)}` : "Preflight required"}</dd>
+    <dt>Recommended pilot cap</dt><dd>${cost.recommended_pilot_cap_usd ? `$${escapeHtml(cost.recommended_pilot_cap_usd)}` : "User decision required"}</dd>
+    <dt>Retries / fallback</dt><dd>0 / 0</dd>
+  `;
+
+  const timeline = state.activityTimeline || [];
+  elements.activityTimelinePanel.hidden = project.project !== "btest";
+  elements.activityTimelineCount.textContent = String(timeline.length);
+  elements.activityTimeline.innerHTML = timeline.length ? timeline.map((event) => {
+    const detail = event.detail || {};
+    const attention = event.status === "USER_REQUIRED" || detail.gate === "USER_REQUIRED";
+    return `
+      <details class="timeline-row${attention ? " needs-user" : ""}">
+        <summary>
+          <time>${escapeHtml(new Date(event.timestamp).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"}))}</time>
+          <span>${escapeHtml(event.source)}</span>
+          <span class="timeline-arrow" aria-hidden="true">→</span>
+          <span>${escapeHtml(event.destination)}</span>
+          <strong>${escapeHtml(event.event_type.replaceAll("_", " "))}</strong>
+          ${statusBadge(event.status, attention ? "warn" : "neutral")}
+        </summary>
+        <dl class="timeline-detail">
+          <dt>Handoff</dt><dd>${escapeHtml(detail.handoff_id || "None")}</dd>
+          <dt>Gate</dt><dd>${escapeHtml(detail.gate || "None")}</dd>
+          <dt>Message</dt><dd>${escapeHtml(detail.message_preview || "No preview")}</dd>
+          <dt>Tokens / cost</dt><dd>${escapeHtml(detail.token_usage ? JSON.stringify(detail.token_usage) : "Unavailable")} / ${detail.cost_usd ? `$${escapeHtml(detail.cost_usd)}` : "Unavailable"}</dd>
+          <dt>Hashes</dt><dd><code>${escapeHtml(JSON.stringify(detail.hashes || {}))}</code></dd>
+        </dl>
+      </details>
+    `;
+  }).join("") : '<p class="empty-state">No orchestration activity</p>';
+
+  elements.nodeCount.textContent = String(project.nodes.length);
+  elements.orchestrationNodes.innerHTML = project.nodes.length ? project.nodes.map((node) => `
+    <article class="node-row">
+      <div class="node-main"><strong>${escapeHtml(node.display_name)}</strong><span>${escapeHtml(node.node_id)} · ${escapeHtml(node.role)}${node.authority_status ? ` · ${escapeHtml(node.authority_status)}` : ""}</span></div>
+      <div class="node-transport"><span>${escapeHtml(node.transport_kind.replaceAll("_", " "))}</span>${statusBadge(node.capabilities.health, capabilityKind(node.capabilities.health))}</div>
+      <div class="node-capabilities"><span>Read ${node.capabilities.can_read ? "Yes" : "No"}</span><span>Write ${node.capabilities.can_write ? "Yes" : "No"}</span><span>Capture ${node.capabilities.capture_message ? "Yes" : "No"}</span><span>${node.transport_configured ? "Configured" : "No reference"}</span>${node.codex_transport ? `<span>${escapeHtml(node.codex_transport.connection_status)}</span><span>${escapeHtml(node.codex_transport.binding_status)}</span><span>${escapeHtml(node.codex_transport.protocol_version || "Protocol unavailable")}</span><span>${escapeHtml(node.codex_transport.last_transport_health_check || "Not checked")}</span>` : ""}</div>
+      ${node.codex_transport ? `<div class="capability-tags">${Object.entries(node.codex_transport.features || {}).map(([name, status]) => `<span title="${escapeHtml(status)}">${escapeHtml(name.replaceAll("_", " "))}</span>`).join("")}</div>` : ""}
+      ${renderCodexBinding(node.codex_transport)}
+      <div class="row-actions"><button class="button quiet" data-node-toggle="${escapeHtml(node.node_id)}" data-enabled="${node.enabled}" type="button">${node.enabled ? "Disable" : "Enable"}</button><button class="icon-button danger" data-node-delete="${escapeHtml(node.node_id)}" type="button" title="Delete node" aria-label="Delete ${escapeHtml(node.display_name)}">×</button></div>
+    </article>
+  `).join("") : '<p class="empty-state">No nodes</p>';
+
+  elements.routeCount.textContent = String(project.routes.length);
+  elements.orchestrationRoutes.innerHTML = project.routes.length ? project.routes.map((route) => `
+    <article class="route-row">
+      <span class="route-id">${escapeHtml(route.route_id)}</span>
+      <strong>${escapeHtml(route.source_node_id)} <span aria-hidden="true">→</span> ${escapeHtml(route.destination_node_id)}</strong>
+      <span>${escapeHtml(route.handoff_type)}</span>
+      ${statusBadge(route.enabled ? "Enabled" : "Disabled", route.enabled ? "good" : "neutral")}
+      <button class="icon-button danger" data-route-delete="${escapeHtml(route.route_id)}" type="button" title="Delete route" aria-label="Delete ${escapeHtml(route.route_id)}">×</button>
+    </article>
+  `).join("") : '<p class="empty-state">No routes</p>';
+
+  const options = project.nodes.filter((node) => node.enabled).map((node) => `<option value="${escapeHtml(node.node_id)}">${escapeHtml(node.display_name)}</option>`).join("");
+  elements.routeForm.elements.source_node_id.innerHTML = options;
+  elements.routeForm.elements.destination_node_id.innerHTML = options;
+  const codexRoutes = project.routes.filter((route) => {
+    const destination = project.nodes.find((node) => node.node_id === route.destination_node_id);
+    return route.enabled && destination?.enabled && destination.transport_kind === "CODEX_THREAD";
+  });
+  elements.dispatchPreviewForm.elements.route_id.innerHTML = codexRoutes.map((route) => `<option value="${escapeHtml(route.route_id)}">${escapeHtml(route.source_node_id)} to ${escapeHtml(route.destination_node_id)}</option>`).join("");
+  elements.dispatchPreviewForm.querySelector('button[type="submit"]').disabled = codexRoutes.length === 0;
+  elements.dispatchPreviewCount.textContent = String(state.dispatchPreviews.length);
+  elements.dispatchPreviews.innerHTML = state.dispatchPreviews.length ? state.dispatchPreviews.map((preview) => {
+    const returnHandoff = state.returnHandoffs.find((item) => item.source_dispatch_id === preview.handoff_id);
+    const delivery = returnHandoff
+      ? state.exactDeliveries.find((item) => item.return_id === returnHandoff.return_id)
+      : null;
+    const apiReturnHandoff = state.returnHandoffs.find((item) => (
+      item.source_dispatch_id === preview.handoff_id
+      && item.destination_node_id === "BTEST_MAINLINE_API"
+    ));
+    const apiMainlineReturn = apiReturnHandoff
+      ? state.apiMainlineReturns.find((item) => item.return_id === apiReturnHandoff.return_id)
+      : null;
+    const displayState = preview.display_state || preview.state;
+    const canApproveAndSend = project.mode === "SEMI_AUTO"
+      && displayState === "PREPARED"
+      && preview.approve_and_send_allowed
+      && Boolean(preview.envelope_sha256);
+    const canReject = preview.state === "PREPARED" && Boolean(preview.envelope_sha256);
+    const statusKind = preview.state === "COMPLETED" || preview.state === "DISPATCHABLE"
+      ? "good"
+      : preview.state === "FAILED" || preview.state === "REJECTED" || displayState === "STALE_PREPARED_HANDOFF" ? "bad" : "neutral";
+    return `
+      <article class="dispatch-preview-row">
+        <div class="dispatch-preview-heading"><strong>${escapeHtml(preview.handoff_id)}</strong>${statusBadge(preview.state === "SENT" ? "Codex Working" : displayState, statusKind)}</div>
+        <p class="dispatch-task-summary">${escapeHtml(preview.task_summary || "No task summary")}</p>
+        <dl class="dispatch-envelope-detail">
+          <dt>Source</dt><dd>${escapeHtml(preview.source_node_id || "Unavailable")}</dd>
+          <dt>Destination</dt><dd>${escapeHtml(preview.destination_node_id)}</dd>
+          <dt>Route</dt><dd>${escapeHtml(preview.route_id || "Unavailable")}</dd>
+          <dt>Workspace</dt><dd>${escapeHtml(preview.workspace || "Unavailable")}</dd>
+          <dt>Branch / HEAD</dt><dd>${escapeHtml(preview.branch || "-")} / ${escapeHtml((preview.head || "").slice(0, 12) || "-")}</dd>
+          <dt>Status fingerprint</dt><dd><code>${escapeHtml((preview.workspace_fingerprint_sha256 || "").slice(0, 16) || "Unavailable")}</code> · ${escapeHtml(String(preview.workspace_status_entry_count ?? "-"))} entries</dd>
+          <dt>Workspace guard</dt><dd>${escapeHtml(preview.workspace_guard || "Unavailable")}</dd>
+          <dt>Task hash</dt><dd><code>${escapeHtml((preview.task_content_sha256 || "").slice(0, 16) || "Unavailable")}</code></dd>
+          <dt>Payload hash</dt><dd><code>${escapeHtml((preview.payload_sha256 || "").slice(0, 16) || "Unavailable")}</code></dd>
+          <dt>Envelope</dt><dd><code>${escapeHtml((preview.envelope_sha256 || "").slice(0, 16) || "Unavailable")}</code></dd>
+          <dt>Approval</dt><dd>${escapeHtml(preview.approval_state || "PENDING")}</dd>
+          <dt>Duplicate send</dt><dd>${escapeHtml(preview.duplicate_send_status || "UNKNOWN")}</dd>
+          <dt>Dispatch status</dt><dd>${escapeHtml(preview.dispatch_status || preview.state)}</dd>
+          <dt>Actual send</dt><dd>${escapeHtml(preview.state === "SENT" ? "IN PROGRESS" : preview.actual_send_count ? "CONSUMED" : "LOCKED")}</dd>
+        </dl>
+        ${preview.task_message ? `<pre class="dispatch-response">${escapeHtml(preview.task_message)}</pre>` : ""}
+        ${(canApproveAndSend || canReject) ? `<div class="dispatch-decision-actions">${canApproveAndSend ? `<button class="button primary" type="button" data-dispatch-approve-send="${escapeHtml(preview.handoff_id)}" data-envelope-sha256="${escapeHtml(preview.envelope_sha256)}">Approve &amp; Send</button>` : ""}${canReject ? `<button class="button danger" type="button" data-dispatch-reject="${escapeHtml(preview.handoff_id)}" data-envelope-sha256="${escapeHtml(preview.envelope_sha256)}">Reject</button>` : ""}</div>` : ""}
+        ${preview.response_text ? `<p class="dispatch-response">${escapeHtml(preview.response_text)}</p>` : preview.error_code ? `<p class="dispatch-response">${escapeHtml(preview.error_code)}</p>` : ""}
+        ${returnHandoff ? `<dl class="dispatch-envelope-detail return-handoff-detail">
+          <dt>Codex result</dt><dd>Captured</dd>
+          <dt>Return destination</dt><dd>${escapeHtml(returnHandoff.destination_node_id)}</dd>
+          <dt>Transport capability</dt><dd>${escapeHtml(returnHandoff.transport_capability?.status || "UNSUPPORTED")}</dd>
+          <dt>Return envelope</dt><dd>${escapeHtml(returnHandoff.delivery_status)}</dd>
+          ${delivery ? `<dt>Source dispatch</dt><dd>${escapeHtml(delivery.source_dispatch_id)}</dd>
+          <dt>Result hash</dt><dd><code>${escapeHtml(delivery.result_content_sha256.slice(0, 16))}</code></dd>
+          <dt>Delivery state</dt><dd>${escapeHtml(delivery.state)}</dd>` : ""}
+        </dl>${delivery ? `<div class="dispatch-decision-actions">
+          ${delivery.state === "PREPARED" ? `<button class="button primary" type="button" data-delivery-copy="${escapeHtml(delivery.delivery_id)}" data-packet-sha256="${escapeHtml(delivery.delivery_packet_sha256)}">Copy Exact Message</button>` : ""}
+          ${delivery.state === "COPIED" ? `<button class="button primary" type="button" data-delivery-mark="${escapeHtml(delivery.delivery_id)}" data-packet-sha256="${escapeHtml(delivery.delivery_packet_sha256)}">Mark Delivered</button>` : ""}
+          ${["PREPARED", "COPIED"].includes(delivery.state) ? `<button class="button danger" type="button" data-delivery-cancel="${escapeHtml(delivery.delivery_id)}" data-packet-sha256="${escapeHtml(delivery.delivery_packet_sha256)}">Cancel</button>` : ""}
+        </div>` : ""}` : ""}
+        ${apiMainlineReturn ? `<dl class="dispatch-envelope-detail return-handoff-detail">
+          <dt>Codex result</dt><dd>Captured</dd>
+          <dt>Return to Mainline</dt><dd>${escapeHtml(apiMainlineReturn.state)}</dd>
+          <dt>Destination</dt><dd>BTEST_MAINLINE_API</dd>
+          <dt>Transport capability</dt><dd>${escapeHtml(apiMainlineReturn.transport_capability)}</dd>
+          <dt>Exact result hash</dt><dd><code>${escapeHtml(apiMainlineReturn.exact_result_sha256.slice(0, 16))}</code></dd>
+          <dt>Duplicate state</dt><dd>${escapeHtml(apiMainlineReturn.duplicate_status)}</dd>
+          <dt>Approval</dt><dd>${escapeHtml(apiMainlineReturn.approval_state || "USER_APPROVAL_REQUIRED")}</dd>
+          <dt>Actual Mainline send</dt><dd>${apiMainlineReturn.actual_mainline_send_count ? "CONSUMED" : "LOCKED"}</dd>
+          ${apiMainlineReturn.parsed_action ? `<dt>Mainline action</dt><dd>${escapeHtml(apiMainlineReturn.parsed_action)}</dd>` : ""}
+          ${apiMainlineReturn.gate ? `<dt>Gate</dt><dd>${escapeHtml(apiMainlineReturn.gate)}</dd>` : ""}
+          ${apiMainlineReturn.destination ? `<dt>Destination</dt><dd>${escapeHtml(apiMainlineReturn.destination)}</dd>` : ""}
+          ${apiMainlineReturn.next_handoff_state ? `<dt>Next Codex handoff</dt><dd>${escapeHtml(apiMainlineReturn.next_handoff_state)}</dd>` : ""}
+          ${apiMainlineReturn.decision_packet_state ? `<dt>Decision packet</dt><dd>${escapeHtml(apiMainlineReturn.decision_packet_state)}</dd>` : ""}
+        </dl>${apiMainlineReturn.state === "PREPARED" && apiMainlineReturn.duplicate_status === "UNCONSUMED" ? `<div class="dispatch-decision-actions"><button class="button primary" type="button" data-mainline-return-approve="${escapeHtml(apiMainlineReturn.return_id)}" data-candidate-sha256="${escapeHtml(apiMainlineReturn.candidate_sha256)}" data-manifest-sha256="${escapeHtml(apiMainlineReturn.approval_manifest_sha256)}">Approve Return to Mainline</button></div>` : ""}` : ""}
+      </article>
+    `;
+  }).join("") : '<p class="empty-state">No previews</p>';
+}
+
+async function mutateOrchestration(path, options) {
+  const result = await request(path, options);
+  replaceOrchestrationProject(result.project);
 }
 
 async function refreshRoadmaps() {
@@ -316,6 +690,8 @@ function renderRoadmapDetail(project) {
 
 function tabFromPath() {
   if (window.location.pathname.replace(/\/$/, "") === "/roadmap") return "roadmap";
+  if (window.location.pathname.replace(/\/$/, "") === "/oracle") return "oracle";
+  if (window.location.pathname.replace(/\/$/, "") === "/orchestration") return "orchestration";
   return PRIMARY_TABS.has(state.activeTab) && state.activeTab !== "roadmap"
     ? state.activeTab
     : "projects";
@@ -328,9 +704,9 @@ function selectPrimaryTab(tab, updateHistory = true) {
   persistUiState();
   document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("active", item === button));
   document.querySelectorAll(".tab-view").forEach((view) => view.classList.toggle("active", view.id === `tab-${tab}`));
-  elements.workspace.classList.toggle("full-width-workspace", ["projects", "resources", "memo"].includes(tab));
+  elements.workspace.classList.toggle("full-width-workspace", ["projects", "orchestration", "resources", "memo"].includes(tab));
   if (updateHistory) {
-    const nextPath = tab === "roadmap" ? "/roadmap" : "/";
+    const nextPath = tab === "roadmap" ? "/roadmap" : tab === "oracle" ? "/oracle" : tab === "orchestration" ? "/orchestration" : "/";
     if (window.location.pathname !== nextPath) window.history.pushState({tab}, "", nextPath);
   }
 }
@@ -690,23 +1066,14 @@ function renderRecovery(backups) {
 
 }
 
-function renderOpenAIUsage(usage) {
-  return `
-    <section class="surface usage-surface">
-      <p class="eyebrow">OPENAI</p>
-      <h2>${usage.status === "snapshot" ? "Month-to-date API cost" : "Usage data is not configured"}</h2>
-      <p class="muted">${escapeHtml(usage.message)}</p>
-      <div class="usage-grid">
-        <div class="usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost_usd)}</strong></div>
-        <div class="usage-value"><span>Budget</span><strong>${formatMoney(usage.budget_usd)}</strong></div>
-        <div class="usage-value"><span>Remaining</span><strong>${formatMoney(usage.remaining_usd)}</strong></div>
-      </div>
-      <p class="cell-detail">Last update: ${escapeHtml(usage.updated_at || "Unavailable")}</p>
-    </section>
-  `;
-}
-
-function renderOracleUsage(usage) {
+function renderOracleUsage(usagePayload) {
+  const usage = Array.isArray(usagePayload?.providers)
+    ? usagePayload.providers.find((provider) => provider.provider === "Oracle Cloud")
+    : null;
+  if (!usage) {
+    elements.oracleUsagePanel.innerHTML = '<section class="surface oracle-usage-surface"><p class="muted">Oracle usage data is not configured.</p></section>';
+    return;
+  }
   const resources = Array.isArray(usage.resources) ? usage.resources : [];
   const resourceRows = resources.length
     ? resources.map((resource) => `
@@ -718,53 +1085,38 @@ function renderOracleUsage(usage) {
         <td>${escapeHtml(formatQuantity(resource.projected_month_usage, resource.unit))}</td>
       </tr>
     `).join("")
-    : `<tr><td colspan="5" class="muted">Free usage data is not available.</td></tr>`;
+    : '<tr><td colspan="5" class="muted">Free usage data is not available.</td></tr>';
   const serviceCosts = Array.isArray(usage.service_costs) ? usage.service_costs : [];
   const serviceRows = serviceCosts.length
     ? serviceCosts.map((service) => `
-      <tr>
-        <td>${escapeHtml(service.name || "Other")}</td>
-        <td>${escapeHtml(formatMoney(service.cost, service.currency || usage.currency))}</td>
-      </tr>
+      <tr><td>${escapeHtml(service.name || "Other")}</td><td>${escapeHtml(formatMoney(service.cost, service.currency || usage.currency))}</td></tr>
     `).join("")
-    : `<tr><td colspan="2" class="muted">No billable service cost is available.</td></tr>`;
-
-  return `
-    <section class="surface usage-surface">
+    : '<tr><td colspan="2" class="muted">No billable service cost is available.</td></tr>';
+  elements.oracleUsagePanel.innerHTML = `
+    <section class="surface oracle-usage-surface">
       <p class="eyebrow">ORACLE CLOUD</p>
-      <h2>${usage.status === "snapshot" ? "Month-to-date infrastructure cost" : "Usage data is not configured"}</h2>
+      <h2>${usage.status === "snapshot" ? "Oracle infrastructure usage" : "Oracle usage data is not configured"}</h2>
       <p class="muted">${escapeHtml(usage.message)}</p>
-      <div class="usage-grid">
-        <div class="usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost, usage.currency)}</strong></div>
-        <div class="usage-value"><span>Projected month-end cost</span><strong>${formatMoney(usage.projected_cost, usage.currency)}</strong></div>
-        <div class="usage-value"><span>Forecast basis</span><strong>${usage.completed_days == null ? "Unavailable" : `${escapeHtml(usage.completed_days)} completed UTC day${usage.completed_days === 1 ? "" : "s"}`}</strong></div>
+      <div class="oracle-usage-grid">
+        <div class="oracle-usage-value"><span>Current cost</span><strong>${formatMoney(usage.cost, usage.currency)}</strong></div>
+        <div class="oracle-usage-value"><span>Projected month-end cost</span><strong>${formatMoney(usage.projected_cost, usage.currency)}</strong></div>
+        <div class="oracle-usage-value"><span>Forecast basis</span><strong>${usage.completed_days == null ? "Unavailable" : `${escapeHtml(usage.completed_days)} completed UTC day${usage.completed_days === 1 ? "" : "s"}`}</strong></div>
       </div>
-      <div class="usage-section">
+      <div class="oracle-usage-section">
         <h3>Ampere A1 monthly free usage</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Resource</th><th>Free used</th><th>Free allowance</th><th>Free remaining</th><th>Month-end projection</th></tr></thead>
-            <tbody>${resourceRows}</tbody>
-          </table>
-        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Resource</th><th>Free used</th><th>Free allowance</th><th>Free remaining</th><th>Month-end projection</th></tr></thead>
+          <tbody>${resourceRows}</tbody>
+        </table></div>
         <p class="cell-detail">Usage comes from OCI billing records through the latest completed UTC day. Free ranges and overage rates come from Oracle's public price list. Month-end values are estimates, not an Oracle invoice.</p>
       </div>
-      <details class="usage-details">
+      <details class="oracle-usage-details">
         <summary>Cost by service</summary>
-        <div class="table-wrap">
-          <table><thead><tr><th>Service</th><th>Cost</th></tr></thead><tbody>${serviceRows}</tbody></table>
-        </div>
+        <div class="table-wrap"><table><thead><tr><th>Service</th><th>Cost</th></tr></thead><tbody>${serviceRows}</tbody></table></div>
       </details>
       <p class="cell-detail">Last update: ${escapeHtml(usage.updated_at || "Unavailable")}</p>
     </section>
   `;
-}
-
-function renderUsage(usage) {
-  const providers = Array.isArray(usage?.providers) ? usage.providers : [usage || {}];
-  elements.usagePanel.innerHTML = providers.map((provider) => (
-    provider.provider === "Oracle Cloud" ? renderOracleUsage(provider) : renderOpenAIUsage(provider)
-  )).join("");
 }
 
 elements.loginForm.addEventListener("submit", async (event) => {
@@ -805,11 +1157,281 @@ elements.memoProjectList.addEventListener("click", (event) => {
 
 elements.memoEditor.addEventListener("input", queueActiveMemoSave);
 
+elements.orchestrationProject.addEventListener("change", async () => {
+  state.activeOrchestrationProject = elements.orchestrationProject.value;
+  persistUiState();
+  try {
+    await loadDispatchPreviews();
+    await loadApiMainlineStart();
+  } catch (error) {
+    showToast(error.message);
+  }
+  renderOrchestration();
+});
+
+elements.apiMainlineStartForm.elements.initial_request.addEventListener("input", () => {
+  if (state.apiMainlineStart?.status === "READY") {
+    state.apiMainlineStartInputChanged = true;
+    renderOrchestration();
+  }
+});
+
+elements.apiMainlineStartForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(elements.apiMainlineStartForm);
+  try {
+    const result = await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/api-mainline-start`, {
+      method: "POST",
+      body: JSON.stringify({initial_request: form.get("initial_request")}),
+    });
+    state.apiMainlineStart = result.start;
+    state.apiMainlineStartInputChanged = false;
+    renderOrchestration();
+    showToast("API Mainline candidate prepared. Live initialization remains approval-locked.");
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+async function decideApiMainlineStart(action) {
+  const start = state.apiMainlineStart || {};
+  const button = action === "approve" ? elements.apiMainlineApprove : elements.apiMainlineCancel;
+  button.disabled = true;
+  if (action === "approve") {
+    state.apiMainlineRun = {status: "SENDING"};
+    renderOrchestration();
+  }
+  try {
+    const result = await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/api-mainline-start/${action}`, {
+      method: "POST",
+      body: JSON.stringify({
+        candidate_file_sha256: start.candidate_file_sha256,
+        approval_manifest_sha256: start.approval_manifest_sha256,
+      }),
+    });
+    state.apiMainlineRun = result.run;
+    await loadApiMainlineStart();
+    renderOrchestration();
+    showToast(action === "approve" ? "API Mainline turn completed." : "API Mainline candidate cancelled.");
+  } catch (error) {
+    await loadApiMainlineStart().catch(() => {});
+    renderOrchestration();
+    showToast(error.message);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+elements.apiMainlineApprove.addEventListener("click", () => decideApiMainlineStart("approve"));
+elements.apiMainlineCancel.addEventListener("click", () => decideApiMainlineStart("cancel"));
+
+elements.orchestrationModes.addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-orchestration-mode]");
+  if (!button) return;
+  try {
+    await mutateOrchestration(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/mode`, {
+      method: "POST",
+      body: JSON.stringify({mode: button.dataset.orchestrationMode}),
+    });
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+elements.orchestrationControls.addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-orchestration-action]");
+  if (!button) return;
+  try {
+    await mutateOrchestration(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/control`, {
+      method: "POST",
+      body: JSON.stringify({action: button.dataset.orchestrationAction}),
+    });
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+elements.nodeForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(elements.nodeForm);
+  const payload = {
+    node_id: form.get("node_id"),
+    display_name: form.get("display_name"),
+    role: form.get("role"),
+    transport_kind: form.get("transport_kind"),
+    transport_ref: form.get("transport_ref"),
+    enabled: true,
+    allowed_sources: splitNodeIds(form.get("allowed_sources")),
+    allowed_destinations: splitNodeIds(form.get("allowed_destinations")),
+  };
+  try {
+    await mutateOrchestration(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/nodes`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    elements.nodeForm.reset();
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+elements.orchestrationNodes.addEventListener("click", async (event) => {
+  const deleteButton = event.target.closest("button[data-node-delete]");
+  const toggleButton = event.target.closest("button[data-node-toggle]");
+  if (!deleteButton && !toggleButton) return;
+  const nodeId = deleteButton?.dataset.nodeDelete || toggleButton.dataset.nodeToggle;
+  try {
+    if (deleteButton) {
+      await mutateOrchestration(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/nodes/${encodeURIComponent(nodeId)}`, {
+        method: "DELETE",
+        body: "{}",
+      });
+    } else {
+      await mutateOrchestration(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/nodes/${encodeURIComponent(nodeId)}`, {
+        method: "PUT",
+        body: JSON.stringify({enabled: toggleButton.dataset.enabled !== "true"}),
+      });
+    }
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+elements.routeForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(elements.routeForm);
+  const payload = {
+    route_id: form.get("route_id"),
+    source_node_id: form.get("source_node_id"),
+    destination_node_id: form.get("destination_node_id"),
+    handoff_type: form.get("handoff_type"),
+    enabled: true,
+  };
+  try {
+    await mutateOrchestration(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/routes`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    elements.routeForm.reset();
+    renderOrchestration();
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+elements.dispatchPreviewForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(elements.dispatchPreviewForm);
+  try {
+    const result = await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/dispatch-preview`, {
+      method: "POST",
+      body: JSON.stringify({
+        handoff_id: form.get("handoff_id"),
+        route_id: form.get("route_id"),
+        message: form.get("message"),
+      }),
+    });
+    replaceOrchestrationProject(result.project);
+    await loadDispatchPreviews();
+    elements.dispatchPreviewForm.reset();
+    renderOrchestration();
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
+elements.dispatchPreviews.addEventListener("click", async (event) => {
+  const approveMainlineReturn = event.target.closest("button[data-mainline-return-approve]");
+  if (approveMainlineReturn) {
+    approveMainlineReturn.disabled = true;
+    approveMainlineReturn.textContent = "Sending...";
+    try {
+      await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/api-mainline-returns/${encodeURIComponent(approveMainlineReturn.dataset.mainlineReturnApprove)}/approve`, {
+        method: "POST",
+        body: JSON.stringify({
+          candidate_sha256: approveMainlineReturn.dataset.candidateSha256,
+          approval_manifest_sha256: approveMainlineReturn.dataset.manifestSha256,
+        }),
+      });
+      await loadDispatchPreviews();
+      renderOrchestration();
+    } catch (error) {
+      await loadDispatchPreviews().catch(() => {});
+      renderOrchestration();
+      showToast(error.message);
+    }
+    return;
+  }
+  const copyDelivery = event.target.closest("button[data-delivery-copy]");
+  const markDelivery = event.target.closest("button[data-delivery-mark]");
+  const cancelDelivery = event.target.closest("button[data-delivery-cancel]");
+  const deliveryButton = copyDelivery || markDelivery || cancelDelivery;
+  if (deliveryButton) {
+    deliveryButton.disabled = true;
+    const deliveryId = copyDelivery?.dataset.deliveryCopy || markDelivery?.dataset.deliveryMark || cancelDelivery.dataset.deliveryCancel;
+    try {
+      let action = markDelivery ? "delivered" : cancelDelivery ? "cancel" : "copied";
+      if (copyDelivery) {
+        const content = await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/deliveries/${encodeURIComponent(deliveryId)}/content`, {
+          method: "POST",
+          body: JSON.stringify({delivery_packet_sha256: deliveryButton.dataset.packetSha256}),
+        });
+        await copyExactText(content.exact_message);
+      }
+      await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/deliveries/${encodeURIComponent(deliveryId)}/${action}`, {
+        method: "POST",
+        body: JSON.stringify({delivery_packet_sha256: deliveryButton.dataset.packetSha256}),
+      });
+      await loadDispatchPreviews();
+      renderOrchestration();
+    } catch (error) {
+      deliveryButton.disabled = false;
+      showToast(error.message);
+    }
+    return;
+  }
+  const approve = event.target.closest("button[data-dispatch-approve-send]");
+  const reject = event.target.closest("button[data-dispatch-reject]");
+  const button = approve || reject;
+  if (!button) return;
+  button.disabled = true;
+  const handoffId = approve?.dataset.dispatchApproveSend || reject.dataset.dispatchReject;
+  const action = approve ? "approve-send" : "reject";
+  if (approve) approve.textContent = "Sending...";
+  try {
+    await request(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/dispatch-previews/${encodeURIComponent(handoffId)}/${action}`, {
+      method: "POST",
+      body: JSON.stringify({envelope_sha256: button.dataset.envelopeSha256}),
+    });
+    await loadDispatchPreviews();
+    renderOrchestration();
+  } catch (error) {
+    button.disabled = false;
+    showToast(error.message);
+  }
+});
+
+elements.orchestrationRoutes.addEventListener("click", async (event) => {
+  const button = event.target.closest("button[data-route-delete]");
+  if (!button) return;
+  try {
+    await mutateOrchestration(`/api/orchestration/${encodeURIComponent(state.activeOrchestrationProject)}/routes/${encodeURIComponent(button.dataset.routeDelete)}`, {
+      method: "DELETE",
+      body: "{}",
+    });
+  } catch (error) {
+    showToast(error.message);
+  }
+});
+
 document.querySelectorAll(".nav-item").forEach((button) => {
   button.addEventListener("click", () => {
     selectPrimaryTab(button.dataset.tab);
     if (button.dataset.tab === "roadmap" && !state.roadmaps) {
       refreshRoadmaps().catch((error) => showToast(error.message));
+    }
+    if (button.dataset.tab === "orchestration" && !state.orchestration && !state.publicReadOnly) {
+      loadOrchestration().catch((error) => showToast(error.message));
     }
   });
 });

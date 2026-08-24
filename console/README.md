@@ -7,6 +7,17 @@ store project roadmaps, duplicate project documentation, or become the source
 of truth for project state. `/roadmap` derives a read-only standard view from
 project-owned root `ROADMAP.md` files.
 
+For bTest orchestration, the Initial Request form is a no-network preparation
+boundary. It requires the managed API Mainline authority, seals the exact user
+input with current canonical state, and stops at `USER_APPROVAL_REQUIRED`.
+Changing the input creates a new candidate and stales the prior candidate; the
+form never creates an OpenAI conversation or sends a Codex dispatch.
+
+Completed Codex reports may be sealed for both native and API Mainline routes.
+Native ChatGPT delivery remains user-assisted. The API route creates only a
+stateless, exact-result PREPARED candidate bound to current canonical state and
+keeps live Mainline send separately locked.
+
 The stage presentation is loaded directly from the canonical, versioned bundle
 under `04_Tools/roadmap-web`. Project-local `/roadmap` routes install and use
 the same bundle; projects continue to own their roadmap parser and content.
@@ -117,8 +128,8 @@ The deployment script:
    restore-verification timers.
 10. Runs an initial memo, OA, Gaia, and bTest backup plus the applicable
     integrity or isolated restore tests.
-11. Installs an hourly provider usage collector using the protected local
-    `X:/Settings/env/developer-os.env` file and a dedicated Python environment.
+11. Installs an hourly provider usage collector using the protected, Git-ignored
+    `X:/Projects/DeveloperOS/.env` file and a dedicated Python environment.
 12. Installs `developer-os-terminal.service` on `127.0.0.1:8022` without
     opening a firewall port.
 
@@ -215,8 +226,12 @@ roadmap payload is loaded only when its view is opened. This keeps page reloads
 responsive without presenting partial project state.
 
 OpenAI collection reads `OPENAI_ADMIN_API_KEY` and
-`OPENAI_MONTHLY_BUDGET_USD`, calls the organization Costs API, and writes
-`openai-usage.json`.
+`OPENAI_MONTHLY_BUDGET_USD`, calls the supported organization Costs API, and
+writes `openai-usage.json` for protected internal reuse. The console does not
+publish an OpenAI cost, budget, or prepaid-credit view. The supported OpenAI
+API does not expose the Billing Credit Grants balance; users check prepaid
+balance directly in the OpenAI Billing web console. The `$1.95` observation is
+not stored or hard-coded.
 
 Oracle Cloud collection uses the Compute instance principal rather than an OCI
 API private key. It calls the Usage API for month-to-date cost and actual
@@ -229,6 +244,200 @@ it with this non-secret value in the same external environment file:
 ```text
 DEVOS_OCI_ENABLED=1
 ```
+
+Oracle usage is the only provider-usage view exposed in the browser console. It
+is available from the `Oracle` navigation tab and `/oracle` route. OpenAI
+Billing, prepaid credit, month-to-date cost, and monthly-limit views are not
+user-facing.
+
+Future DeveloperOS orchestration model calls use a separate project-level
+credential contract. The canonical variables are
+`OPENAI_ORCHESTRATION_API_KEY` and `OPENAI_ORCHESTRATION_PROJECT_ID`.
+`OPENAI_ADMIN_API_KEY` remains limited to the Costs API collector. No live
+orchestration call is permitted until the user provisions the canonical key in
+the Git-ignored `X:/Projects/DeveloperOS/.env`; tracked repository files do not store or validate
+the secret value.
+
+### Orchestration Phase 1A
+
+Phase 1A is local-only. It provides versioned orchestration state, strict
+review-output and Gate validation, mock reviewer injection, Decimal pricing and
+preflight estimation, historical fixture evidence hashing, immutable local run
+artifacts, and manual-comparison packet scaffolding. The default path performs
+zero network calls, never dispatches a generated instruction, and never edits
+bTest. The live OpenAI adapter is intentionally disabled until a later,
+explicitly approved phase.
+
+Run the focused checks with:
+
+```powershell
+make orchestration-test
+```
+
+The local CLI exposes only bounded preparation commands:
+
+```powershell
+python -m console.devos_orchestration credential-status
+python -m console.devos_orchestration fixture-discover --root X:/Projects/bTest
+```
+
+### Cycle Handoff capture
+
+The canonical fixture source is an immutable Cycle Handoff packet for the
+`MAINLINE_CODEX_REVIEW` lane. A capture source supplies exact message records
+with global sequence, session and message identifiers, source context, role,
+cycle ID, and unmodified string content. Selection is explicit: one MAINLINE
+task, zero or more applied user decisions, one CODEX report, and the immediately
+following MAINLINE manual review.
+
+```powershell
+python -m console.devos_orchestration cycle-capture `
+  --messages-file X:/cycle-message-capture.json `
+  --project bTest `
+  --cycle-id <cycle-id> `
+  --task-message-id <task-message-id> `
+  --report-message-id <report-message-id> `
+  --manual-review-message-id <review-message-id> `
+  --user-decision-message-id <optional-decision-id> `
+  --output X:/cycle-handoff-v1.json
+
+python -m console.devos_orchestration cycle-verify `
+  --packet X:/cycle-handoff-v1.json
+```
+
+The packet seals exact content, ordered message metadata, source sessions, and
+its own canonical SHA-256. It defaults to `approved_for_external_api=false`.
+Reviewer input contains only task, explicitly selected intermediate user
+decisions, and report. The manual review remains local-comparison-only;
+FUTURE_DESIGN and unrelated messages cannot be selected implicitly. Existing
+packets are never overwritten. A changed capture creates a separate revision
+that identifies the superseded packet.
+
+The three-file `fixture-import` command remains a legacy/manual fallback.
+Equivalence with a packet can be checked without changing either artifact:
+
+```powershell
+python -m console.devos_orchestration cycle-legacy-equivalence `
+  --packet X:/cycle-handoff-v1.json `
+  --task-file X:/01_codex_task.txt `
+  --report-file X:/02_codex_report.txt `
+  --baseline-file X:/03_manual_mainline_review.txt `
+  --project bTest --historical-date 2026-08-14
+```
+
+When and only when the exact remote ChatGPT source is confirmed blocked, the
+user may explicitly supply the unmodified Mainline manual-review text through
+the temporary `cycle-capture-user-assisted` command. The resulting immutable
+packet uses `capture_mode=USER_ASSISTED_EXACT_CAPTURE`, records
+`source_retrieval_status=REMOTE_SOURCE_BLOCKED`, and derives its manual-review
+identifier from the exact UTF-8 content hash. It does not search similar or
+adjacent messages, select the latest message, or invoke the legacy importer.
+The manual review remains local-comparison-only. A later recovered exact remote
+message can be compared by content hash without modifying the sealed packet;
+direct Session Handoff retrieval remains the canonical first choice.
+
+### Synthetic routing evidence
+
+Synthetic Gate cases live under
+`console/devos_orchestration/synthetic_fixtures/` and are always labeled
+`SYNTHETIC_ROUTING_EVIDENCE`. They test deterministic routing contracts without
+claiming historical validation or making a model call:
+
+```powershell
+python -m console.devos_orchestration synthetic-routing-suite
+```
+
+The suite covers threshold, authority, architecture, scope, and destructive
+migration decisions plus SAFE_CONTINUE, BLOCKED, and STOP controls. A synthetic
+PASS is never reported as `REAL_WORLD_EVIDENCE`.
+
+After a real direct Session Handoff capture and its manual review, the local
+candidate classifier can mark an unambiguous USER_REQUIRED cycle for later
+user-approved holdout preparation:
+
+```powershell
+python -m console.devos_orchestration cycle-user-required-candidate `
+  --packet X:/cycle-handoff.json `
+  --manual-review-gate USER_REQUIRED `
+  --decision-kind AUTHORITY
+```
+
+Only direct non-legacy, non-synthetic `MAINLINE_CODEX_REVIEW` packets classified
+as `REAL_WORLD_EVIDENCE` can set `genuine_user_required_candidate=true`.
+Candidate marking never calls an API or starts a holdout automatically.
+
+### Codex App Server transport boundary
+
+The Phase 2B adapter uses the authenticated Linux-native Codex CLI in Ubuntu
+WSL as its orchestration-only runtime. Windows starts it through
+`wsl.exe -d Ubuntu -- /home/devops/.local/bin/codex app-server`; the Windows
+Store executable is not a transport candidate. The adapter discovers the
+installed schema with `codex app-server generate-json-schema --experimental`,
+declares the generated `experimentalApi` initialize capability, and verifies
+the exact thread, turn, event, and approval methods before reporting support.
+The office implementation is currently bound to `codex-cli 0.147.0`; future
+versions are checked from their generated schema rather than assumed to share
+that contract.
+
+CODEX_THREAD references are backend-only JSON objects. Existing thread
+bindings contain `thread_id` and an absolute workspace; a project worker may
+instead use a workspace-only binding before any orchestration thread exists.
+That binding seals the Windows/WSL path mapping plus Git branch, HEAD, and
+status fingerprints. The console reports the development client, WSL runtime,
+binding, protocol, capability, dispatch lock, and external-change guard without
+returning a thread identifier. A future turn must reject a changed fingerprint
+as `WORKSPACE_CHANGED_EXTERNALLY`, and only one DeveloperOS turn may hold a
+workspace lease at once. These guards do not lock the Codex Desktop client.
+
+A route to a bound CODEX_THREAD node can create a Dispatch Preview. A
+workspace-only worker is reverified against its sealed Git state before the
+preview is written; any branch, HEAD, status, path, or identity change fails as
+`WORKSPACE_CHANGED_EXTERNALLY`. Its immutable envelope binds the route and
+logical nodes, Windows/WSL workspace mapping, Git state, discovered runtime
+protocol, and task. `task_content_sha256` hashes the exact task text,
+`payload_sha256` hashes the rendered logical handoff, and `envelope_sha256`
+hashes the complete dispatch contract. The exactly-once ledger stops at
+PREPARED until an authenticated user explicitly approves or rejects it.
+Approval reverifies the artifact, route, destination, workspace Git seal, and
+runtime protocol before writing a separate immutable record bound to all of
+those values. Its ledger history becomes PREPARED, APPROVED, DISPATCHABLE;
+rejection becomes terminal REJECTED and requires a new envelope. The console
+shows the task and binding summary with Approve and Reject controls. Automatic
+send remains locked in SHADOW_REVIEW and SEMI_AUTO. The bounded one-shot Codex
+dispatch runner is the only live path: it consumes a newly approved envelope by
+writing an immutable ATTEMPT_STARTED record before transport, permits one WSL
+thread and turn with no retry or fallback, captures a terminal result, and
+rechecks the workspace seal. It does not return the result to Mainline or start
+another cycle. Raw thread and turn identifiers remain backend-only.
+
+Completed Codex output can be sealed into one immutable return envelope for a
+validated CODEX_WORKER-to-MAINLINE REPORT route. The envelope binds the source
+dispatch and result artifact, exact result-content hash, originating task,
+workspace seal, and runtime protocol. Duplicate envelopes for the same result
+are rejected. CHATGPT_SESSION read, write, and resume remain unsupported, so
+the current bTest return stops at USER_ASSISTED_EXACT_DELIVERY_CANDIDATE. The
+console exposes only capture, destination, capability, and envelope status;
+there is no Mainline send or automatic fallback path.
+
+The user-assisted exact-delivery layer can create one immutable packet per
+return envelope. Its authenticated console controls copy only the sealed Codex
+result, then record PREPARED to COPIED to DELIVERED, or a terminal CANCELLED
+decision. Copy, delivery, and cancellation records bind the packet, result
+hash, and BTEST_MAINLINE destination. Native Mainline write, browser
+automation, session impersonation, and automatic fallback remain absent.
+
+The bTest control plane also registers a managed `BTEST_MAINLINE_API` node.
+OFF keeps `NATIVE_MAINLINE` as the native canonical authority; any enabled mode
+makes the API node canonical and rejects native routes or results as inactive.
+DeveloperOS canonical Mainline state is separate from private OpenAI
+conversation linkage. The UI exposes only initialization status, current Gate,
+current destination, and locked READ/WRITE/RESUME capability status. No live
+API call or conversation creation is enabled by this model.
+
+The CLI prints only boolean credential presence and fixture metadata. It never
+prints secret values. A sealed Cycle Handoff packet is the canonical fixture
+boundary. The historical task/report/baseline file triplet is accepted only as
+a legacy/manual fallback and does not replace packet approval.
 
 Usage and cost are queried through the latest completed UTC day. The console
 linearly projects those observations across the number of days in the current
@@ -245,9 +454,10 @@ The instance must belong to an OCI dynamic group with these tenancy policies:
 Allow dynamic-group DeveloperOSUsageCollectors to read usage-report in tenancy
 ```
 
-The source environment file remains outside every repository at
-`X:/Settings/env/developer-os.env`. Deployment transfers it separately from
-the Git release and installs it with restricted permissions. The refresh runs
+The source environment file is kept outside Git at
+`X:/Projects/DeveloperOS/.env`. Deployment transfers it separately from
+the Git release, filtering the server payload to `OPENAI_ADMIN_API_KEY` and
+`OPENAI_MONTHLY_BUDGET_USD` before installing it with restricted permissions. The refresh runs
 once during deployment and then hourly through
 `developer-os-openai-usage.timer`.
 

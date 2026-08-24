@@ -4,7 +4,7 @@ param(
   [string]$Action = "Deploy",
   [string]$Server = "opc@168.107.18.16",
   [string]$SshKey = "X:/Settings/ssh/ssh-key-ops.key",
-  [string]$OpenAiEnv = "X:/Settings/env/developer-os.env"
+  [string]$OpenAiEnv = "X:/Projects/DeveloperOS/.env"
 )
 
 $ErrorActionPreference = "Stop"
@@ -164,10 +164,33 @@ if ($LASTEXITCODE -ne 0) {
 }
 $revisionLabel = $revision
 $archive = Join-Path ([System.IO.Path]::GetTempPath()) "developer-os-console-$timestamp.tar.gz"
+$openAiTransferEnv = Join-Path ([System.IO.Path]::GetTempPath()) "developer-os-openai-$timestamp.env"
 $remoteArchive = "/home/opc/.developer-os-console/transfer/$timestamp.tar.gz"
 $remoteOpenAiEnv = "/home/opc/.developer-os-console/transfer/$timestamp-openai.env"
 
 try {
+  $allowedOpenAiNames = @("OPENAI_ADMIN_API_KEY", "OPENAI_MONTHLY_BUDGET_USD")
+  $openAiTransferLines = @{}
+  foreach ($line in [System.IO.File]::ReadLines($OpenAiEnv)) {
+    if ($line -match '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=') {
+      $name = $matches[1]
+      if ($allowedOpenAiNames -contains $name) {
+        if ($openAiTransferLines.ContainsKey($name)) {
+          throw "Duplicate $name entry in $OpenAiEnv."
+        }
+        $openAiTransferLines[$name] = $line
+      }
+    }
+  }
+  if ($openAiTransferLines.Count -ne $allowedOpenAiNames.Count) {
+    throw "The OpenAI deployment environment is incomplete."
+  }
+  [System.IO.File]::WriteAllLines(
+    $openAiTransferEnv,
+    @($openAiTransferLines["OPENAI_ADMIN_API_KEY"], $openAiTransferLines["OPENAI_MONTHLY_BUDGET_USD"]),
+    (New-Object System.Text.UTF8Encoding($false))
+  )
+
   Invoke-Checked -Command "git" -Arguments @(
     "-c", "core.autocrlf=false",
     "-C", $repositoryRoot,
@@ -186,7 +209,7 @@ try {
     "-o", "BatchMode=yes",
     "-o", "ConnectTimeout=15",
     "-i", $SshKey,
-    $OpenAiEnv,
+    $openAiTransferEnv,
     "${Server}:$remoteOpenAiEnv"
   ) -FailureMessage "Could not upload the OpenAI environment file"
 
@@ -343,5 +366,8 @@ echo "Private terminal endpoint: server loopback 127.0.0.1:8022"
 finally {
   if (Test-Path -LiteralPath $archive) {
     Remove-Item -LiteralPath $archive -Force
+  }
+  if (Test-Path -LiteralPath $openAiTransferEnv) {
+    Remove-Item -LiteralPath $openAiTransferEnv -Force
   }
 }

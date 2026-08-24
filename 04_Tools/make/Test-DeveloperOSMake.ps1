@@ -7,7 +7,7 @@ $developerOSPath = Join-Path $workspaceRoot "DeveloperOS"
 $projects = @(
     @{ Name = "OA"; Path = (Join-Path $workspaceRoot "oa"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" },
     @{ Name = "Gaia"; Path = (Join-Path $workspaceRoot "gaia"); Compose = "docker-compose.dev.yml"; BuildCompose = "docker-compose.dev.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" },
-    @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" }
+    @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest"); Compose = "docker-compose.unified.dev.yml"; BuildCompose = "docker-compose.unified.dev.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" }
 )
 
 $reservedTargets = @(
@@ -40,6 +40,12 @@ try {
     $contextOutput = @(& make --no-print-directory -n context TASK="shared make" -C $developerOSPath 2>&1)
     if ($LASTEXITCODE -ne 0 -or ($contextOutput -join "`n") -notmatch "project_context.py") {
         Write-Host "FAIL DeveloperOS: shared make context is unavailable."
+        $developerOSFailed = $true
+    }
+
+    $sharedMakeContract = Get-Content -Raw -LiteralPath $sharedMakeFile
+    if ($sharedMakeContract -notmatch "devos-native-docker\.cmd" -or $sharedMakeContract -notmatch "DEVELOPEROS_NATIVE_DOCKER") {
+        Write-Host "FAIL DeveloperOS: the shared Windows native Docker launcher is not the default boundary."
         $developerOSFailed = $true
     }
 

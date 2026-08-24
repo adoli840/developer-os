@@ -1,6 +1,9 @@
 {
   "cost_usd": 0,
-  "budget_usd": 0,
+  "monthly_limit_usd": 0,
+  "credit_balance_usd": null,
+  "credit_balance_status": "unsupported",
+  "credit_balance_message": "CREDIT BALANCE: unavailable from supported API",
   "period_start": "2026-07-01",
   "period_end": "2026-07-31",
   "updated_at": "2026-07-28T00:00:00Z"

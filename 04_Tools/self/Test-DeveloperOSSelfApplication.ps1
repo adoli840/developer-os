@@ -64,7 +64,8 @@ $requiredFiles = @(
     "PROJECT_AREAS.json",
     "PROJECT_RULES.md",
     "ROADMAP.md",
-    "00_Master\ProjectRoadmapPolicy.md"
+    "00_Master\ProjectRoadmapPolicy.md",
+    "00_Master\ProjectOperationalAuthorityPolicy.md"
 )
 $missingFiles = @($requiredFiles | Where-Object { -not (Test-Path -LiteralPath (Join-Path $developerOSRoot $_) -PathType Leaf) })
 if ($missingFiles.Count -eq 0) {
@@ -155,6 +156,23 @@ if (
     Add-CheckResult PASS "Development protocol" "the high-impact GPT-User-Codex seven-step protocol is defined"
 } else {
     Add-CheckResult FAIL "Development protocol" "the high-impact development protocol is missing or incomplete"
+}
+
+$operationalAuthorityPolicy = Read-Text "00_Master\ProjectOperationalAuthorityPolicy.md"
+$boot = Read-Text "BOOT.md"
+if (
+    $operationalAuthorityPolicy -and
+    $boot -and
+    $operationalAuthorityPolicy.Contains("## Green: Project Autonomy") -and
+    $operationalAuthorityPolicy.Contains("## Amber: User Decision") -and
+    $operationalAuthorityPolicy.Contains("## Red: DeveloperOS Escalation") -and
+    $operationalAuthorityPolicy.Contains("## Absolute Safety Boundaries") -and
+    $operationalAuthorityPolicy.Contains("shared, host, and cross-project") -and
+    $boot.Contains("ProjectOperationalAuthorityPolicy.md")
+) {
+    Add-CheckResult PASS "Project operational authority" "project autonomy and user/shared-infrastructure boundaries are routed and fail closed"
+} else {
+    Add-CheckResult FAIL "Project operational authority" "the Green/Amber/Red authority policy or BOOT route is missing or incomplete"
 }
 
 $null = & git -C $developerOSRoot check-ignore -q -- ".developer-os/context-index.json"

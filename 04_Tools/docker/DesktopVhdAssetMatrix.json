@@ -1,0 +1,1378 @@
+{
+  "records": [
+    {
+      "asset": "btest-desktop-forensic-pg-phase4",
+      "asset_type": "container",
+      "compose_project": null,
+      "created_at": "2026-08-15T04:22:57.499207146Z",
+      "external_backup": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "4cbfea17186918db92bd9379e477e133fc32485c264f7200cde67afd4b4ab1f7",
+      "mount_relations": [
+        "btest_desktop_forensic_clone_20260815_phase4"
+      ],
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 20480,
+      "unique_data": false,
+      "writable_layer_entry_count": 4
+    },
+    {
+      "asset": "btest-db",
+      "asset_type": "container",
+      "compose_project": "btest",
+      "created_at": "2026-08-14T23:15:54.792703755Z",
+      "external_backup": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "c4600606f7d25ae365aab9e2a45e6d854c2e558ca351e1f50147ba59301b7525",
+      "mount_relations": [
+        "/run/desktop/mnt/host/x/Projects/bTest/deploy/postgres/init-databases.sh",
+        "X:\\Projects\\bTest\\deploy\\postgres\\healthcheck.sh",
+        "btest_consolidated_postgres_data"
+      ],
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 49152,
+      "unique_data": false,
+      "writable_layer_entry_count": 8
+    },
+    {
+      "asset": "0a5ed0c20c2e61e5a9f004f92a63d986e30257faa85bb50aa2f8540b042734b1",
+      "asset_type": "volume",
+      "catalog_databases": [
+        "temp"
+      ],
+      "compose_project": null,
+      "created_at": "2026-08-05T01:30:16Z",
+      "external_backup": "X:\\Docker\\Forensics\\global-anonymous-volumes\\0a5ed0c20c2e61e5a9f004f92a63d986e30257faa85bb50aa2f8540b042734b1-pgdata-20260815.tar",
+      "final_classification": "EXTERNALLY_PRESERVED_THEN_SAFE_TO_DELETE",
+      "native_counterpart": "NOT_REQUIRED_DISPOSABLE",
+      "owner": "unknown",
+      "persistence": "OBSOLETE",
+      "preservation": {
+        "artifacts": [
+          {
+            "path": "X:\\Docker\\Forensics\\global-anonymous-volumes\\0a5ed0c20c2e61e5a9f004f92a63d986e30257faa85bb50aa2f8540b042734b1-pgdata-20260815.tar",
+            "sha256": "5601c2cfb25096e9903abcc65ded4970e7a6a97993b6b9f256e51cfe74af5eaf",
+            "verification": "PHYSICAL_ARCHIVE_SHA256_VERIFIED; DISPOSABLE CLONE CRASH-RECOVERY START PASS; LOGICAL VALUE REVIEW NOT REQUIRED"
+          },
+          {
+            "path": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+            "sha256": "e3ceb00f8eabc02b5b80664da6c1e6ea2e1f8084791b34c80356a985ce1a3161",
+            "verification": "SOURCE_AND_COPY_SIZE_SHA256_MATCH; COPY_READ_ONLY"
+          }
+        ],
+        "data_classification": "DISPOSABLE_FORENSIC_OR_TEST_ARTIFACT"
+      },
+      "size_bytes": 48640000,
+      "unique_data": false
+    },
+    {
+      "asset": "46277a77c226d6d32ab1dcd74454e874fc5becd97bdf04e379f853d81632bc02",
+      "asset_type": "volume",
+      "catalog_databases": [
+        "devos_verify"
+      ],
+      "compose_project": null,
+      "created_at": "2026-08-02T02:10:21Z",
+      "external_backup": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+      "final_classification": "EXTERNALLY_PRESERVED_THEN_SAFE_TO_DELETE",
+      "native_counterpart": "NOT_REQUIRED_DISPOSABLE",
+      "owner": "DeveloperOS",
+      "persistence": "OBSOLETE",
+      "preservation": {
+        "artifacts": [
+          {
+            "path": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+            "sha256": "e3ceb00f8eabc02b5b80664da6c1e6ea2e1f8084791b34c80356a985ce1a3161",
+            "verification": "SOURCE_AND_COPY_SIZE_SHA256_MATCH; COPY_READ_ONLY"
+          }
+        ],
+        "data_classification": "DISPOSABLE_DEVELOPEROS_RESTORE_VERIFICATION_ARTIFACT"
+      },
+      "size_bytes": 56520000,
+      "unique_data": false
+    },
+    {
+      "asset": "7ccf989eb0bf61dd98ba5a7b787245a09a5eeb4a0f3d1a913b7c15835db96742",
+      "asset_type": "volume",
+      "catalog_databases": [
+        "devos_verify"
+      ],
+      "compose_project": null,
+      "created_at": "2026-08-02T01:53:35Z",
+      "external_backup": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+      "final_classification": "EXTERNALLY_PRESERVED_THEN_SAFE_TO_DELETE",
+      "native_counterpart": "NOT_REQUIRED_DISPOSABLE",
+      "owner": "DeveloperOS",
+      "persistence": "OBSOLETE",
+      "preservation": {
+        "artifacts": [
+          {
+            "path": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+            "sha256": "e3ceb00f8eabc02b5b80664da6c1e6ea2e1f8084791b34c80356a985ce1a3161",
+            "verification": "SOURCE_AND_COPY_SIZE_SHA256_MATCH; COPY_READ_ONLY"
+          }
+        ],
+        "data_classification": "DISPOSABLE_DEVELOPEROS_RESTORE_VERIFICATION_ARTIFACT"
+      },
+      "size_bytes": 1542000000,
+      "unique_data": false
+    },
+    {
+      "asset": "957fc7c02fbc4c1b659db9ad2b2edd90e6b964e77c6f5d0816e123457e93b399",
+      "asset_type": "volume",
+      "catalog_databases": [
+        "temp"
+      ],
+      "compose_project": null,
+      "created_at": "2026-08-05T01:31:34Z",
+      "external_backup": "X:\\Docker\\Forensics\\global-anonymous-volumes\\957fc7c02fbc4c1b659db9ad2b2edd90e6b964e77c6f5d0816e123457e93b399-pgdata-20260815.tar",
+      "final_classification": "EXTERNALLY_PRESERVED_THEN_SAFE_TO_DELETE",
+      "native_counterpart": "NOT_REQUIRED_DISPOSABLE",
+      "owner": "unknown",
+      "persistence": "OBSOLETE",
+      "preservation": {
+        "artifacts": [
+          {
+            "path": "X:\\Docker\\Forensics\\global-anonymous-volumes\\957fc7c02fbc4c1b659db9ad2b2edd90e6b964e77c6f5d0816e123457e93b399-pgdata-20260815.tar",
+            "sha256": "1b2530e1a858698345b4f17dad28e66bec09f253ce7e0350dbbefeac516bb2f8",
+            "verification": "PHYSICAL_ARCHIVE_SHA256_VERIFIED; DISPOSABLE CLONE CRASH-RECOVERY START PASS; LOGICAL VALUE REVIEW NOT REQUIRED"
+          },
+          {
+            "path": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+            "sha256": "e3ceb00f8eabc02b5b80664da6c1e6ea2e1f8084791b34c80356a985ce1a3161",
+            "verification": "SOURCE_AND_COPY_SIZE_SHA256_MATCH; COPY_READ_ONLY"
+          }
+        ],
+        "data_classification": "DISPOSABLE_FORENSIC_OR_TEST_ARTIFACT"
+      },
+      "size_bytes": 413700000,
+      "unique_data": false
+    },
+    {
+      "asset": "btest_consolidated_postgres_data",
+      "asset_type": "volume",
+      "catalog_databases": [
+        "elliott",
+        "ever",
+        "grid",
+        "kline",
+        "memo",
+        "plot",
+        "webhook"
+      ],
+      "compose_project": "btest-unified",
+      "created_at": "2026-08-03T19:10:50Z",
+      "external_backup": "X:\\Docker\\Forensic\\btest-desktop-elliott-forward-run-manifests-20260815.dump",
+      "final_classification": "EXTERNALLY_PRESERVED_THEN_SAFE_TO_DELETE",
+      "native_counterpart": "UNIQUE_DESKTOP",
+      "owner": "bTest",
+      "persistence": "PERSISTENT_DATA",
+      "preservation": {
+        "artifacts": [
+          {
+            "path": "X:\\Docker\\Forensic\\btest-desktop-elliott-forward-run-manifests-20260815.dump",
+            "sha256": "077e368cc9fc5497065eb913e2fc2aec3eec6ab302454f5e9a7212283223e335",
+            "verification": "LOGICAL_RESTORE_PASS; 69837 ROWS RESTORED; 4709 DESKTOP_ONLY PRIMARY KEYS PRESERVED"
+          },
+          {
+            "path": "X:\\Docker\\Forensics\\btest\\btest-desktop-postgres-20260815T004028Z.tar",
+            "sha256": "f1afeb0a1ddd611a03992cdb07fbc2ce8ff8d4845ad0a4c8dba07a73681d84e2",
+            "verification": "PHYSICAL_VOLUME_ARCHIVE_SHA256_VERIFIED"
+          },
+          {
+            "path": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+            "sha256": "e3ceb00f8eabc02b5b80664da6c1e6ea2e1f8084791b34c80356a985ce1a3161",
+            "verification": "SOURCE_AND_COPY_SIZE_SHA256_MATCH; COPY_READ_ONLY"
+          }
+        ],
+        "data_classification": "HAS_UNIQUE_MEANINGFUL_DATA"
+      },
+      "size_bytes": 2938000000,
+      "unique_data": true
+    },
+    {
+      "asset": "btest_desktop_forensic_clone_20260815_phase4",
+      "asset_type": "volume",
+      "catalog_databases": [
+        "elliott",
+        "ever",
+        "grid",
+        "kline",
+        "memo",
+        "plot",
+        "webhook"
+      ],
+      "compose_project": null,
+      "created_at": "2026-08-15T04:20:27Z",
+      "external_backup": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "PERSISTENT_DATA",
+      "size_bytes": 2937000000,
+      "unique_data": false
+    },
+    {
+      "asset": "btest_go_build_cache",
+      "asset_type": "volume",
+      "catalog_databases": [],
+      "compose_project": "btest",
+      "created_at": "2026-08-05T04:41:02Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "bTest",
+      "persistence": "CACHE",
+      "size_bytes": 171700000,
+      "unique_data": false
+    },
+    {
+      "asset": "btest_web_node_modules",
+      "asset_type": "volume",
+      "catalog_databases": [],
+      "compose_project": "btest",
+      "created_at": "2026-08-05T04:41:02Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "bTest",
+      "persistence": "CACHE",
+      "size_bytes": 64990000,
+      "unique_data": false
+    },
+    {
+      "asset": "gaia_gaia-dev-next-cache",
+      "asset_type": "volume",
+      "catalog_databases": [],
+      "compose_project": "gaia",
+      "created_at": "2026-07-03T01:33:15Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "CACHE",
+      "size_bytes": 336400000,
+      "unique_data": false
+    },
+    {
+      "asset": "gaia_gaia-dev-node-modules",
+      "asset_type": "volume",
+      "catalog_databases": [],
+      "compose_project": "gaia",
+      "created_at": "2026-07-03T01:33:14Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "CACHE",
+      "size_bytes": 494000000,
+      "unique_data": false
+    },
+    {
+      "asset": "gaia_gaia-sim-next-cache",
+      "asset_type": "volume",
+      "catalog_databases": [],
+      "compose_project": "gaia",
+      "created_at": "2026-07-14T02:42:44Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "CACHE",
+      "size_bytes": 59370000,
+      "unique_data": false
+    },
+    {
+      "asset": "gaia_postgres-data",
+      "asset_type": "volume",
+      "catalog_databases": [
+        "gaia"
+      ],
+      "compose_project": "gaia",
+      "created_at": "2026-06-26T03:44:51Z",
+      "external_backup": "D:\\Gaia-forensics\\20260815-desktop-native\\logical-preservation\\desktop-gaia-pg17.dump",
+      "final_classification": "EXTERNALLY_PRESERVED_THEN_SAFE_TO_DELETE",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "PERSISTENT_DATA",
+      "preservation": {
+        "artifacts": [
+          {
+            "path": "D:\\Gaia-forensics\\20260815-desktop-native\\logical-preservation\\desktop-gaia-pg17.dump",
+            "sha256": "8dc69461db4d666d3e527b3119b121f3c4517fb0d0fc0d5ddd926e598c90abe6",
+            "verification": "LOGICAL_RESTORE_PASS; 62 PUBLIC TABLES; CORE ROW COUNTS MATCHED"
+          },
+          {
+            "path": "D:\\Gaia-forensics\\20260815-desktop-native\\desktop-gaia-postgres.tar",
+            "sha256": "a6fe1b81fc6d587f0210d60b5c04dd96f630cd3a89313729ab9e2759206ef23c",
+            "verification": "PHYSICAL_ARCHIVE_SHA256_VERIFIED"
+          },
+          {
+            "path": "X:\\Docker\\Forensics\\vhd\\docker_data-20260815T044434Z-forensic-copy.vhdx",
+            "sha256": "e3ceb00f8eabc02b5b80664da6c1e6ea2e1f8084791b34c80356a985ce1a3161",
+            "verification": "SOURCE_AND_COPY_SIZE_SHA256_MATCH; COPY_READ_ONLY"
+          }
+        ],
+        "data_classification": "DESKTOP_ONLY_DATA_OBSOLETE"
+      },
+      "size_bytes": 324600000,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:013ef6cdbcaec396b7d54285bd76ee0fd2fb5498295599569039d6cc00e860e2"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-01-26T07:05:22.563509224Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:013ef6cdbcaec396b7d54285bd76ee0fd2fb5498295599569039d6cc00e860e2",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12480164,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "adoli840/oa:a0d477f49c01e9fc97dffb0e964fe97bae05db6a"
+      ],
+      "asset_type": "image",
+      "compose_project": null,
+      "created_at": "2026-07-23T10:21:39.510147736Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:05babad81eac5051f8f3527afdf147daa0b400087c8818eb4fef0d86e8b125b4",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 105323466,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:2638db3afc706b9c0000ac216caccaf9cf8e766f99091033d3612abd75263669"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-01-23T07:26:05.408807384Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:2638db3afc706b9c0000ac216caccaf9cf8e766f99091033d3612abd75263669",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12466049,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "alpine:latest"
+      ],
+      "asset_type": "image",
+      "compose_project": null,
+      "created_at": "2026-06-16T00:01:29.967161902Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unrelated",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 3857242,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:2fbf18d32af12d0d95f6594a3ebf1ecb2f340a3868e72a76d6b7ce3fe3db13a2"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-02-12T03:14:39.511815858Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:2fbf18d32af12d0d95f6594a3ebf1ecb2f340a3868e72a76d6b7ce3fe3db13a2",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12520082,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:356f712b4ba9c42b51e8cda34b6c6a027dcb4405c072d8d352273492d904efa8"
+      ],
+      "asset_type": "image",
+      "compose_project": "gaia",
+      "created_at": "2026-07-15T07:50:56.325112882Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:356f712b4ba9c42b51e8cda34b6c6a027dcb4405c072d8d352273492d904efa8",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 164373231,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:3a6a40f8e2092a7a16da336c7919428e1bfa82ac9987214f5806e3334e15844e"
+      ],
+      "asset_type": "image",
+      "compose_project": "oa",
+      "created_at": "2026-02-11T07:18:56.479688985Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:3a6a40f8e2092a7a16da336c7919428e1bfa82ac9987214f5806e3334e15844e",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 282545516,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "btest-confirmed-wave-writer-test:local"
+      ],
+      "asset_type": "image",
+      "compose_project": null,
+      "created_at": "2026-08-14T08:16:32.320891359Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:4a5e372eedbbe92d25cfbfe9a93567c253a1ed5eadc1170e7d67e135d71ab0a4",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 82544131,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:4ef9adf04da75c9b7fdef71c7dfd657e8c01fb46e8ee5c1b3cc78ebf2127f970"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-02-12T04:56:37.838651047Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:4ef9adf04da75c9b7fdef71c7dfd657e8c01fb46e8ee5c1b3cc78ebf2127f970",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12520269,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:4f7bf5783a5a46fa5bf788b070dd817829c5cdf408f984877cbb02bea6299298"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2025-12-17T07:27:35.682242476Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:4f7bf5783a5a46fa5bf788b070dd817829c5cdf408f984877cbb02bea6299298",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12269733,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:56a053b38da4b14877c57e79251d22c2ef6e877e3efce65532d8baef464fc77c"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-02-12T05:39:58.929225808Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:56a053b38da4b14877c57e79251d22c2ef6e877e3efce65532d8baef464fc77c",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12520574,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:5c3360e2f9f1321aa913ac7145868534e7611c38a578d7482e5004e88a909f51"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-01-28T07:52:15.111001571Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:5c3360e2f9f1321aa913ac7145868534e7611c38a578d7482e5004e88a909f51",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12519554,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:652a4eeb211de1b3e303b6a5e9965c669f042d283ef9155ded10d5ed2c3232b6"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-02-12T05:55:33.45620972Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:652a4eeb211de1b3e303b6a5e9965c669f042d283ef9155ded10d5ed2c3232b6",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 18786020,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:699b5543c236dbeed43f841e8ea40228d9d79b52951b32d35f1ccac540686516"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-01-30T07:31:22.757698161Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:699b5543c236dbeed43f841e8ea40228d9d79b52951b32d35f1ccac540686516",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12518784,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:6af803badb0109219468c1d991f3b94eb4c50d370213975555ca4b716de87231"
+      ],
+      "asset_type": "image",
+      "compose_project": "oa",
+      "created_at": "2026-02-11T07:27:08.901332194Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:6af803badb0109219468c1d991f3b94eb4c50d370213975555ca4b716de87231",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 282553893,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "oa-dev:latest"
+      ],
+      "asset_type": "image",
+      "compose_project": "oa",
+      "created_at": "2026-07-24T05:23:11.589163744Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:6d5452e1477843e179215049dac2ab8d5912b82161c71472a134d49c659f067d",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 367683110,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:6ea6cd00b89ca7cf26821e5e9345fb007339c17f4306d388223d1ee86eba0d72"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-01-27T08:09:37.571487101Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:6ea6cd00b89ca7cf26821e5e9345fb007339c17f4306d388223d1ee86eba0d72",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12491465,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:6f79df04e8925d76186169f4d57dc87bd2999c8a091adbeaac13f244878f8920"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2025-09-29T06:06:45.377777843Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:6f79df04e8925d76186169f4d57dc87bd2999c8a091adbeaac13f244878f8920",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12140099,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:7a313ea26d815f321ae714287d08fc46d6e02381f9e3681044db74661af20f46"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-02-12T02:25:38.204540775Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:7a313ea26d815f321ae714287d08fc46d6e02381f9e3681044db74661af20f46",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12518877,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:7c0ab47dd992c9bb897215d9be39e5a2f36e32a9573cca7b380ec991b1defaf4"
+      ],
+      "asset_type": "image",
+      "compose_project": "oa",
+      "created_at": "2026-02-10T07:42:58.719524925Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:7c0ab47dd992c9bb897215d9be39e5a2f36e32a9573cca7b380ec991b1defaf4",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 282083818,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:7e0f1eb1097c8304cde51021a31393a99b70f4e74c043775dbf05ad5747e99a8"
+      ],
+      "asset_type": "image",
+      "compose_project": "gaia",
+      "created_at": "2026-07-15T05:49:22.268214337Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:7e0f1eb1097c8304cde51021a31393a99b70f4e74c043775dbf05ad5747e99a8",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 164366899,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:82b8fffbb463880ab10edcc97d2924457b04d5aca3b3e9998569ab9915942e03"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-04-07T03:02:20.921613313Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:82b8fffbb463880ab10edcc97d2924457b04d5aca3b3e9998569ab9915942e03",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 19214209,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "adoli840/oa:f63d90de6fdb444d05e0b37a5dcc0546571c1ece"
+      ],
+      "asset_type": "image",
+      "compose_project": null,
+      "created_at": "2026-07-21T08:42:30.449874776Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:876f65b6fc63f3ca0bfcfaff2130a0cb682bb1ba931d31314e1b70dfeff005ae",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 105053296,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:93f69478a2200ef1c50ad3a82ecf09a8fa9b4b3273164fa4d348443263e83d9b"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-04-08T01:25:48.179201301Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:93f69478a2200ef1c50ad3a82ecf09a8fa9b4b3273164fa4d348443263e83d9b",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 19217504,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:959de69714358d362c491915caad0c800f1b0ce52bcb80face64ada36cf0de24"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2025-12-03T06:56:40.933327632Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:959de69714358d362c491915caad0c800f1b0ce52bcb80face64ada36cf0de24",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12173318,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:9ad44ce29dc23669d5e0cf51a5731eb3095e3ee16d9b15dfa5aab9e3ae3a013e"
+      ],
+      "asset_type": "image",
+      "compose_project": "gaia",
+      "created_at": "2026-07-15T07:36:08.074847031Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:9ad44ce29dc23669d5e0cf51a5731eb3095e3ee16d9b15dfa5aab9e3ae3a013e",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 164367932,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:9c2f3979b7702c0c1d5934284614dc89b899f088f57e90b50c2b0e2f9be00153"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2025-11-17T02:12:07.019944678Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:9c2f3979b7702c0c1d5934284614dc89b899f088f57e90b50c2b0e2f9be00153",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12170594,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "adoli840/oa:4ab922e982367dc1d7c2dc6b25b424efcb0a50ff",
+        "adoli840/oa:latest"
+      ],
+      "asset_type": "image",
+      "compose_project": null,
+      "created_at": "2026-07-24T16:04:58.032906877Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:9c7c9de12e3c81a41f650434edeca14bc9b93abd466ce3010142f5b7027ecab6",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 105345590,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:9cdcef6b570d90fd2091403dc0d0fb41a13882f2f8cc39966b6b9f027bc5e9e7"
+      ],
+      "asset_type": "image",
+      "compose_project": "gaia",
+      "created_at": "2026-07-15T04:09:36.878008004Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:9cdcef6b570d90fd2091403dc0d0fb41a13882f2f8cc39966b6b9f027bc5e9e7",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 164326876,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "postgres:16-alpine"
+      ],
+      "asset_type": "image",
+      "compose_project": null,
+      "created_at": "2025-09-30T18:58:13Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:9d4951e6dc70422022512ff05ac86e0ae360da051c563accbed85d6f654c3357",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unrelated",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 109511297,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "adoli840/btest:latest"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-06-10T06:56:36.364415661Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:ac2cd29cf681f37b5349412282e3131a9005df0d86921ef53b990b0c6b92cd16",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 60902687,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:c644f1eef712d5d516f9956dd0a80d61be98ef68c4788c79dd6a3ad9f48d5b0e"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-02-12T03:14:39.511815858Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:c644f1eef712d5d516f9956dd0a80d61be98ef68c4788c79dd6a3ad9f48d5b0e",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12520082,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:c6613669c856aca341d6f3e453202611b3e56a280481cd9846735d9f549f0fe8"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2025-12-12T07:37:48.418481273Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:c6613669c856aca341d6f3e453202611b3e56a280481cd9846735d9f549f0fe8",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12240974,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:cc5373ded1db38f14c8d695c032c49c5063172465d9fe70ce92ab997560ca6e0"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-02-12T03:14:39.511815858Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:cc5373ded1db38f14c8d695c032c49c5063172465d9fe70ce92ab997560ca6e0",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12520082,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:ce7d451ddf2879ca1a39ea0ca7fd638c603df12d58cd58d07b53eaab50ca33b9"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-04-07T03:02:20.921613313Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:ce7d451ddf2879ca1a39ea0ca7fd638c603df12d58cd58d07b53eaab50ca33b9",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 19214209,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "postgres:17-alpine"
+      ],
+      "asset_type": "image",
+      "compose_project": null,
+      "created_at": "2026-06-16T23:00:42.611136216Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:dc17045ccfd343b49600570ea734b9c4991cf1c3f3302e67df51e3b402dd55c4",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unrelated",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 117165924,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:dec21f64490f2516eaf34466b778fbcae89a9861b47d9d4de97832e28fe49970"
+      ],
+      "asset_type": "image",
+      "compose_project": "oa",
+      "created_at": "2026-02-12T07:13:11.913678321Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:dec21f64490f2516eaf34466b778fbcae89a9861b47d9d4de97832e28fe49970",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 15714175,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:decd29b3ad801db89768c497d63eb9b909485ce88ec37ef22f506393dc819619"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-01-30T02:38:48.634440512Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:decd29b3ad801db89768c497d63eb9b909485ce88ec37ef22f506393dc819619",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12526357,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:e5c56090fadbfbad997ed179f0aa92e14942ad898da9b55cebd1481a8395bbc6"
+      ],
+      "asset_type": "image",
+      "compose_project": "gaia",
+      "created_at": "2026-07-15T07:36:08.074847031Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:e5c56090fadbfbad997ed179f0aa92e14942ad898da9b55cebd1481a8395bbc6",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 164367932,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "oa:latest"
+      ],
+      "asset_type": "image",
+      "compose_project": "oa",
+      "created_at": "2026-06-01T02:25:42.912043667Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:ecade0162d5676a2a6e992cf9e7f6eac202f66554f2fedae7acd2c50dac2a51c",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 15823375,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "adoli840/oa:46878ef0a9ff755febf0223a9fb8d7612f65dec5"
+      ],
+      "asset_type": "image",
+      "compose_project": null,
+      "created_at": "2026-07-22T09:07:02.930359946Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:edd86594d38f4e2e692b9c4b789061a58a6246b40cda3f2ce24662963b5ef871",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 105214554,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:f4d9ebc6ee4ccbf5b9116ccc27fe4f1034c2d4ae981210a11e96cfef29373566"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-02-12T05:16:12.224948643Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:f4d9ebc6ee4ccbf5b9116ccc27fe4f1034c2d4ae981210a11e96cfef29373566",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12520459,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:f8afb3b56fcce85098fe416767170c417870e7c599ba2da881bb6b4d7d898d6a"
+      ],
+      "asset_type": "image",
+      "compose_project": "gaia",
+      "created_at": "2026-07-15T05:49:22.268214337Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:f8afb3b56fcce85098fe416767170c417870e7c599ba2da881bb6b4d7d898d6a",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 164366899,
+      "unique_data": false
+    },
+    {
+      "asset": [
+        "sha256:fd9287a36d8b08b816694c19e9849926b2760a3e25dea460862282e0cdb8635a"
+      ],
+      "asset_type": "image",
+      "compose_project": "btest",
+      "created_at": "2026-01-28T03:54:02.928505827Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "sha256:fd9287a36d8b08b816694c19e9849926b2760a3e25dea460862282e0cdb8635a",
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "size_bytes": 12515989,
+      "unique_data": false
+    },
+    {
+      "asset": "oa-wsl-network",
+      "asset_type": "network",
+      "compose_project": "tmp",
+      "created_at": "2026-08-10T09:17:14.913456988Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "08ce159c222d5216b5ce739cbe99c2d03fd8b893562a3760cbd945ca15050e29",
+      "mount_relations": [],
+      "native_counterpart": "UNKNOWN",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "btest-unified-app",
+      "asset_type": "network",
+      "compose_project": "btest",
+      "created_at": "2026-08-01T02:00:07.658987581Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "236d642a5ea0f036f15c451a3c3adfaf992d0e145cab28f90112a1f755b0ff2a",
+      "mount_relations": [],
+      "native_counterpart": "UNKNOWN",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "btest",
+      "asset_type": "network",
+      "compose_project": "btest",
+      "created_at": "2026-06-12T04:56:03.836663819Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "2d1fcbf27c966999dcdbbc58993b305bb0f62d9c6baaa5c82c96d0045f38baa4",
+      "mount_relations": [],
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "none",
+      "asset_type": "network",
+      "compose_project": null,
+      "created_at": "2025-07-14T01:50:43.135703505Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "3f73c09c090eb82c5092992c8e4554aac21e5a9895eb6515e2e4a8c1689c2014",
+      "mount_relations": [],
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "unrelated",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "host",
+      "asset_type": "network",
+      "compose_project": null,
+      "created_at": "2025-07-14T01:50:43.165286205Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "890a744b1234aa0019e52a3a40e62b84737cac99349e6330bd510ec778f8a2f8",
+      "mount_relations": [],
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "unrelated",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "oa",
+      "asset_type": "network",
+      "compose_project": "oa",
+      "created_at": "2026-07-24T05:23:24.808918848Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "89961a3815f250eaeccb99a6582216e461176be4bc16006ae950f4872da9f8d9",
+      "mount_relations": [],
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "OA",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "btest-elliott",
+      "asset_type": "network",
+      "compose_project": "btest",
+      "created_at": "2026-08-01T08:30:04.859480376Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "bae14c55c2d8b49e435cc9461be6446438ec6fd54a45ae83f9137ba70bc3c979",
+      "mount_relations": [],
+      "native_counterpart": "UNKNOWN",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "gaia_default",
+      "asset_type": "network",
+      "compose_project": "gaia",
+      "created_at": "2026-07-20T05:49:59.728715314Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "c6792757e584c37130884b2544ce22d7c6077818634d38d7cb45eb191d141189",
+      "mount_relations": [],
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "Gaia",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "bridge",
+      "asset_type": "network",
+      "compose_project": null,
+      "created_at": "2026-08-15T04:20:06.569560613Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "e7bc95d5797f66fe393d1789c7687a8b3e9ae1a81853a59e03e623b6e35bd72e",
+      "mount_relations": [
+        "btest-desktop-forensic-pg-phase4"
+      ],
+      "native_counterpart": "SUPERSEDED_BY_NATIVE",
+      "owner": "unrelated",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "btest-unified-elliott",
+      "asset_type": "network",
+      "compose_project": "btest",
+      "created_at": "2026-08-01T02:00:06.977316902Z",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "id": "f9b44ae1bbbc2ba1fc892115ec1ce550616fcb8d92bdd995e550b2d6d15c6d04",
+      "mount_relations": [],
+      "native_counterpart": "UNKNOWN",
+      "owner": "bTest",
+      "persistence": "REPRODUCIBLE_RUNTIME_ARTIFACT",
+      "unique_data": false
+    },
+    {
+      "asset": "w95mwegd04hr5mqqsztdsggc0",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:15:58.94003529 +0000 UTC",
+      "description": "local source for context",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "8.192kB",
+      "unique_data": false
+    },
+    {
+      "asset": "yg998sgo42hbw9mymghjngfso",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:15:56.316831856 +0000 UTC",
+      "description": "local source for dockerfile",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "8.192kB",
+      "unique_data": false
+    },
+    {
+      "asset": "odsmfsh7x5u9upgnt8h7zmiot",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:16:06.181984244 +0000 UTC",
+      "description": "[base 2/4] WORKDIR /app",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "8.285kB",
+      "unique_data": false
+    },
+    {
+      "asset": "hcd5zj1i8refn7nv3730l2l85",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:16:06.264066059 +0000 UTC",
+      "description": "[base 3/4] COPY apps/api/pyproject.toml ./",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "12.76kB",
+      "unique_data": false
+    },
+    {
+      "asset": "t4amt7kqx4m22undhbikng7ew",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:15:59.322943833 +0000 UTC",
+      "description": "pulled from docker.io/library/python:3.12-slim@sha256:dd29372629eeba2dd003fd9e9d35a5b8236c44727875a0364254b5127af88e65",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "16.63kB",
+      "unique_data": false
+    },
+    {
+      "asset": "u3vo6dbmhm2f8h5i66hr7varg",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:16:32.320891359 +0000 UTC",
+      "description": "[dev 4/4] COPY db/migrations ./db/migrations",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "479.9kB",
+      "unique_data": false
+    },
+    {
+      "asset": "x1zojzsqno4lf84zythg227qm",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:16:32.222933498 +0000 UTC",
+      "description": "[dev 3/4] COPY apps/api/tests ./tests",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "4.148MB",
+      "unique_data": false
+    },
+    {
+      "asset": "qgx81xi0jzub2mx1eaiz23k70",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:16:32.117487753 +0000 UTC",
+      "description": "[dev 2/4] COPY apps/api/app ./app",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "4.869MB",
+      "unique_data": false
+    },
+    {
+      "asset": "v4237ziovok4c72bq5esl916t",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:15:59.157538198 +0000 UTC",
+      "description": "pulled from docker.io/library/python:3.12-slim@sha256:dd29372629eeba2dd003fd9e9d35a5b8236c44727875a0364254b5127af88e65",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "6.241MB",
+      "unique_data": false
+    },
+    {
+      "asset": "ul41b3c4quds90owdw6sh2iw3",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:15:59.04449134 +0000 UTC",
+      "description": "local source for context",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "8.286MB",
+      "unique_data": false
+    },
+    {
+      "asset": "0taashjp9ocjuin7wupra172x",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:15:59.245352101 +0000 UTC",
+      "description": "pulled from docker.io/library/python:3.12-slim@sha256:dd29372629eeba2dd003fd9e9d35a5b8236c44727875a0364254b5127af88e65",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "53.48MB",
+      "unique_data": false
+    },
+    {
+      "asset": "tys6p6jnsswb0evov59me82ts",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:16:31.965678122 +0000 UTC",
+      "description": "mount / from exec /bin/sh -c pip install --no-cache-dir \".[dev]\"",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "56.83MB",
+      "unique_data": false
+    },
+    {
+      "asset": "h4knfq5zub446tw719t5llzor",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:16:21.788042924 +0000 UTC",
+      "description": "mount / from exec /bin/sh -c pip install --no-cache-dir .",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "101MB",
+      "unique_data": false
+    },
+    {
+      "asset": "5rmktzunusrho7xox0t2dw3w6",
+      "asset_type": "build_cache",
+      "created_at": "2026-08-14 08:15:59.092878034 +0000 UTC",
+      "description": "pulled from docker.io/library/python:3.12-slim@sha256:dd29372629eeba2dd003fd9e9d35a5b8236c44727875a0364254b5127af88e65",
+      "external_backup": null,
+      "final_classification": "SAFE_TO_DELETE_WITH_DESKTOP",
+      "native_counterpart": "UNKNOWN",
+      "owner": "unknown",
+      "persistence": "CACHE",
+      "size": "117.2MB",
+      "unique_data": false
+    }
+  ],
+  "schema_version": 1,
+  "source_inventory_sha256": "cddd2fd3bfbadc630125ab17d3c2c44ab890c13db22857e3eff4ad839b08b9a8",
+  "summary": {
+    "by_final_classification": {
+      "EXTERNALLY_PRESERVED_THEN_SAFE_TO_DELETE": 6,
+      "KEEP_OUTSIDE_DESKTOP": 0,
+      "SAFE_TO_DELETE_WITH_DESKTOP": 76,
+      "UNKNOWN": 0,
+      "VETO_DELETE": 0
+    },
+    "by_type": {
+      "build_cache": 14,
+      "container": 2,
+      "image": 44,
+      "network": 10,
+      "volume": 12
+    },
+    "oa_desktop_persistent_unique_data": 0,
+    "project_approval_gate": "PASS (3/3)",
+    "record_count": 82,
+    "remaining_unknown_assets": 0,
+    "remaining_veto_assets": 0
+  }
+}

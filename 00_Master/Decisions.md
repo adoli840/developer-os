@@ -244,9 +244,105 @@ documents.
 
 Impact:
 
-The console runs independently from governance documents, binds to port 8080,
-and may display a local OpenAI usage snapshot. OpenAI credentials and live
-billing integration are outside the default console scope.
+The console runs independently from governance documents and binds to port
+8080. OpenAI credentials and live billing integration are outside the default
+user-facing console scope.
+
+## 2026-08-12 - Remove OpenAI Billing And Usage From The Console
+
+Status: Accepted
+
+Context:
+
+The supported OpenAI API exposes organization Costs data but does not expose
+the prepaid Credit Grants balance shown in the Billing web console. Showing a
+partial cost and credit surface in DeveloperOS could be mistaken for a live
+balance view.
+
+Decision:
+
+Remove the user-facing OpenAI Billing and Usage navigation entry, page, cards,
+labels, and route behavior. Users check prepaid Credit Balance directly in
+OpenAI Billing. Preserve the server-side Costs API collector, its protected
+snapshot, systemd service and timer, and external secret-management path for
+future internal orchestration cost measurement. Do not store or hard-code the
+observed `$1.95` value. `OPENAI_MONTHLY_BUDGET_USD` remains unchanged and its
+orchestration budget contract is deferred to a separate Phase 1 design.
+
+Reason:
+
+An unavailable or partial provider surface is less useful than a clear
+ownership boundary. DeveloperOS can retain cost evidence internally without
+claiming to represent prepaid billing state.
+
+Impact:
+
+The browser no longer renders or navigates to an OpenAI billing or usage page.
+The collector and snapshot remain available to backend consumers, but the
+public console does not display OpenAI cost, monthly limit, or prepaid credit.
+
+## 2026-08-12 - Establish A Dedicated Orchestration Credential Contract
+
+Status: Accepted
+
+Context:
+
+Future DeveloperOS orchestration reviews may call the OpenAI Responses API, but
+the existing server `OPENAI_API_KEY` has unknown provenance and must not be
+reused. The existing Admin key is scoped to organization cost collection.
+
+Decision:
+
+Use a new DeveloperOS orchestration project and dedicated service-account key.
+The canonical variables are `OPENAI_ORCHESTRATION_API_KEY` and
+`OPENAI_ORCHESTRATION_PROJECT_ID`. Keep `OPENAI_ADMIN_API_KEY` exclusively for
+the Costs API. Do not modify, copy, or delete the existing server
+`OPENAI_API_KEY` during this phase. Do not make a live model call until the
+user stores the new key in `X:/Settings/env/developer-os.env`.
+
+Reason:
+
+Explicit project ownership and separate credentials prevent an administration
+key, an unknown legacy key, or an incidental workstation secret from becoming
+the authority for orchestration model calls.
+
+Impact:
+
+Credential provisioning is pending. The key value is never stored in Git,
+logged, returned in reports, or sent to the frontend. Orchestration Phase 1,
+Responses API calls, and key lifecycle changes remain disabled until a later
+explicit approval.
+
+## 2026-08-12 - Keep Orchestration Phase 1A Local And Fixture-Bound
+
+Status: Accepted
+
+Context:
+
+The first orchestration implementation needs to validate state, reviewer Gate
+outputs, pricing, preflight, and historical evidence without creating an
+automatic execution path or making a live model call.
+
+Decision:
+
+Phase 1A is a local-only Python package under `console/devos_orchestration`.
+It may create strict versioned state, mock reviewer responses, Decimal cost
+estimates, local immutable run artifacts, and manual-comparison packets. It
+must not call OpenAI, dispatch a generated instruction, edit a repository,
+modify bTest, deploy, commit, push, or create a server worker. Historical
+fixtures require an existing Codex report and manual baseline pair; the tool
+must report `HISTORICAL_FIXTURE_REQUIRED` instead of inventing one.
+
+Reason:
+
+Separating deterministic contract validation from model access makes accidental
+live calls and automatic execution structurally unavailable during preflight.
+
+Impact:
+
+The live adapter remains disabled, credential fallback is prohibited, and all
+Phase 1A artifacts remain local and ignored by Git. A later phase requires a
+separate user decision and explicit live-run approval.
 
 ## 2026-07-28 - Automate Recoverability Evidence
 
@@ -346,10 +442,9 @@ Status: Accepted
 
 Context:
 
-The operations console should display current OpenAI API cost and remaining
-monthly budget. Organization cost access requires a privileged Admin key that
-must not enter Git, a browser response, or the long-running public console
-process.
+DeveloperOS needs protected internal OpenAI cost collection. Organization cost
+access requires a privileged Admin key that must not enter Git, a browser
+response, or the long-running public console process.
 
 Decision:
 
@@ -368,8 +463,9 @@ Impact:
 DeveloperOS deployments require the local
 `X:/Settings/env/developer-os.env` file with `OPENAI_ADMIN_API_KEY` and
 `OPENAI_MONTHLY_BUDGET_USD`. The server installs it with restricted
-permissions, and the public console reads only aggregate cost, budget,
-remaining amount, period, and update time.
+permissions, and the protected snapshot is available to backend consumers.
+The public console does not display OpenAI cost, budget, remaining amount, or
+prepaid credit.
 
 ## 2026-08-02 - Require Project-Owned Roadmap Continuity
 
@@ -808,7 +904,7 @@ become quieter as its contracts mature.
 
 Impact:
 
-The primary navigation is Overview, Projects, Roadmap, Recovery, and Usage.
+The primary navigation is Overview, Projects, Roadmap, and Recovery.
 Deployment and delivery signals remain derived in their existing views, while
 recoverability evidence retains a dedicated view. The console no longer emits
 project actions or accepts `/api/actions` requests.
@@ -839,7 +935,7 @@ or aggregator of application-project planning state.
 
 Impact:
 
-The primary console navigation is Overview, Projects, Recovery, and Usage.
+The primary console navigation is Overview, Projects, Roadmap, and Recovery.
 Roadmap standards remain shared, while roadmap content and web publication stay
 inside each project repository and application.
 
@@ -870,8 +966,8 @@ useful product transition.
 
 Impact:
 
-The primary console navigation is Resources, Projects, Roadmap, Recovery, and
-Usage. Each project remains the canonical owner of its roadmap content; the
+The primary console navigation is Resources, Projects, Roadmap, and Recovery.
+Each project remains the canonical owner of its roadmap content; the
 console validates and renders that content without storing a second copy.
 
 ## 2026-08-03 - Make Resources The Console Landing View
@@ -904,7 +1000,7 @@ usage that is required for the server to operate or recover.
 
 Impact:
 
-The primary console navigation is Resources, Projects, Recovery, and Usage.
+The primary console navigation is Resources, Projects, Roadmap, and Recovery.
 Projects retains workstation and repository comparisons; Recovery retains
 backup and schedule evidence. Resource collection adds aggregate host-process,
 shared-Docker, system-file, log, and backup attribution without exposing
@@ -1003,3 +1099,402 @@ The canonical policy is `02_AI/DevelopmentProtocol.md`. `BOOT.md`, global
 Codex guidance, and the Codex task template route high-impact work to it. New
 projects under `X:\Projects` inherit the default through DeveloperOS guidance;
 their local rules may strengthen or specialize it.
+
+## 2026-08-14 - Use Immutable Cycle Handoff Packets As Canonical Review Fixtures
+
+Status: Accepted
+
+Context:
+
+Manually assembled task, report, and baseline text files preserve content but
+do not prove which session messages formed one real GPT-Codex review cycle.
+They also make it easier to include unrelated history or omit an intermediate
+user decision without an explicit trace.
+
+Decision:
+
+Use an immutable `MAINLINE_CODEX_REVIEW` Cycle Handoff packet as the canonical
+orchestration fixture. Select exactly one MAINLINE task, every applied user
+decision between task and report, one CODEX report, and the immediately
+following MAINLINE manual review by message identifier. Seal exact content,
+message order, source sessions, and packet content with SHA-256. Send only the
+task, selected user decisions, and report to a reviewer; reserve the manual
+review for local comparison. Never merge FUTURE_DESIGN or unrelated session
+history automatically. Keep the three-file importer as a legacy/manual
+fallback with an explicit semantic-equivalence check.
+
+Reason:
+
+Message-level provenance makes cycle boundaries reproducible while preserving
+the reviewer-blinding contract. Immutable revisions prevent a captured source
+change from silently rewriting an already reviewed fixture.
+
+Impact:
+
+Future canonical candidates begin from a verified Cycle Handoff packet with
+`approved_for_external_api=false`. Changed source content creates a new packet
+revision and hash. Existing holdout, response, comparison, and consumed
+approval artifacts remain unchanged.
+
+The first end-to-end validation is accepted as `SESSION_HANDOFF_E2E_COMPLETE`.
+The no-network candidate with approval manifest `e11cb8e3d5bdb4fe6a98362a22ebea288be53f2d41878c2cf12c7badf62be950`
+is retained as an unapproved artifact and must not be executed. The next
+validation must start from a new independent `MAINLINE_CODEX_REVIEW` cycle
+captured directly as a Cycle Handoff packet, with a clear `USER_REQUIRED`
+manual baseline.
+
+## 2026-08-14 - Separate Synthetic Routing Evidence From Historical Holdouts
+
+Status: Accepted
+
+Context:
+
+No completed historical `MAINLINE_CODEX_REVIEW` cycle currently provides an
+unambiguous USER_REQUIRED baseline. Inventing one as historical evidence would
+weaken fixture provenance, while leaving USER_REQUIRED untested would leave a
+material routing branch uncovered.
+
+Decision:
+
+Maintain deterministic threshold, authority, architecture, scope, and
+destructive-migration cases in a dedicated synthetic fixture area. Label every
+result `SYNTHETIC_ROUTING_EVIDENCE` and require SAFE_CONTINUE, BLOCKED, and STOP
+negative controls in the same suite. Never present a synthetic PASS as
+historical validation. Mark a future genuine USER_REQUIRED candidate only when
+a direct, non-legacy, non-synthetic MAINLINE Cycle Handoff packet has a complete
+task, report, and manual review and the unresolved choice belongs to semantic,
+policy, threshold, authority, architecture, or scope ownership.
+
+Reason:
+
+Synthetic cases provide immediate deterministic contract coverage without
+fabricating provenance. Negative controls prevent the suite from simply routing
+every case to USER_REQUIRED.
+
+Impact:
+
+Candidate marking remains local and never triggers an API call or dispatch.
+The first genuine real-world candidate still requires explicit user approval
+before it can become a historical holdout.
+
+## 2026-08-14 - Establish A Non-Executing Multi-Prompt Control Plane
+
+Status: Accepted
+
+Context:
+
+Phase 1 proved local capture, review, routing, task-alignment, and evidence
+contracts, but the console had no project-level place to define logical GPT and
+Codex participants or the routes between them. Binding UI concepts directly to
+session identifiers would also mix orchestration intent with unreliable remote
+transport details.
+
+Decision:
+
+Add an authenticated per-project orchestration control plane with OFF,
+SHADOW_REVIEW, and SEMI_AUTO modes; lifecycle controls; logical prompt nodes;
+directed route validation; backend-only transport references; capability-aware
+transport adapters; and redacted user-action audit events. Persist it through
+the existing console runtime-file boundary rather than introducing a database.
+Keep AUTO_SAFE_CONTINUE locked and keep all background capture, reviewer calls,
+handoff writes, Codex execution, and generated-instruction dispatch disabled.
+
+Reason:
+
+Separating policy state, logical routing, and transport capability creates a
+usable operator surface without overstating remote connectivity or weakening
+the Phase 1 approval and immutable-artifact contracts.
+
+Impact:
+
+The console can configure and inspect multi-prompt graphs and operator state,
+but no selected mode performs work in Phase 2A. CHATGPT_SESSION is reported as
+degraded, Codex and Responses transports remain locked, USER_ASSISTED preserves
+exact local capture, and MOCK supports local routing tests only. Transport
+references are omitted from API responses and audit records.
+
+## bTest Uses One Mainline Authority Per Orchestration State
+
+Status: Accepted
+
+Context:
+
+The native bTest GPT remains useful during manual development, while managed
+orchestration needs an API-addressable Mainline. Treating both as simultaneous
+authorities would permit conflicting policy, routing, and user-decision state.
+Provider conversation history also cannot replace DeveloperOS canonical state.
+
+Decision:
+
+When orchestration is OFF, `NATIVE_MAINLINE` is canonical. When orchestration is
+enabled, `BTEST_MAINLINE_API` is canonical. Every transition records the old
+and new authority in the redacted control-plane audit. Output from the inactive
+Mainline cannot update canonical routing or resolve an active route. Keep
+purpose, frozen decisions, scope, authority, routing, user decisions, current
+Gate, and latest handoff in DeveloperOS; keep conversation IDs, response links,
+and model interaction history as private OpenAI transport state.
+
+API Mainline output must select one structured action from `HANDOFF_CODEX`,
+`USER_REQUIRED`, `CONTINUE_USER_DIALOGUE`, `BLOCKED`, or `STOP`. Validate its
+destination and required packet deterministically rather than interpreting
+natural language. READ, WRITE, and RESUME remain declared but locked; this
+decision authorizes no OpenAI call, conversation creation, dispatch, or loop.
+
+Reason:
+
+One explicit authority and a fail-closed routing contract preserve user control
+and make provider conversation continuity replaceable without changing project
+policy.
+
+Impact:
+
+The console can display the active Mainline authority and API readiness without
+exposing conversation or transport identifiers. A later live phase must obtain
+separate approval and reuse the existing Gate, task-alignment, evidence,
+handoff, workspace, approval, and duplicate guards.
+
+The first API Mainline interaction must begin from a separately sealed,
+no-network bootstrap candidate. Send only canonical state and one exact user
+input, require a strict structured routing action, and accept only an
+allowlisted state delta. Model output cannot directly change frozen decisions,
+authority, or routing. The candidate remains `approved_for_external_api=false`
+and exposes only model, cost cap, and a shortened canonical-state hash in the
+console until the user approves a later live phase.
+
+The purpose-free Phase 2C-2A candidate is retained as
+`DO_NOT_EXECUTE / SAFE_BOOTSTRAP_FALLBACK`. Do not spend a model call merely to
+ask for the user's missing purpose. The normal path requires orchestration ON
+with `BTEST_MAINLINE_API` as the active authority and an exact user-entered
+Initial Request. Start creates an immutable, no-network candidate and binds its
+user-input hash to the approval manifest. A changed input or canonical state
+invalidates the earlier candidate. Live initialization remains a separate
+explicit approval boundary.
+
+Codex return handoffs are exactly-once per captured result and destination, not
+globally per result. This permits the native user-assisted path and the managed
+API Mainline path to coexist without reusing either envelope. API Mainline
+returns replay canonical state plus the exact sealed Codex result in a
+`STATELESS_CANONICAL_CONTINUATION`; with `store=false`, they do not represent
+`previous_response_id` as a supported resume mechanism. The preview remains
+`approved_for_external_api=false` and cannot create an approval, attempt, live
+Responses call, or next cycle.
+
+## AUTO_SAFE_CONTINUE Begins As A Two-Cycle Approval-Locked Pilot
+
+Status: Accepted
+
+Decision:
+
+Implement the AUTO_SAFE_CONTINUE eligibility and stop policy as a local,
+deterministic pilot with a hard maximum of two cycles, zero retries or model
+fallbacks, and no automatic approval. Permit eligibility only for validated
+`SAFE_CONTINUE` plus `BOUNDED_TASK` results that pass task alignment, evidence
+sufficiency, workspace, transport, blocker, and user-authority checks. Always
+stop on conflicts, external workspace changes, approval/input requests, budget
+failure, or changes involving destructive work, databases, infrastructure,
+authority, thresholds, or scope.
+
+Keep the mode non-selectable and live execution disabled until the user
+separately approves a cumulative pilot cost cap. Use the newest sealed API
+Mainline return preflight as the cost basis, but do not mutate or reuse its
+approval. Expose immutable-ledger activity as a read-only timeline.
+
+Impact:
+
+The controller and UI can explain exactly why an automatic step would proceed
+or stop and can show the bounded cost envelope. No API call, Codex turn,
+dispatch, or background cycle is enabled by this decision.
+
+## 2026-08-19 - Finalize Orchestration Token Efficiency And Pause Development
+
+Status: Accepted
+
+Decision:
+
+Use `OrchestrationTokenEfficiencyV1` for managed Mainline continuations. Keep a
+stable prompt/schema prefix separate from a dynamic payload limited to compact
+canonical state, the current task, latest Codex report, requirement identities,
+and authorized source references. Do not automatically include full history,
+manual reviews, completed cycles, the activity timeline, or repository history.
+Generate Codex handoffs as bounded deltas and cap continuation output at 6,144
+tokens while preserving every existing Gate, authority, alignment, evidence,
+and routing field.
+
+Block an identical validated evaluation by exact canonical-state, task, report,
+protocol, and reviewer-schema identity. Deterministic prechecks may stop stale,
+consumed, credential-missing, workspace-mismatched, route-invalid, or
+protocol-invalid execution, but may not perform semantic judgment. Prompt cache
+availability is never a correctness dependency.
+
+Impact:
+
+No live call, Codex turn, dispatch, or project mutation is authorized by this
+decision. Orchestration development is paused after this bounded optimization;
+new pilots, transports, or orchestration features require an explicit user
+resume instruction.
+
+## 2026-08-15 - Assign Shared Native Docker Infrastructure To DeveloperOS
+
+Status: Accepted
+
+Context:
+
+bTest, OA, and Gaia migrated substantial runtime and database state from Docker
+Desktop to one native Ubuntu daemon, but local commands still depended on
+project wrappers, ambient Windows contexts, Desktop-backed CLI plugin links,
+and inconsistent Docker configuration. Any project changing that shared layer
+independently could break all three runtimes.
+
+Decision:
+
+DeveloperOS owns the canonical Windows-to-Ubuntu launcher, native CLI and
+Compose paths, `/run/docker-wsl.sock`, `/var/lib/docker-wsl`,
+`docker-wsl.service`, `/home/devops/.docker-native`, native `pass` credential
+storage, Desktop plugin-link cleanup, and coordinated daemon restart. The
+launcher rejects socket, context, and config overrides. Projects own only their
+repository commands and must integrate local calls with the shared launcher;
+remote Docker commands and credentials stay server-local.
+
+Reason:
+
+One explicit infrastructure authority prevents Desktop state, Windows context,
+plugin search order, and credential helper drift from changing which daemon or
+Compose implementation a project command uses.
+
+Impact:
+
+Fifteen unowned Docker Desktop plugin symlinks were removed after their targets
+and ownership were recorded. Native Docker and Compose packages, containers,
+volumes, networks, data root, and socket were retained. The canonical config
+uses `credsStore=pass` with private permissions. Docker Desktop deletion remains
+blocked until bTest, OA, and Gaia each migrate repository-local commands and
+repeat runtime and data verification through the shared launcher.
+
+## 2026-08-15 - Centralize Docker Desktop VHD Deletion-Readiness Evidence
+
+Status: Accepted
+
+Context:
+
+bTest, OA, and Gaia proved native runtime/tooling independence but could not
+vote on Docker Desktop deletion until persistent data inside the shared Desktop
+VHD was classified across project boundaries.
+
+Decision:
+
+DeveloperOS owns the read-only cross-project inventory, immutable forensic-copy
+hashes, ownership and persistence matrix, native-counterpart reconciliation,
+and project handoff evidence for the shared Docker Desktop VHD. Project Codex
+instances retain authority over their database semantics and final deletion
+votes. A full VHD copy is forensic preservation, not an application backup or
+deletion authorization.
+
+Reason:
+
+The VHD is one shared storage boundary. Independent project inventories could
+miss anonymous volumes, duplicate preservation work, or make conflicting
+claims about shared assets.
+
+Impact:
+
+All 82 Desktop assets have an exact machine-readable row. A read-only,
+hash-matched VHD copy and dedicated bTest PostgreSQL archive exist outside
+Docker Desktop. No VHD, volume, container, image, network, or cache was deleted.
+Docker Desktop deletion remains closed pending bTest and Gaia project acceptance
+and an explicit user-approved destructive phase.
+
+## 2026-08-15 - Pass The Docker Desktop Global Asset Gate
+
+Status: Accepted
+
+Context:
+
+Later project forensics closed the two database questions left open by the
+initial shared VHD inventory. bTest preserved and restored 4,709 meaningful
+Desktop-only provenance rows; Gaia preserved and restored its Desktop database
+and classified 32 stale rows as obsolete; OA confirmed no unique Desktop data.
+
+Decision:
+
+Record `PROJECT_APPROVAL_GATE=PASS (3/3)`, `GLOBAL_ASSET_GATE=PASS`, and
+`READY_FOR_GLOBAL_AUTHORIZATION=YES`. Of 82 Desktop assets, 76 are directly
+safe with Desktop removal and six are externally preserved then safe to delete.
+No asset remains VETO or UNKNOWN. External forensic artifacts and every native
+Ubuntu/Docker/project asset are outside the deletion set.
+
+Reason:
+
+The final gate now has project-owned semantic evidence, checksum-bound external
+preservation, and restore verification rather than name-based equivalence.
+
+Impact:
+
+This decision freezes readiness evidence and an exact cleanup plan. It does not
+issue `AUTHORIZE_GLOBAL_DOCKER_DESKTOP_REMOVAL`; no application, distribution,
+VHD, container, image, network, volume, cache, startup entry, or helper is
+deleted by this decision.
+
+## 2026-08-20 - Delegate Routine Operations To Managed Projects
+
+Status: Accepted
+
+Context:
+
+bTest and Elliott repeatedly routed project-owned database, credential,
+migration, and container operations through DeveloperOS even when no shared or
+cross-project resource changed. The extra approval hop obscured the real user
+decision boundaries and interrupted bounded development cycles.
+
+Decision:
+
+Adopt `ProjectOperationalAuthorityPolicy.md`. A managed project owns routine,
+non-destructive repository, database, runtime, credential, source-ingestion,
+and forward-materialization operations inside an already approved purpose.
+Users retain semantic, policy, destructive, privilege-expansion, and live-risk
+authority. DeveloperOS retains shared Docker daemon/socket/data-root/network,
+host/WSL, global secret, and cross-project authority.
+
+Reason:
+
+Authority should follow the resource and the meaning being changed. Routine
+project operation does not become a cross-project authority mutation merely
+because it uses DeveloperOS-managed shared infrastructure.
+
+Impact:
+
+Elliott may continue bTest 2.12.3 operations, including shared-kline runtime
+recovery, additive migrations, least-privilege writer maintenance, credential
+rotation, and forward-only source recovery, without an OS round trip. A new
+production search budget, cadence, activation start, guidance meaning, or
+canonical research rule remains a user decision. Shared-daemon or host changes
+still escalate to DeveloperOS.
+
+## 2026-08-20 - Keep DeveloperOS Environment In Its Working Directory
+
+Status: Accepted
+
+Context:
+
+DeveloperOS credentials were split across shared files under
+`X:/Settings/env`, while the repository already excludes a root `.env` from
+Git. The shared location made the active source harder to identify and tied
+DeveloperOS startup to a separate settings directory.
+
+Decision:
+
+Use `X:/Projects/DeveloperOS/.env` as the canonical local DeveloperOS
+environment file. Runtime, deployment, and orchestration defaults resolve that
+file directly. The file remains untracked and secret values must never enter
+logs, artifacts, documentation, or Git.
+
+Reason:
+
+Keeping the machine-local environment beside the working tree makes the active
+configuration explicit while retaining Git isolation and existing secret
+handling boundaries.
+
+Impact:
+
+The former `X:/Settings/env` files are no longer DeveloperOS runtime inputs.
+They remain preserved until the user separately decides their retention or
+deletion policy.

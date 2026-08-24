@@ -459,6 +459,7 @@ def build_index(
     cache_relative: str = DEFAULT_CACHE_PATH,
     *,
     force: bool = False,
+    persist_cache: bool = True,
 ) -> tuple[dict[str, Any], dict[str, int]]:
     cache_relative = require_safe_relative(cache_relative, "cache path")
     ensure_cache_ignored(project_root, cache_relative)
@@ -542,7 +543,8 @@ def build_index(
         },
         "files": files,
     }
-    write_json_atomic(cache_path, index)
+    if persist_cache:
+        write_json_atomic(cache_path, index)
     return index, {
         "refreshed": refreshed,
         "reused": reused,
