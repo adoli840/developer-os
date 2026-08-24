@@ -39,6 +39,32 @@ X:\Projects
 +-- <Project C>
 ```
 
+## Local Drive Allocation Policy
+
+DeveloperOS uses these default roles for local workstation storage:
+
+| Drive | Role | Default contents |
+|---|---|---|
+| `X:` | Development workspace and temporary data | Source repositories, working trees, development tools and materials, build output, caches, scratch data, disposable validation data, and other reproducible intermediate state |
+| `D:` | Durable development output | Backups, archives, exported datasets, released artifacts, retained evidence, model bundles, and other development outputs that must persist independently of a working tree |
+| `C:` | Restricted fallback | Operating-system or application-managed state, or data that cannot reasonably be placed on `X:` or `D:` because of a verified platform or tool constraint |
+
+Use `X:` for active development and reproducible temporary state. Use `D:`
+when the output is intended for durable retention. Do not place a new
+repository, temporary workload, cache, backup, archive, or durable project
+artifact on `C:` when `X:` or `D:` can satisfy the requirement.
+
+An exception for `C:` must be based on an actual operating-system,
+application, permission, compatibility, or bootstrapping constraint. Tool
+defaults alone should be redirected when the tool safely supports an explicit
+location.
+
+This policy does not authorize automatic relocation or deletion of existing
+data. Existing paths are migrated only through a separate bounded plan that
+identifies ownership, integrity checks, rollback, and every consumer that must
+be updated. Drive placement also does not replace project-specific authority,
+retention, backup, secret-handling, or data-synchronization contracts.
+
 ## Git Boundary
 
 `DeveloperOS` is the dedicated repository for governance, Blueprints, AI policy, and development operations.
