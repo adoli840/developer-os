@@ -1,0 +1,23 @@
+[Unit]
+Description=DeveloperOS Native WSL Docker Engine
+Documentation=https://docs.docker.com/engine/
+After=network-online.target containerd.service
+Wants=network-online.target
+Requires=containerd.service
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/dockerd --host=unix:///run/docker-wsl.sock --pidfile=/run/docker-wsl.pid --data-root=/var/lib/docker-wsl --containerd=/run/containerd/containerd.sock
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=on-failure
+RestartSec=2
+TimeoutStartSec=0
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target
