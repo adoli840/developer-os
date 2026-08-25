@@ -93,8 +93,9 @@ Review these candidates after inspecting active projects:
 
 ## Shared Native Docker Infrastructure
 
-DeveloperOS owns one local native Docker execution boundary for bTest, OA, and
-Gaia. Windows commands enter Ubuntu through an argument-array launcher that
+DeveloperOS owns one local native Docker execution boundary for OA, Gaia,
+bTest-Elliott, and bTest-Ever. Windows commands enter Ubuntu through an
+argument-array launcher that
 fixes `DOCKER_HOST=unix:///run/docker-wsl.sock`,
 `DOCKER_CONFIG=/home/devops/.docker-native`, `/usr/bin/docker`, and the native
 Compose binary under `/usr/libexec`. Docker Desktop, Windows contexts, and
@@ -107,8 +108,11 @@ data root, CLI, Compose plugin, or credential helper. Remote commands executed
 after SSH continue to use server-local Docker and server-local least-privilege
 registry credentials.
 
-Only DeveloperOS coordinates `docker-wsl.service` restart after checking all
-three project runtimes. Plugin cleanup is limited to unowned Docker Desktop
+Only DeveloperOS coordinates `docker-wsl.service` stop/restart and daemon
+configuration. Starting the pre-approved service, or idempotently ensuring it
+is running, is allowed to each project agent. Project runtimes are explicitly
+scoped to their own Compose namespaces and daemon startup must not auto-start
+any project. Plugin cleanup is limited to unowned Docker Desktop
 mount symlinks in the higher-priority local CLI plugin directory. Native
 packages, images, containers, networks, volumes, `/var/lib/docker-wsl`, and the
 socket are preserved. See `04_Tools/docker/NativeDockerInfrastructure.md`.

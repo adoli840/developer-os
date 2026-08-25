@@ -49,12 +49,16 @@ through DeveloperOS.
 
 ## Red: DeveloperOS Escalation
 
-DeveloperOS is required only for a Docker daemon, shared socket, shared data
-root, shared network topology, shared or cross-project volume, host WSL or OS,
-global secret infrastructure, cross-project credential or authority, or an
-outage/recovery action that can affect another project. A project-owned
-container, database, role, credential, or network attachment is not Red merely
-because it uses the shared native Docker daemon.
+DeveloperOS is required for Docker daemon stop/restart, daemon configuration,
+the shared socket, shared data root, shared network topology, shared or
+cross-project volume, host WSL or OS, global secret infrastructure,
+cross-project credential or authority, or an outage/recovery action that can
+affect another project. Starting the pre-approved `docker-wsl.service`, or
+running its idempotent `ensure-running` operation, is an exception: it is a
+shared infrastructure prerequisite that every managed project may invoke
+without a separate DeveloperOS approval. A project-owned container, database,
+role, credential, or network attachment is not Red merely because it uses the
+shared native Docker daemon.
 
 ## Explicit User Approval
 

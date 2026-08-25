@@ -113,6 +113,55 @@ Current integration status at sealing time:
 - Gaia overrides `DEVOS_DOCKER` with `scripts/docker-native.cmd`; it must
   converge on the shared launcher while retaining remote-only commands.
 
+## Independent Project Runtime Policy
+
+The shared daemon is a prerequisite, not a project orchestrator. OA, Gaia,
+bTest-Elliott, and bTest-Ever may independently start and stop their own
+development runtime without a per-operation DeveloperOS approval.
+
+- `docker-wsl.service start` and the idempotent `ensure-running` operation are
+  pre-approved shared infrastructure prerequisites.
+- A project may ensure the daemon is running and then start only its own
+  Compose project or explicitly selected services with `--no-build`.
+- A project must not stop or restart the daemon. Those operations can affect
+  every project and remain DeveloperOS/user-authorized operations.
+- Prune, global volume or network deletion, daemon configuration changes, and
+  cross-project volume operations remain approval-bound.
+- Local development Compose services must use `restart: "no"` (or omit a
+  restart policy). Production and remote deployment policies remain owned by
+  the project and are not changed by this local rule.
+
+The invariant is:
+
+```text
+daemon start != project runtime start
+```
+
+Daemon startup must not implicitly start OA, Gaia, bTest-Elliott, or
+bTest-Ever containers. The operating system and project agents must audit
+systemd/project auto-start units, Compose startup hooks, `restart:` policies,
+scheduled tasks, and supervisor configurations to remove such side effects.
+
+Each project owns an explicit Compose namespace and its lifecycle commands
+must be scoped to that namespace. `up`, `down`, `logs`, and service selection
+must not use global container, network, or volume operations and must not
+remove resources belonging to another namespace. Ever's development contract
+is specifically: ensure the daemon is running, then start only the Ever
+development runtime with `--no-build` on `127.0.0.1:8091`.
+
+The migration and policy checks must prove, without deleting or migrating
+existing data:
+
+1. daemon-only start leaves all project runtimes stopped;
+2. each project's start creates or starts only its own services;
+3. each project's stop removes or stops only its own services/resources; and
+4. the other project namespaces have zero state change.
+
+Project repositories remain responsible for applying the local `restart: "no"`
+and namespace changes in their own Compose files. DeveloperOS defines and
+verifies the shared boundary; it does not copy project Compose files into this
+repository.
+
 ## Operations
 
 ```powershell

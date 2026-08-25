@@ -1498,3 +1498,38 @@ Impact:
 The former `X:/Settings/env` files are no longer DeveloperOS runtime inputs.
 They remain preserved until the user separately decides their retention or
 deletion policy.
+
+## 2026-08-25 - Permit Independent Native Docker Runtime Starts
+
+Status: Accepted
+
+Context:
+
+OA, Gaia, bTest-Elliott, and bTest-Ever share one native WSL Docker daemon,
+but routine project development should not require a separate DeveloperOS
+approval merely because the daemon is currently stopped. Conversely, starting
+the daemon must not unexpectedly start another project's containers.
+
+Decision:
+
+Starting `docker-wsl.service` and idempotently ensuring it is running are
+pre-approved shared prerequisites. Each project may then start or stop only
+its own Compose namespace and services with `--no-build`. Daemon stop/restart,
+daemon configuration, prune, global volume/network deletion, and
+cross-project resource operations remain DeveloperOS/user-authorized.
+Local development Compose services must not use restart policies that make
+daemon startup start project runtimes. The four project namespaces are
+independent, and Ever development owns loopback port `8091`.
+
+Reason:
+
+This separates availability of the shared engine from application lifecycle,
+so one project's routine development does not become an approval hop or
+accidentally affect another project's containers, networks, or volumes.
+
+Impact:
+
+Project repositories must audit restart policies, systemd and supervisor
+units, scheduled tasks, Compose hooks, namespace names, and scoped start/stop
+commands. Existing data and volumes are preserved; this decision authorizes
+no migration, deletion, prune, or daemon restart by itself.
