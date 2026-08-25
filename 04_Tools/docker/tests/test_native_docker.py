@@ -9,6 +9,7 @@ from unittest.mock import patch
 MODULE_PATH = Path(__file__).parents[1] / "native_docker.py"
 SEAL_SCRIPT_PATH = Path(__file__).parents[1] / "Seal-NativeDockerInfrastructure.ps1"
 WINDOWS_DOCKER_SHIM_PATH = Path(__file__).parents[1] / "windows-cli" / "docker.cmd"
+PERSISTENCE_SCRIPT_PATH = Path(__file__).parents[1] / "Manage-NativeDockerPersistence.ps1"
 SPEC = importlib.util.spec_from_file_location("devos_native_docker", MODULE_PATH)
 assert SPEC and SPEC.loader
 native_docker = importlib.util.module_from_spec(SPEC)
@@ -65,6 +66,23 @@ class NativeDockerLauncherTests(unittest.TestCase):
         self.assertIn(r"..\..\bin\devos-native-docker.cmd", shim)
         self.assertIn("%*", shim)
         self.assertNotIn("docker.exe", shim.lower())
+
+    def test_persistence_manager_owns_one_bounded_keeper(self) -> None:
+        script = PERSISTENCE_SCRIPT_PATH.read_text(encoding="utf-8-sig")
+        self.assertIn('DeveloperOS-WSL-Docker-Keepalive', script)
+        self.assertIn('-MultipleInstances IgnoreNew', script)
+        self.assertIn('-RestartCount 3', script)
+        self.assertIn('-ExecutionTimeLimit ([TimeSpan]::Zero)', script)
+        self.assertIn('systemctl start $serviceName && exec /bin/sleep infinity', script)
+        self.assertIn('disable", "--now", "docker.service", "docker.socket"', script)
+
+    def test_persistence_manager_never_starts_project_runtime(self) -> None:
+        script = PERSISTENCE_SCRIPT_PATH.read_text(encoding="utf-8-sig").lower()
+        self.assertNotIn("docker compose", script)
+        self.assertNotIn("compose up", script)
+        self.assertNotIn("volume rm", script)
+        self.assertNotIn("network rm", script)
+        self.assertNotIn("prune", script)
 
 
 if __name__ == "__main__":

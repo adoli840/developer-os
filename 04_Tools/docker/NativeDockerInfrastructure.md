@@ -169,7 +169,26 @@ make native-docker-audit
 make native-docker-seal
 make native-docker-test
 make native-docker-check
+make native-docker-persistence-install
+make native-docker-persistence-status
+make native-docker-persistence-ensure
+make native-docker-persistence-stop
+make native-docker-persistence-start
 ```
+
+`DeveloperOS-WSL-Docker-Keepalive` is the single host-side persistence
+mechanism for the Home workstation. It is installed at Windows logon with
+`IgnoreNew`, an unlimited execution time, and a bounded three-attempt failure
+restart. Its hidden action runs the DeveloperOS persistence manager, ensures
+only `docker-wsl.service`, and then holds one foreground WSL session. It never
+calls project Compose or starts a project container. The manager owns the
+normal status, ensure-running, stop, and start paths and writes its local
+runtime log under `.console`.
+
+Ubuntu's distro-default `docker.service` and `docker.socket` remain disabled
+on this workstation. They use the legacy `/var/lib/docker` boundary and must
+not run alongside the canonical `/var/lib/docker-wsl` daemon. Disabling them
+does not remove their images, containers, volumes, networks, or data.
 
 Only DeveloperOS coordinates `docker-wsl.service` restart. Before a restart it
 must record bTest, OA, and Gaia container health and prove that no migration,

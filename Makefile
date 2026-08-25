@@ -5,7 +5,7 @@ DEVOS_OPENAI_ENV ?= X:/Projects/DeveloperOS/.env
 DEVOS_DEPLOY_TARGET := console-deploy
 WORKSTATION_REPORT_INTERVAL_MINUTES ?= 5
 
-.PHONY: self-enable self-check make-check context-test docker-policy-check native-docker-audit native-docker-seal native-docker-test native-docker-check console-run console-test orchestration-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
+.PHONY: self-enable self-check make-check context-test docker-policy-check native-docker-audit native-docker-seal native-docker-test native-docker-check native-docker-persistence-install native-docker-persistence-status native-docker-persistence-ensure native-docker-persistence-start native-docker-persistence-stop console-run console-test orchestration-test console-deploy console-status console-logs console-restart console-stop console-backup console-backup-verify console-backup-status console-usage-status terminal-status terminal-logs terminal-tunnel terminal-developer-os terminal-oa terminal-gaia terminal-close workstation-home-report workstation-office-report workstation-home-auto-enable workstation-home-auto-disable workstation-home-auto-status workstation-office-auto-enable workstation-office-auto-disable workstation-office-auto-status
 
 self-enable:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/self/Enable-DeveloperOSSelfApplication.ps1
@@ -34,6 +34,21 @@ native-docker-test:
 
 native-docker-check:
 	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Test-NativeDockerInfrastructure.ps1
+
+native-docker-persistence-install:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Manage-NativeDockerPersistence.ps1 -Action Install
+
+native-docker-persistence-status:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Manage-NativeDockerPersistence.ps1 -Action Status
+
+native-docker-persistence-ensure:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Manage-NativeDockerPersistence.ps1 -Action EnsureRunning
+
+native-docker-persistence-start:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Manage-NativeDockerPersistence.ps1 -Action Start
+
+native-docker-persistence-stop:
+	powershell -NoProfile -ExecutionPolicy Bypass -File 04_Tools/docker/Manage-NativeDockerPersistence.ps1 -Action Stop
 
 console-run:
 	$(PYTHON) -m console.devos_console --dev --bind 127.0.0.1 --port 8080
