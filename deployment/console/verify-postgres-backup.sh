@@ -98,7 +98,7 @@ verify_one() (
   fi
 
   cleanup() {
-    docker rm -f "$verification_container" >/dev/null 2>&1 || true
+    docker rm -fv "$verification_container" >/dev/null 2>&1 || true
   }
   trap cleanup EXIT
   docker run -d --rm --name "$verification_container" --network none \
