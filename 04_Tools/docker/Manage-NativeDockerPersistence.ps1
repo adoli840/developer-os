@@ -211,7 +211,7 @@ function Install-Persistence {
 
 function Invoke-KeepAlive {
     Write-PersistenceLog "keeper started pid=$PID"
-    & $wslExecutable -d $distribution --exec /bin/bash -lc "systemctl start $serviceName && exec /bin/sleep infinity"
+    & $wslExecutable -d $distribution -u root --exec /bin/bash -lc "systemctl start $serviceName && exec /bin/sleep infinity"
     $exitCode = $LASTEXITCODE
     Write-PersistenceLog "keeper exited unexpectedly code=$exitCode pid=$PID"
     exit 1

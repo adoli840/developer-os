@@ -74,6 +74,7 @@ class NativeDockerLauncherTests(unittest.TestCase):
         self.assertIn('-RestartCount 3', script)
         self.assertIn('-ExecutionTimeLimit ([TimeSpan]::Zero)', script)
         self.assertIn('systemctl start $serviceName && exec /bin/sleep infinity', script)
+        self.assertIn('-d $distribution -u root --exec /bin/bash', script)
         self.assertIn('disable", "--now", "docker.service", "docker.socket"', script)
 
     def test_persistence_manager_never_starts_project_runtime(self) -> None:
