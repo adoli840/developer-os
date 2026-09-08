@@ -100,6 +100,9 @@ def _json_lines(value: str) -> list[dict[str, Any]]:
 
 
 def _directory_size(path: Path) -> int | None:
+    snapshot_size = _snapshot_directory_size(path)
+    if snapshot_size is not None:
+        return snapshot_size
     result = run_command(
         (
             "sudo",
@@ -145,6 +148,24 @@ DISK_COMPONENT_DETAILS = {
         "project",
     ),
 }
+
+PROJECT_DISK_SNAPSHOT = Path("/var/lib/developer-os-console/project-disk-sizes.tsv")
+
+
+def _snapshot_directory_size(path: Path) -> int | None:
+    try:
+        lines = PROJECT_DISK_SNAPSHOT.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    target = str(path)
+    for line in lines:
+        raw_path, separator, raw_size = line.partition("\t")
+        if separator and raw_path == target:
+            try:
+                return int(raw_size)
+            except ValueError:
+                return None
+    return None
 
 
 def _image_keys(image: object, image_id: object = None) -> set[str]:

@@ -762,6 +762,19 @@ class ProjectStatusTests(unittest.TestCase):
 
 
 class ResourceBreakdownTests(unittest.TestCase):
+    def test_project_size_uses_privileged_snapshot_without_subprocess(self) -> None:
+        from console.devos_console import resources
+
+        with tempfile.TemporaryDirectory() as temporary:
+            snapshot = Path(temporary) / "sizes.tsv"
+            snapshot.write_text(f"{Path('/opt/ever')}\t260000000\n", encoding="utf-8")
+            with (
+                patch.object(resources, "PROJECT_DISK_SNAPSHOT", snapshot),
+                patch("console.devos_console.resources.run_command") as command,
+            ):
+                self.assertEqual(resources._directory_size(Path("/opt/ever")), 260000000)
+        command.assert_not_called()
+
     def test_project_size_prefers_allowlisted_read_only_helper(self) -> None:
         from console.devos_console.resources import _directory_size
 

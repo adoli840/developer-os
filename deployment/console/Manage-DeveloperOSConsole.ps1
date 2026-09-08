@@ -73,7 +73,7 @@ $scp = Resolve-OpenSshTool -Name "scp"
 
 if ($Action -ne "Deploy") {
   $command = switch ($Action) {
-    "Status" { "sudo systemctl --no-pager --full status developer-os-console developer-os-terminal; systemctl list-timers developer-os-backup.timer developer-os-backup-verify.timer developer-os-openai-usage.timer --no-pager; curl --fail --silent http://127.0.0.1:8080/healthz; echo; curl --fail --silent http://127.0.0.1:8022/healthz" }
+    "Status" { "sudo systemctl --no-pager --full status developer-os-console developer-os-terminal; systemctl list-timers developer-os-backup.timer developer-os-backup-verify.timer developer-os-openai-usage.timer developer-os-project-disk-snapshot.timer --no-pager; curl --fail --silent http://127.0.0.1:8080/healthz; echo; curl --fail --silent http://127.0.0.1:8022/healthz" }
     "Logs" { "sudo journalctl -u developer-os-console --no-pager -n 120" }
     "Restart" { "sudo systemctl restart developer-os-console; sudo systemctl is-active developer-os-console" }
     "Stop" { "sudo systemctl stop developer-os-console; sudo systemctl is-active developer-os-console || true" }
@@ -320,7 +320,8 @@ sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.tim
 sed 's/\r`$//' "`$release/deployment/console/backup-postgres.sh" | sudo tee /usr/local/sbin/developer-os-backup-postgres >/dev/null
 sed 's/\r`$//' "`$release/deployment/console/verify-postgres-backup.sh" | sudo tee /usr/local/sbin/developer-os-verify-postgres-backup >/dev/null
 sed 's/\r`$//' "`$release/deployment/console/project-disk-usage.sh" | sudo tee /usr/local/sbin/developer-os-project-disk-usage >/dev/null
-sudo chmod 0755 /usr/local/sbin/developer-os-backup-postgres /usr/local/sbin/developer-os-verify-postgres-backup /usr/local/sbin/developer-os-project-disk-usage
+sed 's/\r`$//' "`$release/deployment/console/project-disk-snapshot.sh" | sudo tee /usr/local/sbin/developer-os-project-disk-snapshot >/dev/null
+sudo chmod 0755 /usr/local/sbin/developer-os-backup-postgres /usr/local/sbin/developer-os-verify-postgres-backup /usr/local/sbin/developer-os-project-disk-usage /usr/local/sbin/developer-os-project-disk-snapshot
 printf '%s\n' 'opc ALL=(root) NOPASSWD: /usr/local/sbin/developer-os-project-disk-usage *' | sudo tee /etc/sudoers.d/developer-os-console-disk-usage >/dev/null
 sudo chmod 0440 /etc/sudoers.d/developer-os-console-disk-usage
 sudo visudo -cf /etc/sudoers.d/developer-os-console-disk-usage >/dev/null
@@ -328,9 +329,12 @@ sudo install -m 0644 "`$release/deployment/console/developer-os-backup.service" 
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup.timer" /etc/systemd/system/developer-os-backup.timer
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup-verify.service" /etc/systemd/system/developer-os-backup-verify.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup-verify.timer" /etc/systemd/system/developer-os-backup-verify.timer
+sudo install -m 0644 "`$release/deployment/console/developer-os-project-disk-snapshot.service" /etc/systemd/system/developer-os-project-disk-snapshot.service
+sudo install -m 0644 "`$release/deployment/console/developer-os-project-disk-snapshot.timer" /etc/systemd/system/developer-os-project-disk-snapshot.timer
 sudo systemctl daemon-reload
 sudo systemctl enable developer-os-console developer-os-terminal
-sudo systemctl enable --now developer-os-backup.timer developer-os-backup-verify.timer developer-os-openai-usage.timer
+sudo systemctl enable --now developer-os-backup.timer developer-os-backup-verify.timer developer-os-openai-usage.timer developer-os-project-disk-snapshot.timer
+sudo systemctl start developer-os-project-disk-snapshot.service
 sudo systemctl reset-failed developer-os-console || true
 sudo systemctl reset-failed developer-os-terminal || true
 sudo systemctl restart developer-os-console developer-os-terminal

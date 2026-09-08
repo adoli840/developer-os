@@ -356,6 +356,7 @@ if (
 
 $rootMakefile = Read-Text "Makefile"
 $diskUsageHelper = Read-Text "deployment\console\project-disk-usage.sh"
+$diskSnapshotHelper = Read-Text "deployment\console\project-disk-snapshot.sh"
 if (
     $rootMakefile -and
     $rootMakefile -match "(?m)^console-deploy:" -and
@@ -363,10 +364,14 @@ if (
     $diskUsageHelper -and
     $diskUsageHelper.Contains("readlink -f") -and
     $diskUsageHelper.Contains("/usr/bin/du -sb") -and
+    $diskSnapshotHelper -and
+    $diskSnapshotHelper.Contains("project-disk-sizes.tsv") -and
+    $diskSnapshotHelper.Contains("/opt/ever") -and
     $memoDeployment.Contains("developer-os-project-disk-usage") -and
+    $memoDeployment.Contains("developer-os-project-disk-snapshot.timer") -and
     $memoDeployment.Contains("visudo -cf")
 ) {
-    Add-CheckResult PASS "Specialized deployment" "console deployment, status, and allowlisted read-only project sizing are available"
+    Add-CheckResult PASS "Specialized deployment" "console deployment and allowlisted periodic project sizing are available"
 } else {
     Add-CheckResult FAIL "Specialized deployment" "DeveloperOS console deployment or read-only project sizing is incomplete"
 }

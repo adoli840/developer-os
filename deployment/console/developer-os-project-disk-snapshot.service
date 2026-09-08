@@ -1,0 +1,7 @@
+[Unit]
+Description=DeveloperOS project disk size snapshot
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/developer-os-project-disk-snapshot
