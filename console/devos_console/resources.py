@@ -615,7 +615,7 @@ def collect_resource_breakdown(
         elif size is not None:
             unassigned_volume_size += size
 
-    registered_paths = {spec.slug: spec.path.resolve() for spec in specs if spec.path.is_dir()}
+    registered_paths = {spec.slug: spec.path.resolve() for spec in specs}
     for slug, path in registered_paths.items():
         size = _directory_size(path)
         if size is not None:
