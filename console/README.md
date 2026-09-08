@@ -36,15 +36,19 @@ The console reads:
 - Daily database backup and weekly isolated restore-verification status.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
 - A Recovery view limited to backup, restore-verification, and schedule evidence.
-- A server-database memo workspace for DeveloperOS, bTest, OA, and Gaia ideas.
+- A server-database memo workspace for DeveloperOS, bTest, OA, Gaia, and Ever ideas.
 - Standard roadmap fields for configured projects, without raw files or source
   paths.
 
 The landing `Resources` view uses the full workspace with CPU, memory, and disk
 columns ordered from left to right. Each column lists project and host usage
-vertically from the largest category to the smallest. Registered project usage
-is separated from host usage. The
-`Server & other` row further identifies required services, operating-system
+vertically from the largest category to the smallest. Registered project disk
+usage includes its configured workspace, writable container layers, exclusively
+attached or Compose-labelled volumes, exclusively mounted host data, and unique
+image bytes used only by that project's managed containers. Assets used by more
+than one project remain explicitly shared; Docker assets without ownership
+evidence remain unassigned instead of being guessed into a project. The
+`Shared, system & unassigned` disk row further identifies operating-system
 baseline, shared Docker data, protected backups, reviewable usage, and the
 remaining measurement or attribution boundary. Category values are bounded by
 the observed host total so a detailed estimate never exceeds actual usage.
@@ -155,7 +159,7 @@ integrity check against the copy, and retains 14 days under
 `/var/backups/developer-os/developer-os-memos`. Its result appears in Recovery
 as `DeveloperOS memos`.
 
-The Memo view reads and writes these four bounded records directly without a
+The Memo view reads and writes these five bounded records directly without a
 separate token. Anyone who can reach the console address can view and edit
 them; the rest of the private console APIs keep their existing authentication.
 
@@ -181,7 +185,7 @@ make console-backup-status
 ## Workstation Reporting
 
 The Home and Office workstation reporters refresh the configured upstreams for
-DeveloperOS, OA, Gaia, and bTest, then send separate small JSON summaries
+DeveloperOS, OA, Gaia, bTest, and Ever, then send separate small JSON summaries
 through SSH to the Oracle server. Fetch updates Git metadata without changing
 the checked-out branch, index, or working tree. Send a one-time report with:
 
@@ -485,6 +489,7 @@ Open a project:
 make terminal-developer-os
 make terminal-oa
 make terminal-gaia
+make terminal-ever
 ```
 
 The tunnel maps Home `127.0.0.1:8092` to server `127.0.0.1:8022`. The public

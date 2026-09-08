@@ -77,6 +77,8 @@ def _child_cpu_seconds() -> float | None:
 
 
 def _labels(value: object) -> dict[str, str]:
+    if isinstance(value, dict):
+        return {str(name): str(label_value) for name, label_value in value.items()}
     labels: dict[str, str] = {}
     for item in str(value or "").split(","):
         name, separator, label_value = item.partition("=")
@@ -109,6 +111,142 @@ def _directory_size(path: Path) -> int | None:
 
 def _add_component(components: dict[str, float], name: str, value: float) -> None:
     components[name] = components.get(name, 0) + value
+
+
+DISK_COMPONENT_DETAILS = {
+    "Project files": (
+        "Registered project workspace files measured from the configured project path.",
+        "project",
+    ),
+    "Bind-mounted project data": (
+        "Host data mounted only by this project's managed containers and outside every registered project workspace.",
+        "project",
+    ),
+    "Docker volumes": (
+        "Docker volumes attributed by Compose label or exclusive attachment to this project's containers.",
+        "project",
+    ),
+    "Container writes": (
+        "Writable container layers carrying this project's Compose label.",
+        "project",
+    ),
+    "Exclusive Docker image data": (
+        "Unique image bytes used only by this project's managed containers.",
+        "project",
+    ),
+}
+
+
+def _image_keys(image: object, image_id: object = None) -> set[str]:
+    keys: set[str] = set()
+    normalized_image = str(image or "").strip()
+    normalized_id = str(image_id or "").strip().removeprefix("sha256:")
+    if normalized_image:
+        keys.add(normalized_image)
+    if normalized_id:
+        keys.add(normalized_id)
+    return keys
+
+
+def _disk_image_keys(item: dict[str, Any]) -> set[str]:
+    repository = str(item.get("Repository") or "").strip()
+    tag = str(item.get("Tag") or "").strip()
+    image_name = f"{repository}:{tag}" if repository and tag and tag != "<none>" else repository
+    return _image_keys(image_name, item.get("Image ID") or item.get("ID"))
+
+
+def _disk_image_size(item: dict[str, Any]) -> int:
+    unique_size = _parse_size(item.get("UniqueSize"))
+    if unique_size is not None:
+        return unique_size
+    return _parse_size(item.get("Size")) or 0
+
+
+def _matching_image_owners(
+    item: dict[str, Any],
+    owner_keys: dict[str, set[str]],
+) -> set[str]:
+    owners: set[str] = set()
+    for item_key in _disk_image_keys(item):
+        for owner_key, slugs in owner_keys.items():
+            exact = item_key == owner_key
+            digest_prefix = (
+                len(item_key) >= 12
+                and len(owner_key) >= 12
+                and re.fullmatch(r"[0-9a-f]+", item_key, re.IGNORECASE)
+                and re.fullmatch(r"[0-9a-f]+", owner_key, re.IGNORECASE)
+                and (item_key.startswith(owner_key) or owner_key.startswith(item_key))
+            )
+            if exact or digest_prefix:
+                owners.update(slugs)
+    return owners
+
+
+def _managed_mount_owners(
+    projects: list[dict[str, Any]],
+    compose_to_slug: dict[str, str],
+) -> tuple[dict[str, set[str]], dict[str, set[str]]]:
+    refs: list[str] = []
+    fallback_owners: dict[str, str] = {}
+    for project in projects:
+        slug = str(project.get("slug") or "")
+        for container in project.get("containers") or []:
+            container_id = str(container.get("id") or "").strip()
+            name = str(container.get("name") or "").strip().removeprefix("/")
+            ref = container_id or name
+            if not ref or not slug:
+                continue
+            refs.append(ref)
+            if container_id:
+                fallback_owners[container_id] = slug
+            if name:
+                fallback_owners[name] = slug
+    if not refs:
+        return {}, {}
+    template = (
+        '{"Id":{{json .Id}},"Name":{{json .Name}},'
+        '"Labels":{{json .Config.Labels}},"Mounts":{{json .Mounts}}}'
+    )
+    result = run_docker(("inspect", "--format", template, *sorted(set(refs))), timeout=20)
+    if not result.ok:
+        return {}, {}
+    volume_owners: dict[str, set[str]] = {}
+    bind_owners: dict[str, set[str]] = {}
+    for item in _json_lines(result.stdout):
+        labels = _labels(item.get("Labels"))
+        slug = compose_to_slug.get(labels.get("com.docker.compose.project", ""))
+        if not slug:
+            container_id = str(item.get("Id") or "").removeprefix("sha256:")
+            name = str(item.get("Name") or "").removeprefix("/")
+            slug = fallback_owners.get(name)
+            if not slug:
+                slug = next(
+                    (
+                        owner
+                        for identity, owner in fallback_owners.items()
+                        if len(identity) >= 8 and container_id.startswith(identity)
+                    ),
+                    None,
+                )
+        if not slug:
+            continue
+        for mount in item.get("Mounts") or []:
+            if not isinstance(mount, dict):
+                continue
+            mount_type = str(mount.get("Type") or "").lower()
+            if mount_type == "volume" and mount.get("Name"):
+                volume_owners.setdefault(str(mount["Name"]), set()).add(slug)
+            elif mount_type == "bind" and mount.get("Source"):
+                bind_owners.setdefault(str(Path(str(mount["Source"]))), set()).add(slug)
+    return volume_owners, bind_owners
+
+
+def _path_contains(parent: Path, child: Path) -> bool:
+    try:
+        child.relative_to(parent)
+        return True
+    except ValueError:
+        return False
 
 
 PROCESS_CATEGORIES = {
@@ -317,18 +455,21 @@ def _metric_rows(
             key=lambda item: item[1],
             reverse=True,
         )
+        rendered_components = []
+        for name, component_value in components if metric == "disk" else components[:4]:
+            component = {
+                "name": name,
+                "value": round(component_value, 1) if metric == "cpu" else int(component_value),
+            }
+            if metric == "disk" and name in DISK_COMPONENT_DETAILS:
+                component["note"], component["disposition"] = DISK_COMPONENT_DETAILS[name]
+            rendered_components.append(component)
         rows.append(
             {
                 "slug": project["slug"],
                 "name": project["name"],
                 "value": round(value, 1) if metric == "cpu" else int(value),
-                "components": [
-                    {
-                        "name": name,
-                        "value": round(component_value, 1) if metric == "cpu" else int(component_value),
-                    }
-                    for name, component_value in components[:4]
-                ],
+                "components": rendered_components,
             }
         )
     rows.sort(key=lambda item: item["value"], reverse=True)
@@ -338,7 +479,7 @@ def _metric_rows(
             rows.append(
                 {
                     "slug": "other",
-                    "name": "Server & other",
+                    "name": "Shared, system & unassigned" if metric == "disk" else "Server & other",
                     "value": round(other, 1) if metric == "cpu" else int(other),
                     "components": _bounded_residual_components(metric, other, residual_candidates),
                 }
@@ -367,15 +508,20 @@ def collect_resource_breakdown(
     }
     compose_to_slug = {spec.compose_project: spec.slug for spec in specs}
     container_map: dict[str, tuple[str, str]] = {}
+    image_owner_keys: dict[str, set[str]] = {}
     for project in projects:
+        project_slug = str(project.get("slug") or "")
         for container in project.get("containers") or []:
             name = str(container.get("name") or "")
             container_id = str(container.get("id") or "")
             service = str(container.get("service") or name or "Container")
-            if name and project.get("slug") in usage:
-                container_map[name] = (str(project["slug"]), service)
-            if container_id and project.get("slug") in usage:
-                container_map[container_id] = (str(project["slug"]), service)
+            if name and project_slug in usage:
+                container_map[name] = (project_slug, service)
+            if container_id and project_slug in usage:
+                container_map[container_id] = (project_slug, service)
+            if project_slug in usage:
+                for key in _image_keys(container.get("image"), container.get("image_id")):
+                    image_owner_keys.setdefault(key, set()).add(project_slug)
 
     cpu_count = max(1, int(system.get("cpu_count") or 1))
     container_ids = {value for value in container_map if len(value) >= 8}
@@ -432,6 +578,7 @@ def collect_resource_breakdown(
     )
     disk_items = _json_lines(disk_report.stdout) if disk_report.ok else []
     disk_payload = disk_items[0] if disk_items else {}
+    volume_mount_owners, bind_mount_owners = _managed_mount_owners(projects, compose_to_slug)
     for item in disk_payload.get("Containers") or []:
         labels = _labels(item.get("Labels"))
         slug = compose_to_slug.get(labels.get("com.docker.compose.project", ""))
@@ -439,18 +586,72 @@ def collect_resource_breakdown(
         if slug and size is not None:
             usage[slug]["disk"] += size
             _add_component(usage[slug]["disk_components"], "Container writes", size)
+    shared_volume_size = 0
+    unassigned_volume_size = 0
     for item in disk_payload.get("Volumes") or []:
         labels = _labels(item.get("Labels"))
-        slug = compose_to_slug.get(labels.get("com.docker.compose.project", ""))
+        label_slug = compose_to_slug.get(labels.get("com.docker.compose.project", ""))
+        volume_name = str(item.get("Name") or item.get("Volume Name") or "")
+        owners = set(volume_mount_owners.get(volume_name, set()))
+        if label_slug:
+            owners.add(label_slug)
         size = _parse_size(item.get("Size"))
-        if slug and size is not None:
+        if len(owners) == 1 and size is not None:
+            slug = next(iter(owners))
             usage[slug]["disk"] += size
             _add_component(usage[slug]["disk_components"], "Docker volumes", size)
-    for spec in specs:
-        size = _directory_size(spec.path) if spec.path.is_dir() else None
+        elif len(owners) > 1 and size is not None:
+            shared_volume_size += size
+        elif size is not None:
+            unassigned_volume_size += size
+
+    registered_paths = {spec.slug: spec.path.resolve() for spec in specs if spec.path.is_dir()}
+    for slug, path in registered_paths.items():
+        size = _directory_size(path)
         if size is not None:
-            usage[spec.slug]["disk"] += size
-            _add_component(usage[spec.slug]["disk_components"], "Project files", size)
+            usage[slug]["disk"] += size
+            _add_component(usage[slug]["disk_components"], "Project files", size)
+
+    shared_bind_size = 0
+    kept_bind_paths: dict[str, list[Path]] = {slug: [] for slug in usage}
+    resolved_bind_owners: dict[Path, set[str]] = {}
+    for raw_path, owners in bind_mount_owners.items():
+        resolved_bind_owners.setdefault(Path(raw_path).resolve(), set()).update(owners)
+    for path, owners in sorted(resolved_bind_owners.items(), key=lambda item: len(item[0].parts)):
+        if not path.is_dir():
+            continue
+        if any(
+            _path_contains(project_path, path) or _path_contains(path, project_path)
+            for project_path in registered_paths.values()
+        ):
+            continue
+        if len(owners) == 1:
+            slug = next(iter(owners))
+            if slug not in usage or any(_path_contains(parent, path) for parent in kept_bind_paths[slug]):
+                continue
+            size = _directory_size(path)
+            if size is not None:
+                usage[slug]["disk"] += size
+                _add_component(usage[slug]["disk_components"], "Bind-mounted project data", size)
+                kept_bind_paths[slug].append(path)
+        elif len(owners) > 1:
+            size = _directory_size(path)
+            if size is not None:
+                shared_bind_size += size
+
+    shared_image_size = 0
+    unassigned_image_size = 0
+    for item in disk_payload.get("Images") or []:
+        size = _disk_image_size(item)
+        owners = _matching_image_owners(item, image_owner_keys)
+        if len(owners) == 1:
+            slug = next(iter(owners))
+            usage[slug]["disk"] += size
+            _add_component(usage[slug]["disk_components"], "Exclusive Docker image data", size)
+        elif len(owners) > 1:
+            shared_image_size += size
+        else:
+            unassigned_image_size += size
 
     cpu_candidates: list[dict[str, Any]] = []
     if cpu_start is not None and cpu_end is not None:
@@ -468,19 +669,51 @@ def collect_resource_breakdown(
         )
     memory_candidates.extend(_process_memory_components(process_end))
     disk_candidates: list[dict[str, Any]] = []
-    images_size = sum(
-        _parse_size(item.get("UniqueSize")) or _parse_size(item.get("Size")) or 0
-        for item in disk_payload.get("Images") or []
-    )
     build_cache_size = sum(
         _parse_size(item.get("Size")) or 0 for item in disk_payload.get("BuildCache") or []
     )
-    if images_size:
+    if shared_image_size:
         disk_candidates.append(
             {
                 "name": "Shared Docker images",
-                "value": images_size,
-                "note": "Image layers shared by projects. Remove only images confirmed unused by every deployment.",
+                "value": shared_image_size,
+                "note": "Unique image bytes used by managed containers from more than one registered project.",
+                "disposition": "shared",
+            }
+        )
+    if unassigned_image_size:
+        disk_candidates.append(
+            {
+                "name": "Unassigned Docker images",
+                "value": unassigned_image_size,
+                "note": "Image data with no managed-container ownership evidence. It is not charged to a project.",
+                "disposition": "unattributed",
+            }
+        )
+    if shared_volume_size:
+        disk_candidates.append(
+            {
+                "name": "Shared Docker volumes",
+                "value": shared_volume_size,
+                "note": "Volume data attached to managed containers from multiple registered projects.",
+                "disposition": "shared",
+            }
+        )
+    if unassigned_volume_size:
+        disk_candidates.append(
+            {
+                "name": "Unassigned Docker volumes",
+                "value": unassigned_volume_size,
+                "note": "Volume data without a recognized Compose label or managed-container attachment.",
+                "disposition": "unattributed",
+            }
+        )
+    if shared_bind_size:
+        disk_candidates.append(
+            {
+                "name": "Shared bind-mounted data",
+                "value": shared_bind_size,
+                "note": "Host data mounted by containers from multiple registered projects.",
                 "disposition": "shared",
             }
         )

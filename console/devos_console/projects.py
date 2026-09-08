@@ -16,6 +16,8 @@ COMPOSE_FILES = (
     "compose.yml",
     "docker-compose.yaml",
     "compose.yaml",
+    "docker-compose.office-dev.yml",
+    "docker-compose.ever-demo.yml",
 )
 
 HEX_REVISION = re.compile(r"^[0-9a-f]{7,64}$", re.IGNORECASE)

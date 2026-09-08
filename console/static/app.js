@@ -4,6 +4,7 @@ const MEMO_PROJECTS = [
   {slug: "btest", name: "bTest"},
   {slug: "oa", name: "OA"},
   {slug: "gaia", name: "Gaia"},
+  {slug: "ever", name: "Ever"},
 ];
 const PRIMARY_TABS = new Set(["projects", "orchestration", "resources", "roadmap", "recovery", "oracle", "memo"]);
 
@@ -826,6 +827,7 @@ async function saveMemo(project) {
 function resourceDisposition(value) {
   return ({
     baseline: "Required baseline",
+    project: "Project-owned",
     service: "Required service",
     shared: "Shared",
     protected: "Protected",
@@ -1003,7 +1005,7 @@ function serviceStatus(status) {
 }
 
 function terminalLink(project) {
-  const terminalProjects = new Set(["developer-os", "oa", "gaia", "btest"]);
+  const terminalProjects = new Set(["developer-os", "oa", "gaia", "btest", "ever"]);
   if (!project.available || !terminalProjects.has(project.slug)) {
     return `<span class="terminal-unavailable">Unavailable</span>`;
   }

@@ -54,7 +54,7 @@ class MemoStoreTests(unittest.TestCase):
             items = {item["project"]: item for item in second.list_all()["items"]}
 
         self.assertEqual(items["oa"]["content"], "세금 신고 아이디어")
-        self.assertEqual(list(items), ["developer-os", "btest", "oa", "gaia"])
+        self.assertEqual(list(items), ["developer-os", "btest", "oa", "gaia", "ever"])
 
     def test_unknown_project_and_oversized_content_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -119,6 +119,8 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn('label: "Root disk"', javascript)
         self.assertIn("const sortedRows = sortResourceItems(rows);", javascript)
         self.assertIn("sortResourceItems(row.components || [])", javascript)
+        self.assertIn('project: "Project-owned"', javascript)
+        self.assertIn(".resource-disposition.project", stylesheet)
         self.assertIn("grid-template-columns: repeat(3, minmax(0, 1fr));", stylesheet)
         self.assertIn(".resource-breakdown {\n  display: grid;\n  grid-template-columns: 1fr;", stylesheet)
 
@@ -181,8 +183,8 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertNotIn("SERVER CAPACITY", html)
         self.assertNotIn("<h1>Resources</h1>", html)
         self.assertNotIn('id="resource-time"', html)
-        self.assertIn('href="/styles.css?v=12"', html)
-        self.assertIn('src="/app.js?v=18"', html)
+        self.assertIn('href="/styles.css?v=13"', html)
+        self.assertIn('src="/app.js?v=20"', html)
         self.assertIn("width: 1%;\n    min-width: 0;\n    padding-inline: 8px;\n    white-space: nowrap;", (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8"))
         self.assertIn('statusBadge(`${repo.behind} behind`, "behind")', javascript)
         self.assertIn(".status.behind", (repository / "console" / "static" / "styles.css").read_text(encoding="utf-8"))
@@ -379,6 +381,22 @@ class SettingsTests(unittest.TestCase):
         btest = next(project for project in settings.projects if project.slug == "btest")
         self.assertTrue(btest.backup_expected)
         self.assertEqual(btest.port, 8081)
+
+    def test_ever_is_a_managed_project_without_inventing_backup_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            values = {
+                "DEVOS_CONSOLE_TOKEN": "test-token",
+                "DEVOS_RUNTIME_DIR": directory,
+                "DEVOS_WORKSPACE_ROOT": directory,
+            }
+            with patch.dict(os.environ, values, clear=True):
+                settings = load_settings()
+        ever = next(project for project in settings.projects if project.slug == "ever")
+        self.assertEqual(ever.name, "Ever")
+        self.assertEqual(ever.path, Path(directory) / "Ever")
+        self.assertEqual(ever.compose_project, "ever-dev")
+        self.assertEqual(ever.port, 8091)
+        self.assertFalse(ever.backup_expected)
 
     def test_loopback_development_mode_enables_trusted_local_session(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -693,6 +711,7 @@ class OrchestrationApiTests(unittest.TestCase):
                 thread.join(timeout=5)
 
         self.assertFalse(initial["dispatch_enabled"])
+        self.assertTrue(any(item["project"] == "ever" for item in initial["projects"]))
         btest = next(item for item in initial["projects"] if item["project"] == "btest")
         self.assertEqual(btest["mainline_state"]["authority"], "NATIVE_MAINLINE")
         self.assertTrue(any(node["node_id"] == "BTEST_MAINLINE_API" for node in btest["nodes"]))
@@ -747,9 +766,12 @@ class ResourceBreakdownTests(unittest.TestCase):
         self.assertEqual(_cpu_percent_between((1_000, 600), (1_400, 800)), 50.0)
 
     def test_size_parser_accepts_docker_decimal_and_binary_units(self) -> None:
+        from console.devos_console.resources import _disk_image_size
+
         self.assertEqual(_parse_size("1.5GB"), 1_500_000_000)
         self.assertEqual(_parse_size("2MiB"), 2_097_152)
         self.assertIsNone(_parse_size("N/A"))
+        self.assertEqual(_disk_image_size({"UniqueSize": "0B", "Size": "800MB"}), 0)
 
     def test_cpu_component_rounding_preserves_the_displayed_residual(self) -> None:
         from console.devos_console.resources import _bounded_residual_components
@@ -777,7 +799,15 @@ class ResourceBreakdownTests(unittest.TestCase):
         projects = [
             {
                 "slug": "oa",
-                "containers": [{"id": "container-id", "name": "oa", "service": "app"}],
+                "containers": [
+                    {
+                        "id": "container-id",
+                        "name": "oa",
+                        "service": "app",
+                        "image": "oa:current",
+                        "image_id": "abcdef123456",
+                    }
+                ],
             }
         ]
         stats = CommandResult(
@@ -802,10 +832,31 @@ class ResourceBreakdownTests(unittest.TestCase):
                         {"Labels": "com.docker.compose.project=oa", "Size": "10MB"}
                     ],
                     "Volumes": [
-                        {"Labels": "com.docker.compose.project=oa", "Size": "1GB"}
+                        {"Name": "oa-data", "Labels": "com.docker.compose.project=oa", "Size": "1GB"}
                     ],
-                    "Images": [{"UniqueSize": "500MB", "Size": "800MB"}],
+                    "Images": [
+                        {
+                            "Repository": "oa",
+                            "Tag": "current",
+                            "Image ID": "abcdef123456",
+                            "UniqueSize": "500MB",
+                            "Size": "800MB",
+                        }
+                    ],
                     "BuildCache": [{"Size": "250MB"}],
+                }
+            ),
+            "",
+        )
+        inspect = CommandResult(
+            ("docker", "inspect"),
+            0,
+            json.dumps(
+                {
+                    "Id": "container-id-full",
+                    "Name": "/oa",
+                    "Labels": {"com.docker.compose.project": "oa"},
+                    "Mounts": [],
                 }
             ),
             "",
@@ -817,7 +868,7 @@ class ResourceBreakdownTests(unittest.TestCase):
             "disk": {"used": 5_000_000_000},
         }
         with (
-            patch("console.devos_console.resources.run_docker", side_effect=[stats, disk]),
+            patch("console.devos_console.resources.run_docker", side_effect=[stats, disk, inspect]),
             patch("console.devos_console.resources._directory_size", return_value=100_000_000),
             patch("console.devos_console.resources._cpu_ticks", return_value=None),
             patch("console.devos_console.resources._child_cpu_seconds", return_value=None),
@@ -838,17 +889,19 @@ class ResourceBreakdownTests(unittest.TestCase):
         self.assertEqual(result["cpu"][0]["name"], "OA")
         self.assertEqual(result["cpu"][0]["value"], 10.0)
         self.assertEqual(result["memory"][0]["value"], 209_715_200)
-        self.assertEqual(result["disk"][0]["value"], 1_110_000_000)
+        self.assertEqual(result["disk"][0]["value"], 1_610_000_000)
         self.assertEqual(
             [item["name"] for item in result["disk"][0]["components"]],
-            ["Docker volumes", "Project files", "Container writes"],
+            ["Docker volumes", "Exclusive Docker image data", "Project files", "Container writes"],
+        )
+        self.assertTrue(
+            all(item["disposition"] == "project" for item in result["disk"][0]["components"])
         )
         server_disk = result["disk"][-1]
-        self.assertEqual(server_disk["name"], "Server & other")
+        self.assertEqual(server_disk["name"], "Shared, system & unassigned")
         self.assertEqual(
             [item["name"] for item in server_disk["components"]],
             [
-                "Shared Docker images",
                 "Docker build cache",
                 "System files & packages",
                 "System logs",
@@ -856,8 +909,111 @@ class ResourceBreakdownTests(unittest.TestCase):
                 "Other host files",
             ],
         )
-        self.assertEqual(server_disk["components"][2]["disposition"], "baseline")
+        self.assertEqual(server_disk["components"][1]["disposition"], "baseline")
         self.assertEqual(server_disk["components"][-1]["disposition"], "unattributed")
+
+    def test_disk_usage_separates_exclusive_shared_and_unassigned_assets(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            oa_path = root / "oa"
+            gaia_path = root / "gaia"
+            oa_data = root / "oa-data"
+            for path in (oa_path, gaia_path, oa_data):
+                path.mkdir()
+            specs = (
+                ProjectSpec("oa", "OA", oa_path, "oa", 8082, True),
+                ProjectSpec("gaia", "Gaia", gaia_path, "gaia", 8083, True),
+            )
+            projects = [
+                {
+                    "slug": "oa",
+                    "containers": [
+                        {"id": "oa-container", "name": "oa", "service": "app", "image": "shared:latest"}
+                    ],
+                },
+                {
+                    "slug": "gaia",
+                    "containers": [
+                        {"id": "gaia-container", "name": "gaia", "service": "app", "image": "shared:latest"}
+                    ],
+                },
+            ]
+            stats = CommandResult(("docker", "stats"), 0, "", "")
+            disk = CommandResult(
+                ("docker", "system", "df"),
+                0,
+                json.dumps(
+                    {
+                        "Containers": [],
+                        "Volumes": [
+                            {"Name": "oa-only", "Labels": "", "Size": "100MB"},
+                            {"Name": "shared-data", "Labels": "", "Size": "200MB"},
+                            {"Name": "orphan", "Labels": "", "Size": "300MB"},
+                        ],
+                        "Images": [
+                            {"Repository": "shared", "Tag": "latest", "UniqueSize": "400MB"},
+                            {"Repository": "unused", "Tag": "latest", "UniqueSize": "500MB"},
+                        ],
+                        "BuildCache": [],
+                    }
+                ),
+                "",
+            )
+            inspect = CommandResult(
+                ("docker", "inspect"),
+                0,
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "Id": "oa-container-full",
+                                "Name": "/oa",
+                                "Labels": {"com.docker.compose.project": "oa"},
+                                "Mounts": [
+                                    {"Type": "volume", "Name": "oa-only"},
+                                    {"Type": "volume", "Name": "shared-data"},
+                                    {"Type": "bind", "Source": str(oa_data)},
+                                ],
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "Id": "gaia-container-full",
+                                "Name": "/gaia",
+                                "Labels": {"com.docker.compose.project": "gaia"},
+                                "Mounts": [{"Type": "volume", "Name": "shared-data"}],
+                            }
+                        ),
+                    ]
+                ),
+                "",
+            )
+            sizes = {oa_path.resolve(): 10_000_000, gaia_path.resolve(): 10_000_000, oa_data.resolve(): 50_000_000}
+            system = {
+                "cpu_count": 4,
+                "cpu_percent": 0,
+                "memory": {"used": 0},
+                "disk": {"used": 3_000_000_000},
+            }
+            with (
+                patch("console.devos_console.resources.run_docker", side_effect=[stats, disk, inspect]),
+                patch("console.devos_console.resources._directory_size", side_effect=lambda path: sizes.get(path.resolve())),
+                patch("console.devos_console.resources._cpu_ticks", return_value=None),
+                patch("console.devos_console.resources._child_cpu_seconds", return_value=None),
+                patch("console.devos_console.resources._process_snapshot", return_value={}),
+                patch("console.devos_console.resources._host_disk_sizes", return_value={}),
+            ):
+                result = collect_resource_breakdown(specs, projects, system)
+
+        project_rows = {item["slug"]: item for item in result["disk"] if item["slug"] != "other"}
+        self.assertEqual(project_rows["oa"]["value"], 160_000_000)
+        self.assertEqual(project_rows["gaia"]["value"], 10_000_000)
+        self.assertIn("Bind-mounted project data", {item["name"] for item in project_rows["oa"]["components"]})
+        residual = {item["name"]: item for item in result["disk"][-1]["components"]}
+        self.assertEqual(residual["Shared Docker images"]["disposition"], "shared")
+        self.assertEqual(residual["Shared Docker volumes"]["disposition"], "shared")
+        self.assertEqual(residual["Unassigned Docker images"]["disposition"], "unattributed")
+        self.assertEqual(residual["Unassigned Docker volumes"]["disposition"], "unattributed")
 
 
 class BackupStatusTests(unittest.TestCase):
@@ -1278,6 +1434,7 @@ class WorkstationStatusTests(unittest.TestCase):
                 "online": True,
                 "projects": [
                     {"slug": "gaia", "name": "Gaia", "repository": None},
+                    {"slug": "ever", "name": "Ever", "repository": None},
                     {"slug": "unknown", "name": "Unknown", "repository": None},
                     {"slug": "developer-os", "name": "DeveloperOS", "repository": None},
                     {"slug": "btest", "name": "bTest", "repository": None},
@@ -1291,13 +1448,14 @@ class WorkstationStatusTests(unittest.TestCase):
             {"slug": "gaia", "available": True, "port": 8083},
             {"slug": "developer-os", "available": True, "port": 8080},
             {"slug": "btest", "available": True, "port": 8081},
+            {"slug": "ever", "available": True, "port": 8091},
         ]
 
         attach_server_comparisons(workstations, server_projects)
 
         self.assertEqual(
             [project["slug"] for project in workstations[0]["projects"]],
-            ["developer-os", "btest", "oa", "gaia", "unknown"],
+            ["developer-os", "btest", "oa", "gaia", "ever", "unknown"],
         )
 
 

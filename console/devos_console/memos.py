@@ -13,6 +13,7 @@ MEMO_PROJECTS = (
     ("btest", "bTest"),
     ("oa", "OA"),
     ("gaia", "Gaia"),
+    ("ever", "Ever"),
 )
 MAX_MEMO_BYTES = 256 * 1024
 

@@ -169,7 +169,7 @@ Fallback direct command:
 X:\Projects\DeveloperOS\04_Tools\bin\devos.cmd git-check
 ```
 
-The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, Gaia Project, bTest, and OA.
+The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, Gaia Project, bTest, OA, and Ever.
 
 ## Project Data Synchronization
 
@@ -313,6 +313,7 @@ make terminal-tunnel
 make terminal-developer-os
 make terminal-oa
 make terminal-gaia
+make terminal-ever
 ```
 
 The Projects table Terminal heading opens the allowlisted Server context at

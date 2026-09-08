@@ -1,6 +1,6 @@
 ﻿# DeveloperOS Roadmap
 
-Updated: 2026-08-15
+Updated: 2026-09-08
 
 ## Direction
 
@@ -13,7 +13,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 - Objective: Complete context routing and shared roadmap 3.1 adoption across
   the active application projects.
 - Status: In Progress
-- Completion signal: OA, Gaia, and bTest pass their project-owned context
+- Completion signal: OA, Gaia, bTest, and Ever pass their project-owned context
   routing checks and local roadmap dependency, card-parity, interaction, and
   presentation checks with the current shared bundle.
 
@@ -22,9 +22,9 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Topic | Status | Completion Signal | Next Transition |
 |---|---|---|---|
 | Workspace foundation | Done | Self-application and roadmap lifecycle and publication contracts are confirmed across active projects | Observe the shared contracts for regressions |
-| Project context routing | In Progress | DeveloperOS, OA, Gaia, and bTest use project-owned area maps, ignored incremental indexes, and the shared task context selector | Move to Done after all three application projects pass focused routing checks |
+| Project context routing | In Progress | DeveloperOS, OA, Gaia, bTest, and Ever use project-owned area maps, ignored incremental indexes, and the shared task context selector | Move to Done after all four application projects pass focused routing checks |
 | Roadmap web publication | Done | Version 3.1 publishes compact expandable topic cards, validated dependency flows, exact linked-track identity, and accessible blocker presentation at `/roadmap` | Monitor project adapters without duplicating project state |
-| Managed project roadmap adoption | In Progress | OA, Gaia, and bTest use the current shared bundle, schema version 2 track linkage, exact Overall-to-track card parity, dependency flows, and current blocker semantics at their own `/roadmap` routes | Move to Done after all three local routes pass data, interaction, and visual parity checks |
+| Managed project roadmap adoption | In Progress | OA, Gaia, bTest, and Ever use the current shared bundle, schema version 2 track linkage, exact Overall-to-track card parity, dependency flows, and current blocker semantics at their own `/roadmap` routes | Move to Done after all four local routes pass data, interaction, and visual parity checks |
 | Docker image build minimization | In Progress | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Resolve or explicitly classify bTest build-cache cleanup findings, then rerun the workspace policy check |
 | Shared native Docker infrastructure | Done | One Desktop-independent launcher fixes Ubuntu, native CLI/Compose, socket, config, and credential helper while preserving all native runtime and data assets | Keep daemon restart coordinated and monitor the sealed boundary for drift |
 | Managed project native Docker adoption | In Progress | bTest, OA, and Gaia local repository commands use the shared launcher and pass runtime/data verification without changing remote server Docker behavior | Migrate each project-owned local wrapper and direct invocation, then reopen its deletion gate independently |

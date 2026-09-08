@@ -49,6 +49,7 @@ DEFAULT_PROJECTS = (
     {"slug": "btest", "name": "bTest", "directory": "bTest", "compose_project": "btest", "port": 8081, "backup_expected": True},
     {"slug": "oa", "name": "OA", "directory": "oa", "compose_project": "oa", "port": 8082, "backup_expected": True},
     {"slug": "gaia", "name": "Gaia", "directory": "gaia", "compose_project": "gaia", "port": 8083, "backup_expected": True},
+    {"slug": "ever", "name": "Ever", "directory": "Ever", "compose_project": "ever-dev", "port": 8091, "backup_expected": False},
 )
 
 DEFAULT_WORKSTATIONS = (

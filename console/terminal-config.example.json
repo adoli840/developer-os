@@ -24,6 +24,11 @@
       "slug": "gaia",
       "name": "Gaia",
       "path": "X:/Projects/gaia"
+    },
+    {
+      "slug": "ever",
+      "name": "Ever",
+      "path": "X:/Projects/Ever"
     }
   ]
 }

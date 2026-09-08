@@ -15,7 +15,8 @@ $projects = @(
     [pscustomobject]@{ Name = "DeveloperOS"; Path = $developerOsRoot.Path },
     [pscustomobject]@{ Name = "Gaia Project"; Path = Join-Path $workspaceRoot "gaia" },
     [pscustomobject]@{ Name = "bTest"; Path = Join-Path $workspaceRoot "bTest" },
-    [pscustomobject]@{ Name = "OA"; Path = Join-Path $workspaceRoot "oa" }
+    [pscustomobject]@{ Name = "OA"; Path = Join-Path $workspaceRoot "oa" },
+    [pscustomobject]@{ Name = "Ever"; Path = Join-Path $workspaceRoot "Ever" }
 )
 
 function Invoke-Git {
