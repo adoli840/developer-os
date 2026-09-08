@@ -762,23 +762,36 @@ class ProjectStatusTests(unittest.TestCase):
 
 
 class ResourceBreakdownTests(unittest.TestCase):
-    def test_project_size_uses_allowlisted_read_only_helper_after_permission_denial(self) -> None:
+    def test_project_size_prefers_allowlisted_read_only_helper(self) -> None:
         from console.devos_console.resources import _directory_size
 
-        denied = CommandResult(("du", "-sb", "/opt/ever"), 1, "10 /opt/ever", "Permission denied")
         measured = CommandResult(
             ("sudo", "developer-os-project-disk-usage"),
             0,
             "123456 /opt/ever\n",
             "",
         )
-        with patch("console.devos_console.resources.run_command", side_effect=[denied, measured]) as command:
+        with patch("console.devos_console.resources.run_command", return_value=measured) as command:
             self.assertEqual(_directory_size(Path("/opt/ever")), 123456)
 
-        self.assertEqual(command.call_count, 2)
-        fallback_command = command.call_args_list[1].args[0]
-        self.assertTrue(fallback_command[-2].endswith("developer-os-project-disk-usage"))
-        self.assertEqual(fallback_command[-1], str(Path("/opt/ever")))
+        self.assertEqual(command.call_count, 1)
+        helper_command = command.call_args.args[0]
+        self.assertEqual(helper_command[:2], ("sudo", "-n"))
+        self.assertTrue(helper_command[-2].endswith("developer-os-project-disk-usage"))
+        self.assertEqual(helper_command[-1], str(Path("/opt/ever")))
+
+    def test_project_size_falls_back_to_direct_du_without_server_helper(self) -> None:
+        from console.devos_console.resources import _directory_size
+
+        unavailable = CommandResult(("sudo", "helper"), 1, "", "not found")
+        measured = CommandResult(("du", "-sb", "/workspace"), 0, "42 /workspace\n", "")
+        with patch(
+            "console.devos_console.resources.run_command",
+            side_effect=[unavailable, measured],
+        ) as command:
+            self.assertEqual(_directory_size(Path("/workspace")), 42)
+
+        self.assertEqual(command.call_args_list[1].args[0], ("du", "-sb", str(Path("/workspace"))))
 
     def test_cpu_percent_uses_the_same_sampling_window(self) -> None:
         self.assertEqual(_cpu_percent_between((1_000, 600), (1_400, 800)), 50.0)
