@@ -355,10 +355,20 @@ if (
 }
 
 $rootMakefile = Read-Text "Makefile"
-if ($rootMakefile -and $rootMakefile -match "(?m)^console-deploy:" -and $rootMakefile -match "(?m)^console-status:") {
-    Add-CheckResult PASS "Specialized deployment" "console deployment and status targets are available"
+$diskUsageHelper = Read-Text "deployment\console\project-disk-usage.sh"
+if (
+    $rootMakefile -and
+    $rootMakefile -match "(?m)^console-deploy:" -and
+    $rootMakefile -match "(?m)^console-status:" -and
+    $diskUsageHelper -and
+    $diskUsageHelper.Contains("readlink -f") -and
+    $diskUsageHelper.Contains("/usr/bin/du -sb") -and
+    $memoDeployment.Contains("developer-os-project-disk-usage") -and
+    $memoDeployment.Contains("visudo -cf")
+) {
+    Add-CheckResult PASS "Specialized deployment" "console deployment, status, and allowlisted read-only project sizing are available"
 } else {
-    Add-CheckResult FAIL "Specialized deployment" "DeveloperOS console deployment targets are missing"
+    Add-CheckResult FAIL "Specialized deployment" "DeveloperOS console deployment or read-only project sizing is incomplete"
 }
 
 $taskTemplate = Read-Text "04_Tools\codex-task\TASK.template.md"

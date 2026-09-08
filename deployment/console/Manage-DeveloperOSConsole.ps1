@@ -319,7 +319,11 @@ sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.ser
 sudo install -m 0644 "`$release/deployment/console/developer-os-openai-usage.timer" /etc/systemd/system/developer-os-openai-usage.timer
 sed 's/\r`$//' "`$release/deployment/console/backup-postgres.sh" | sudo tee /usr/local/sbin/developer-os-backup-postgres >/dev/null
 sed 's/\r`$//' "`$release/deployment/console/verify-postgres-backup.sh" | sudo tee /usr/local/sbin/developer-os-verify-postgres-backup >/dev/null
-sudo chmod 0755 /usr/local/sbin/developer-os-backup-postgres /usr/local/sbin/developer-os-verify-postgres-backup
+sed 's/\r`$//' "`$release/deployment/console/project-disk-usage.sh" | sudo tee /usr/local/sbin/developer-os-project-disk-usage >/dev/null
+sudo chmod 0755 /usr/local/sbin/developer-os-backup-postgres /usr/local/sbin/developer-os-verify-postgres-backup /usr/local/sbin/developer-os-project-disk-usage
+printf '%s\n' 'opc ALL=(root) NOPASSWD: /usr/local/sbin/developer-os-project-disk-usage *' | sudo tee /etc/sudoers.d/developer-os-console-disk-usage >/dev/null
+sudo chmod 0440 /etc/sudoers.d/developer-os-console-disk-usage
+sudo visudo -cf /etc/sudoers.d/developer-os-console-disk-usage >/dev/null
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup.service" /etc/systemd/system/developer-os-backup.service
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup.timer" /etc/systemd/system/developer-os-backup.timer
 sudo install -m 0644 "`$release/deployment/console/developer-os-backup-verify.service" /etc/systemd/system/developer-os-backup-verify.service

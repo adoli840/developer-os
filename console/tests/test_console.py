@@ -762,6 +762,24 @@ class ProjectStatusTests(unittest.TestCase):
 
 
 class ResourceBreakdownTests(unittest.TestCase):
+    def test_project_size_uses_allowlisted_read_only_helper_after_permission_denial(self) -> None:
+        from console.devos_console.resources import _directory_size
+
+        denied = CommandResult(("du", "-sb", "/opt/ever"), 1, "10 /opt/ever", "Permission denied")
+        measured = CommandResult(
+            ("sudo", "developer-os-project-disk-usage"),
+            0,
+            "123456 /opt/ever\n",
+            "",
+        )
+        with patch("console.devos_console.resources.run_command", side_effect=[denied, measured]) as command:
+            self.assertEqual(_directory_size(Path("/opt/ever")), 123456)
+
+        self.assertEqual(command.call_count, 2)
+        fallback_command = command.call_args_list[1].args[0]
+        self.assertTrue(fallback_command[-2].endswith("developer-os-project-disk-usage"))
+        self.assertEqual(fallback_command[-1], str(Path("/opt/ever")))
+
     def test_cpu_percent_uses_the_same_sampling_window(self) -> None:
         self.assertEqual(_cpu_percent_between((1_000, 600), (1_400, 800)), 50.0)
 

@@ -102,6 +102,16 @@ def _json_lines(value: str) -> list[dict[str, Any]]:
 def _directory_size(path: Path) -> int | None:
     result = run_command(("du", "-sb", str(path)), timeout=12)
     if not result.ok:
+        result = run_command(
+            (
+                "sudo",
+                "-n",
+                "/usr/local/sbin/developer-os-project-disk-usage",
+                str(path),
+            ),
+            timeout=20,
+        )
+    if not result.ok:
         return None
     try:
         return int(result.stdout.split()[0])

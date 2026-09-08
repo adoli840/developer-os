@@ -52,6 +52,9 @@ evidence remain unassigned instead of being guessed into a project. The
 baseline, shared Docker data, protected backups, reviewable usage, and the
 remaining measurement or attribution boundary. Category values are bounded by
 the observed host total so a detailed estimate never exceeds actual usage.
+Server deployment installs a root-owned, allowlisted, read-only size helper so
+permission-protected descendants of registered project roots contribute to the
+correct project total without exposing file content or changing ownership.
 
 The `Projects` view is a single full-width comparison table. Project identity,
 GitHub state, server state, service health, port, and terminal are shared columns;
