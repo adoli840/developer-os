@@ -5,6 +5,8 @@ import re
 import time
 from pathlib import Path
 from typing import Any
+from urllib.error import HTTPError, URLError
+from urllib.request import urlopen
 
 from .runner import CommandResult, run_command, run_docker
 from .settings import ProjectSpec
@@ -17,7 +19,6 @@ COMPOSE_FILES = (
     "docker-compose.yaml",
     "compose.yaml",
     "docker-compose.office-dev.yml",
-    "docker-compose.ever-demo.yml",
 )
 
 HEX_REVISION = re.compile(r"^[0-9a-f]{7,64}$", re.IGNORECASE)
@@ -29,6 +30,28 @@ class ProjectService:
 
     def project(self, slug: str) -> ProjectSpec | None:
         return self._projects.get(slug)
+
+    @staticmethod
+    def _systemd_runtime(project: ProjectSpec) -> dict[str, Any] | None:
+        if not project.runtime_services:
+            return None
+        services = []
+        for name in project.runtime_services:
+            result = run_command(("systemctl", "is-active", name), timeout=5)
+            services.append({"name": name, "state": result.stdout.strip() if result.ok else "inactive"})
+        main_active = services[0]["state"] == "active"
+        health = "unavailable"
+        if main_active and project.port and project.health_path:
+            try:
+                with urlopen(f"http://127.0.0.1:{project.port}{project.health_path}", timeout=4) as response:
+                    health = "healthy" if response.status == 200 else "degraded"
+            except (HTTPError, URLError, TimeoutError, OSError):
+                health = "degraded"
+        status = "stopped" if not main_active else (
+            "healthy" if health == "healthy" and all(item["state"] == "active" for item in services)
+            else "degraded"
+        )
+        return {"mode": "systemd", "status": status, "health": health, "services": services}
 
     @staticmethod
     def _git(project: ProjectSpec, *args: str, timeout: float = 8) -> CommandResult:
@@ -301,7 +324,8 @@ class ProjectService:
         return {"ready": blocking == 0, "blocking": blocking, "checks": checks}
 
     def collect(self, project: ProjectSpec) -> dict[str, Any]:
-        containers = self._containers(project)
+        containers = [] if project.runtime_services else self._containers(project)
+        runtime = self._systemd_runtime(project)
         if not project.path.is_dir():
             deployment = self._deployment(project, None, containers)
             return {
@@ -312,6 +336,7 @@ class ProjectService:
                 "available": False,
                 "repository": None,
                 "containers": containers,
+                "runtime": runtime,
                 "deployment": deployment,
                 "work_end": self._work_end_checks(False, None, containers, deployment),
             }
@@ -357,6 +382,9 @@ class ProjectService:
                 }
 
         deployment = self._deployment(project, repository, containers)
+        if runtime and deployment["status"] == "not_deployed":
+            deployment["status"] = "running" if runtime["status"] != "stopped" else "not_deployed"
+            deployment["mode"] = "systemd"
         compose_file = self._compose_file(project)
         return {
             "slug": project.slug,
@@ -367,6 +395,7 @@ class ProjectService:
             "compose_file": compose_file.name if compose_file else None,
             "repository": repository,
             "containers": containers,
+            "runtime": runtime,
             "deployment": deployment,
             "work_end": self._work_end_checks(True, repository, containers, deployment),
         }

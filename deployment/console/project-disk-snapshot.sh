@@ -12,7 +12,7 @@ for path in \
   /home/opc/bTest-release \
   /home/opc/oa \
   /home/opc/gaia \
-  /opt/ever
+  /opt/everNext
 do
   if [[ -e "$path" ]]; then
     resolved="$(readlink -f -- "$path")"

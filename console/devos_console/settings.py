@@ -15,6 +15,8 @@ class ProjectSpec:
     compose_project: str
     port: int | None
     backup_expected: bool
+    runtime_services: tuple[str, ...] = ()
+    health_path: str | None = None
 
 
 @dataclass(frozen=True)
@@ -49,7 +51,7 @@ DEFAULT_PROJECTS = (
     {"slug": "btest", "name": "bTest", "directory": "bTest", "compose_project": "btest", "port": 8081, "backup_expected": True},
     {"slug": "oa", "name": "OA", "directory": "oa", "compose_project": "oa", "port": 8082, "backup_expected": True},
     {"slug": "gaia", "name": "Gaia", "directory": "gaia", "compose_project": "gaia", "port": 8083, "backup_expected": True},
-    {"slug": "ever", "name": "Ever", "directory": "Ever", "compose_project": "ever-dev", "port": 8091, "backup_expected": False},
+    {"slug": "evernext", "name": "everNext", "directory": "everNext", "compose_project": "evernext", "port": 8086, "backup_expected": False, "runtime_services": ["evernext.service", "evernext-sp-worker.service"], "health_path": "/api/settings"},
 )
 
 DEFAULT_WORKSTATIONS = (
@@ -112,6 +114,8 @@ def load_settings(*, dev_mode: bool = False, bind: str | None = None, port: int 
                 compose_project=str(item.get("compose_project", slug)),
                 port=int(item["port"]) if item.get("port") is not None else None,
                 backup_expected=bool(item.get("backup_expected", False)),
+                runtime_services=tuple(str(service) for service in item.get("runtime_services", ())),
+                health_path=str(item["health_path"]) if item.get("health_path") else None,
             )
         )
 

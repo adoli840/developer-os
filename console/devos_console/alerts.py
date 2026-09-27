@@ -39,6 +39,9 @@ def build_alerts(
             alerts.append({"severity": "warning", "source": name, "message": f'{repository["behind"]} commits are behind the tracking branch.'})
         if project.get("deployment", {}).get("status") == "out_of_sync":
             alerts.append({"severity": "warning", "source": name, "message": "Running image does not match repository HEAD."})
+        runtime = project.get("runtime")
+        if isinstance(runtime, dict) and runtime.get("status") in {"stopped", "degraded"}:
+            alerts.append({"severity": "critical", "source": name, "message": f'Systemd runtime is {runtime["status"]}.'})
         containers = project.get("containers") or []
         stopped = sum(1 for container in containers if str(container.get("state")).lower() != "running")
         unhealthy = sum(1 for container in containers if "unhealthy" in str(container.get("status")).lower())

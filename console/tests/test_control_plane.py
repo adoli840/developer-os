@@ -64,6 +64,31 @@ class ControlPlaneStoreTests(unittest.TestCase):
         self.assertFalse(value["reserved_modes"][0]["background_execution"])
         self.assertIn("SESSION_HANDOFF", value["phase_1_contracts"])
 
+    def test_retired_ever_state_is_preserved_but_not_active(self) -> None:
+        legacy = OrchestrationControlStore(
+            self.store.path,
+            ["developer-os", "btest", "ever"],
+            AuditLog(self.audit_path),
+        )
+        legacy.set_mode("ever", "OFF")
+        original = json.loads(self.store.path.read_text(encoding="utf-8"))["projects"]["ever"]
+        current = OrchestrationControlStore(
+            self.store.path,
+            ["developer-os", "btest", "evernext"],
+            AuditLog(self.audit_path),
+        )
+        self.assertEqual(
+            [project["project"] for project in current.list_projects()["projects"]],
+            ["developer-os", "btest", "evernext"],
+        )
+        with self.assertRaisesRegex(ControlPlaneError, "UNKNOWN_PROJECT"):
+            current.set_mode("ever", "OFF")
+        current.set_mode("evernext", "OFF")
+        self.assertEqual(
+            json.loads(self.store.path.read_text(encoding="utf-8"))["projects"]["ever"],
+            original,
+        )
+
     def test_node_crud_persists_but_public_state_hides_transport_reference(self) -> None:
         created = self.store.add_node("developer-os", node("mainline", "MAINLINE"))
         public_node = created["nodes"][0]

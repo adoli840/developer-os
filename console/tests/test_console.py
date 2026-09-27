@@ -5,6 +5,8 @@ import os
 import tempfile
 import threading
 import unittest
+import sqlite3
+from contextlib import closing, nullcontext
 from http.cookiejar import CookieJar
 from datetime import datetime, timezone
 from pathlib import Path
@@ -54,7 +56,21 @@ class MemoStoreTests(unittest.TestCase):
             items = {item["project"]: item for item in second.list_all()["items"]}
 
         self.assertEqual(items["oa"]["content"], "세금 신고 아이디어")
-        self.assertEqual(list(items), ["developer-os", "btest", "oa", "gaia", "ever"])
+        self.assertEqual(list(items), ["developer-os", "btest", "oa", "gaia", "evernext"])
+
+    def test_legacy_ever_memo_remains_stored_but_is_not_a_current_project(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            database = Path(directory) / "memos.sqlite3"
+            store = MemoStore(database)
+            with closing(sqlite3.connect(database)) as connection:
+                connection.execute(
+                    "INSERT INTO project_memos(project, content, updated_at) VALUES (?, ?, ?)",
+                    ("ever", "historical note", "2026-09-01T00:00:00Z"),
+                )
+                connection.commit()
+            self.assertNotIn("ever", {item["project"] for item in store.list_all()["items"]})
+            with closing(sqlite3.connect(database)) as connection:
+                self.assertEqual(connection.execute("SELECT content FROM project_memos WHERE project='ever'").fetchone()[0], "historical note")
 
     def test_unknown_project_and_oversized_content_are_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -66,6 +82,15 @@ class MemoStoreTests(unittest.TestCase):
 
 
 class ConsoleSurfaceTests(unittest.TestCase):
+    def test_current_project_ui_excludes_retired_ever(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
+        javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
+        self.assertIn('data-memo-project="evernext"', html)
+        self.assertNotIn('data-memo-project="ever"', html)
+        self.assertIn('{slug: "evernext", name: "everNext"}', javascript)
+        self.assertNotIn('{slug: "ever", name: "Ever"}', javascript)
+
     def test_recovery_replaces_operations_and_browser_commands(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
@@ -382,7 +407,7 @@ class SettingsTests(unittest.TestCase):
         self.assertTrue(btest.backup_expected)
         self.assertEqual(btest.port, 8081)
 
-    def test_ever_is_a_managed_project_without_inventing_backup_authority(self) -> None:
+    def test_evernext_is_a_systemd_project_without_inventing_backup_authority(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             values = {
                 "DEVOS_CONSOLE_TOKEN": "test-token",
@@ -391,12 +416,13 @@ class SettingsTests(unittest.TestCase):
             }
             with patch.dict(os.environ, values, clear=True):
                 settings = load_settings()
-        ever = next(project for project in settings.projects if project.slug == "ever")
-        self.assertEqual(ever.name, "Ever")
-        self.assertEqual(ever.path, Path(directory) / "Ever")
-        self.assertEqual(ever.compose_project, "ever-dev")
-        self.assertEqual(ever.port, 8091)
-        self.assertFalse(ever.backup_expected)
+        evernext = next(project for project in settings.projects if project.slug == "evernext")
+        self.assertEqual(evernext.name, "everNext")
+        self.assertEqual(evernext.path, Path(directory) / "everNext")
+        self.assertEqual(evernext.port, 8086)
+        self.assertEqual(evernext.runtime_services, ("evernext.service", "evernext-sp-worker.service"))
+        self.assertFalse(evernext.backup_expected)
+        self.assertNotIn("ever", {project.slug for project in settings.projects})
 
     def test_loopback_development_mode_enables_trusted_local_session(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -711,7 +737,8 @@ class OrchestrationApiTests(unittest.TestCase):
                 thread.join(timeout=5)
 
         self.assertFalse(initial["dispatch_enabled"])
-        self.assertTrue(any(item["project"] == "ever" for item in initial["projects"]))
+        self.assertTrue(any(item["project"] == "evernext" for item in initial["projects"]))
+        self.assertFalse(any(item["project"] == "ever" for item in initial["projects"]))
         btest = next(item for item in initial["projects"] if item["project"] == "btest")
         self.assertEqual(btest["mainline_state"]["authority"], "NATIVE_MAINLINE")
         self.assertTrue(any(node["node_id"] == "BTEST_MAINLINE_API" for node in btest["nodes"]))
@@ -739,6 +766,40 @@ class OrchestrationApiTests(unittest.TestCase):
 
 
 class ProjectStatusTests(unittest.TestCase):
+    def test_evernext_systemd_runtime_is_collected_without_docker(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            project = ProjectSpec("evernext", "everNext", Path(directory), "evernext", 8086, False,
+                                  ("evernext.service", "evernext-sp-worker.service"), "/api/settings")
+            active = CommandResult(("systemctl",), 0, "active\n", "")
+            with (
+                patch("console.devos_console.projects.run_command", return_value=active) as command,
+                patch("console.devos_console.projects.urlopen", return_value=nullcontext(SimpleNamespace(status=200))) as health,
+                patch.object(ProjectService, "_containers", side_effect=AssertionError("Docker lookup")),
+            ):
+                result = ProjectService((project,)).collect(project)
+            self.assertEqual(result["runtime"]["status"], "healthy")
+            self.assertEqual(result["runtime"]["health"], "healthy")
+            self.assertEqual(result["containers"], [])
+            self.assertEqual(result["deployment"]["mode"], "systemd")
+            self.assertEqual(
+                [call.args[0] for call in command.call_args_list if call.args[0][0] == "systemctl"],
+                [("systemctl", "is-active", "evernext.service"),
+                 ("systemctl", "is-active", "evernext-sp-worker.service")],
+            )
+            health.assert_called_once_with("http://127.0.0.1:8086/api/settings", timeout=4)
+
+    def test_evernext_stopped_service_does_not_probe_http(self) -> None:
+        project = ProjectSpec("evernext", "everNext", Path("/missing"), "evernext", 8086, False,
+                              ("evernext.service",), "/api/settings")
+        inactive = CommandResult(("systemctl",), 3, "inactive\n", "")
+        with (
+            patch("console.devos_console.projects.run_command", return_value=inactive),
+            patch("console.devos_console.projects.urlopen") as health,
+        ):
+            result = ProjectService._systemd_runtime(project)
+        self.assertEqual(result["status"], "stopped")
+        health.assert_not_called()
+
     def test_status_counts_distinguish_worktree_states(self) -> None:
         result = ProjectService._status_counts(["M  staged.py", " M changed.py", "?? new.py"])
         self.assertEqual(result, {"modified": 3, "staged": 1, "unstaged": 1, "untracked": 1})
@@ -767,12 +828,12 @@ class ResourceBreakdownTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             snapshot = Path(temporary) / "sizes.tsv"
-            snapshot.write_text(f"{Path('/opt/ever')}\t260000000\n", encoding="utf-8")
+            snapshot.write_text(f"{Path('/opt/everNext')}\t260000000\n", encoding="utf-8")
             with (
                 patch.object(resources, "PROJECT_DISK_SNAPSHOT", snapshot),
                 patch("console.devos_console.resources.run_command") as command,
             ):
-                self.assertEqual(resources._directory_size(Path("/opt/ever")), 260000000)
+                self.assertEqual(resources._directory_size(Path("/opt/everNext")), 260000000)
         command.assert_not_called()
 
     def test_project_size_prefers_allowlisted_read_only_helper(self) -> None:
@@ -781,17 +842,17 @@ class ResourceBreakdownTests(unittest.TestCase):
         measured = CommandResult(
             ("sudo", "developer-os-project-disk-usage"),
             0,
-            "123456 /opt/ever\n",
+            "123456 /opt/everNext\n",
             "",
         )
         with patch("console.devos_console.resources.run_command", return_value=measured) as command:
-            self.assertEqual(_directory_size(Path("/opt/ever")), 123456)
+            self.assertEqual(_directory_size(Path("/opt/everNext")), 123456)
 
         self.assertEqual(command.call_count, 1)
         helper_command = command.call_args.args[0]
         self.assertEqual(helper_command[:2], ("sudo", "-n"))
         self.assertTrue(helper_command[-2].endswith("developer-os-project-disk-usage"))
-        self.assertEqual(helper_command[-1], str(Path("/opt/ever")))
+        self.assertEqual(helper_command[-1], str(Path("/opt/everNext")))
 
     def test_project_size_falls_back_to_direct_du_without_server_helper(self) -> None:
         from console.devos_console.resources import _directory_size
@@ -1478,7 +1539,7 @@ class WorkstationStatusTests(unittest.TestCase):
                 "online": True,
                 "projects": [
                     {"slug": "gaia", "name": "Gaia", "repository": None},
-                    {"slug": "ever", "name": "Ever", "repository": None},
+                    {"slug": "evernext", "name": "everNext", "repository": None},
                     {"slug": "unknown", "name": "Unknown", "repository": None},
                     {"slug": "developer-os", "name": "DeveloperOS", "repository": None},
                     {"slug": "btest", "name": "bTest", "repository": None},
@@ -1492,14 +1553,14 @@ class WorkstationStatusTests(unittest.TestCase):
             {"slug": "gaia", "available": True, "port": 8083},
             {"slug": "developer-os", "available": True, "port": 8080},
             {"slug": "btest", "available": True, "port": 8081},
-            {"slug": "ever", "available": True, "port": 8091},
+            {"slug": "evernext", "available": True, "port": 8086},
         ]
 
         attach_server_comparisons(workstations, server_projects)
 
         self.assertEqual(
             [project["slug"] for project in workstations[0]["projects"]],
-            ["developer-os", "btest", "oa", "gaia", "ever", "unknown"],
+            ["developer-os", "btest", "oa", "gaia", "evernext", "unknown"],
         )
 
 

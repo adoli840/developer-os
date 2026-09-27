@@ -14,7 +14,7 @@ case "$resolved" in
   /home/opc/bTest-release|/home/opc/bTest-release/*|\
   /home/opc/oa|/home/opc/oa/*|\
   /home/opc/gaia|/home/opc/gaia/*|\
-  /opt/ever|/opt/ever/*)
+  /opt/everNext|/opt/everNext/*)
     ;;
   *)
     echo "path is outside the managed project allowlist" >&2

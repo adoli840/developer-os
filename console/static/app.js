@@ -4,7 +4,7 @@ const MEMO_PROJECTS = [
   {slug: "btest", name: "bTest"},
   {slug: "oa", name: "OA"},
   {slug: "gaia", name: "Gaia"},
-  {slug: "ever", name: "Ever"},
+  {slug: "evernext", name: "everNext"},
 ];
 const PRIMARY_TABS = new Set(["projects", "orchestration", "resources", "roadmap", "recovery", "oracle", "memo"]);
 
@@ -883,6 +883,13 @@ function containerStateBadge(container) {
 }
 
 function renderProjectContainers(project) {
+  const runtime = project?.runtime;
+  if (runtime?.mode === "systemd") {
+    return `<div class="project-container-grid">${(runtime.services || []).map((service) => `
+      <article class="project-container-card"><div class="project-container-heading"><strong>${escapeHtml(service.name)}</strong>${serviceStatus(service.state === "active" ? "healthy" : "stopped")}</div>
+      <dl><dt>Status</dt><dd>${escapeHtml(service.state)}</dd><dt>HTTP health</dt><dd>${escapeHtml(runtime.health || "Unavailable")}</dd></dl></article>
+    `).join("")}</div>`;
+  }
   const containers = project?.containers || [];
   if (!containers.length) {
     const message = project?.deployment?.mode === "systemd"
@@ -911,18 +918,18 @@ function renderProjectContainers(project) {
 }
 
 function renderWorkstations(workstations, serverProjects) {
-  if (!workstations.length) {
-    elements.workstationDetail.innerHTML = "";
-    return;
-  }
   const home = workstations.find((workstation) => workstation.id === "home") || {name: "Home", status: "never_reported", projects: []};
   const office = workstations.find((workstation) => workstation.id === "office") || {name: "Office", status: "never_reported", projects: []};
   const serverProjectMap = new Map(serverProjects.map((project) => [project.slug, project]));
   const projects = new Map();
   for (const workstation of [home, office]) {
     for (const project of workstation.projects || []) {
+      if (!serverProjectMap.has(project.slug)) continue;
       if (!projects.has(project.slug)) projects.set(project.slug, project);
     }
+  }
+  for (const project of serverProjects) {
+    if (!projects.has(project.slug)) projects.set(project.slug, project);
   }
   const sharedProjects = [...projects.values()].sort((left, right) => {
     const leftPort = Number(left.port) || Number.MAX_SAFE_INTEGER;
@@ -962,8 +969,8 @@ function renderWorkstations(workstations, serverProjects) {
                 <td>${workstationRepositoryCell(homeProject, "local")}</td>
                 <td>${workstationRepositoryCell(officeProject, "local")}</td>
                 <td>${workstationRepositoryCell(commonStatusProject, "github")}</td>
-                <td>${comparisonStatus(commonStatusProject?.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(commonStatusProject?.comparison?.deployed_revisions))}</div></td>
-                <td>${serviceStatus(commonStatusProject?.comparison?.service_status)}</td>
+                <td>${serverProject?.runtime ? statusBadge(serverProject.runtime.status === "stopped" ? "Stopped" : "Running", serverProject.runtime.status === "healthy" ? "good" : "bad") : comparisonStatus(commonStatusProject?.comparison?.runtime_status)}<div class="cell-detail">${escapeHtml(shortRevisions(commonStatusProject?.comparison?.deployed_revisions))}</div></td>
+                <td>${serviceStatus(serverProject?.runtime?.status || commonStatusProject?.comparison?.service_status)}</td>
                 <td><strong>${displayProject.port ? escapeHtml(displayProject.port) : "-"}</strong></td>
                 <td class="terminal-cell">${terminalLink(displayProject)}</td>
               </tr>
@@ -1005,7 +1012,7 @@ function serviceStatus(status) {
 }
 
 function terminalLink(project) {
-  const terminalProjects = new Set(["developer-os", "oa", "gaia", "btest", "ever"]);
+  const terminalProjects = new Set(["developer-os", "oa", "gaia", "btest", "evernext"]);
   if (!project.available || !terminalProjects.has(project.slug)) {
     return `<span class="terminal-unavailable">Unavailable</span>`;
   }

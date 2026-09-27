@@ -203,7 +203,7 @@ class TerminalRunnerTests(unittest.TestCase):
         self.assertIn('"slug": "server"', example)
         self.assertIn('"path": "X:/Projects"', example)
         self.assertIn('{"slug":"server","name":"Server","path":"/home/opc"}', deployment)
-        self.assertIn('{"slug":"ever","name":"Ever","path":"/opt/ever"}', deployment)
+        self.assertIn('{"slug":"evernext","name":"everNext","path":"/opt/everNext"}', deployment)
         self.assertNotIn('{"slug":"server","name":"Server","path":"/"}', deployment)
 
 

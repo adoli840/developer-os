@@ -125,6 +125,9 @@ def _revisions_match(first: object, second: object) -> bool:
 def _service_status(server_project: dict[str, Any] | None) -> str:
     if not server_project or not server_project.get("available"):
         return "unavailable"
+    runtime = server_project.get("runtime")
+    if isinstance(runtime, dict):
+        return str(runtime.get("status") or "unavailable")
     containers = server_project.get("containers") or []
     if not containers:
         return "healthy" if server_project.get("slug") == "developer-os" else "unavailable"

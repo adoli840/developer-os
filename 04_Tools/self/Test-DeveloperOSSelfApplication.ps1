@@ -280,7 +280,7 @@ $python = Get-Command python -ErrorAction SilentlyContinue
 if ($null -eq $python) {
     Add-CheckResult FAIL "Console monitoring" "python is unavailable"
 } else {
-    $pythonCheck = "from console.devos_console.settings import DEFAULT_PROJECTS; projects={p['slug']:p for p in DEFAULT_PROJECTS}; assert projects['developer-os'].get('backup_expected') is False; assert projects['ever']['directory']=='Ever' and projects['ever']['compose_project']=='ever-dev' and projects['ever']['port']==8091 and projects['ever'].get('backup_expected') is False"
+    $pythonCheck = "from console.devos_console.settings import DEFAULT_PROJECTS; projects={p['slug']:p for p in DEFAULT_PROJECTS}; assert projects['developer-os'].get('backup_expected') is False; assert 'ever' not in projects and projects['evernext']['directory']=='everNext' and projects['evernext']['port']==8086 and projects['evernext']['runtime_services']==['evernext.service','evernext-sp-worker.service'] and projects['evernext'].get('backup_expected') is False"
     Push-Location $developerOSRoot
     try {
         $null = & $python.Source -c $pythonCheck 2>&1
@@ -321,9 +321,9 @@ $terminalConfigPath = Join-Path $developerOSRoot "console\terminal-config.exampl
 $terminalConfig = Get-Content -Raw -LiteralPath $terminalConfigPath | ConvertFrom-Json
 if (
     ($terminalConfig.projects | Where-Object { $_.slug -eq "developer-os" } | Select-Object -First 1) -and
-    ($terminalConfig.projects | Where-Object { $_.slug -eq "ever" -and $_.path -eq "X:/Projects/Ever" } | Select-Object -First 1)
+    ($terminalConfig.projects | Where-Object { $_.slug -eq "evernext" -and $_.path -eq "X:/Projects/everNext" } | Select-Object -First 1)
 ) {
-    Add-CheckResult PASS "Server terminal" "DeveloperOS and Ever are available through the private project terminal"
+    Add-CheckResult PASS "Server terminal" "DeveloperOS and everNext are available through the private project terminal"
 } else {
     Add-CheckResult FAIL "Server terminal" "DeveloperOS is missing from the terminal project list"
 }
@@ -335,7 +335,7 @@ $workstationMakefile = Read-Text "Makefile"
 if (
     $workstationReporter -and
     $workstationReporter.Contains('slug = "developer-os"') -and
-    $workstationReporter.Contains('slug = "ever"') -and
+    $workstationReporter.Contains('slug = "evernext"') -and
     $workstationReporter.Contains('remote_refresh_status = $remoteRefreshStatus') -and
     $workstationReporter.Contains('"fetch", "--quiet", "--no-tags", "--no-recurse-submodules"') -and
     $workstationReporter.Contains('$env:GIT_TERMINAL_PROMPT = "0"') -and
@@ -366,7 +366,7 @@ if (
     $diskUsageHelper.Contains("/usr/bin/du -sb") -and
     $diskSnapshotHelper -and
     $diskSnapshotHelper.Contains("project-disk-sizes.tsv") -and
-    $diskSnapshotHelper.Contains("/opt/ever") -and
+    $diskSnapshotHelper.Contains("/opt/everNext") -and
     $memoDeployment.Contains("developer-os-project-disk-usage") -and
     $memoDeployment.Contains("developer-os-project-disk-snapshot.timer") -and
     $memoDeployment.Contains("visudo -cf")

@@ -355,9 +355,11 @@ class OrchestrationControlStore:
             raise ControlPlaneError("INVALID_CONTROL_PLANE_STATE")
         for project in self.projects:
             states.setdefault(project, _default_project(project))
-        if set(states) != set(self.projects):
+        # Retired Ever state remains historical data, never an active project.
+        if set(states) - set(self.projects) - {"ever"}:
             raise ControlPlaneError("UNKNOWN_PROJECT_STATE")
-        for state in states.values():
+        for project in self.projects:
+            state = states[project]
             state.setdefault("mainline_state", None)
             if state.get("project") == "btest":
                 try:

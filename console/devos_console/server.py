@@ -144,6 +144,12 @@ class ConsoleApplication:
             projects = projects_future.result()
             backups = backups_future.result()
             workstations = workstations_future.result()
+        registered_projects = {project.slug for project in self.settings.projects}
+        for workstation in workstations:
+            workstation["projects"] = [
+                project for project in workstation.get("projects", [])
+                if project.get("slug") in registered_projects
+            ]
         system["resources"] = collect_resource_breakdown(
             self.settings.projects,
             projects,

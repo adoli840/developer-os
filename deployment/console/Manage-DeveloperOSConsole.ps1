@@ -220,7 +220,7 @@ try {
     {"slug":"btest","name":"bTest","path":"/home/opc/bTest-release","compose_project":"btest","port":8081,"backup_expected":true},
     {"slug":"oa","name":"OA","path":"/home/opc/oa","compose_project":"oa","port":8082,"backup_expected":true},
     {"slug":"gaia","name":"Gaia","path":"/home/opc/gaia","compose_project":"gaia","port":8083,"backup_expected":true},
-    {"slug":"ever","name":"Ever","path":"/opt/ever","compose_project":"ever-demo","port":8091,"backup_expected":false}
+    {"slug":"evernext","name":"everNext","path":"/opt/everNext","compose_project":"evernext","port":8086,"backup_expected":false,"runtime_services":["evernext.service","evernext-sp-worker.service"],"health_path":"/api/settings"}
   ],
   "workstations": [
     {"id":"home","name":"Home","offline_after_seconds":900},
@@ -237,7 +237,7 @@ try {
     {"slug":"btest","name":"bTest","path":"/home/opc/bTest-release"},
     {"slug":"oa","name":"OA","path":"/home/opc/oa"},
     {"slug":"gaia","name":"Gaia","path":"/home/opc/gaia"},
-    {"slug":"ever","name":"Ever","path":"/opt/ever"}
+    {"slug":"evernext","name":"everNext","path":"/opt/everNext"}
   ]
 }
 "@
