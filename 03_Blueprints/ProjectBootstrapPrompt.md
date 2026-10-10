@@ -3,7 +3,7 @@
 Use this prompt when starting a Codex or AI-agent session inside an individual project repository under `X:\Projects`.
 
 ```text
-Read `X:\Projects\DeveloperOS\BOOT.md` before starting work.
+Read `X:\Projects\DeveloperOS\BOOT.md` before starting work only if this project opts in to DeveloperOS governance.
 
 DeveloperOS exists at `X:\Projects\DeveloperOS`.
 
@@ -15,7 +15,7 @@ If `PROJECT_AREAS.json` exists, run `make context TASK="<current request>"`
 before broad source inspection. Start with the selected entrypoints and expand
 only when a real dependency crosses the declared area.
 
-Project-specific documents override DeveloperOS only when they explicitly say so. Otherwise, DeveloperOS is the global engineering constitution.
+Project-specific documents are authoritative for independent projects. DeveloperOS is consulted only after explicit project opt-in.
 
 Preserve the separation between DeveloperOS and this project repository:
 
@@ -24,11 +24,11 @@ Preserve the separation between DeveloperOS and this project repository:
 - Do not copy DeveloperOS governance documents into this project.
 - Do not update DeveloperOS with project-local state unless the finding changes future engineering decisions across projects.
 
-Use the task routing rules in `BOOT.md` to decide which DeveloperOS documents to read before implementation.
+Opted-in projects use the task routing rules in `BOOT.md` to decide which DeveloperOS documents to read before implementation.
 
 For Docker, Compose, image, deployment, or container lifecycle work, follow `DeveloperOS/00_Master/DockerImageBuildPolicy.md`. Routine starts and restarts must reuse existing images; use an explicit build command only when a build input changed or an image is missing.
 
-For meaningful project work, follow `DeveloperOS/00_Master/ProjectRoadmapPolicy.md` without waiting for a separate request. Use this project's existing roadmap or generator, and create a root `ROADMAP.md` from the DeveloperOS blueprint only when no canonical roadmap exists. When `ROADMAPS.json` exists, read the root overview and each affected track. Before finishing, update an affected track only when its status, scope, priority, completion signal, or material blocker changed, and update the overview only for a project-wide boundary.
+For opted-in projects, follow `DeveloperOS/00_Master/ProjectRoadmapPolicy.md` without waiting for a separate request. Use this project's existing roadmap or generator, and create a root `ROADMAP.md` from the DeveloperOS blueprint only when no canonical roadmap exists. When `ROADMAPS.json` exists, read the root overview and each affected track. Before finishing, update an affected track only when its status, scope, priority, completion signal, or material blocker changed, and update the overview only for a project-wide boundary.
 ```
 
 ## Short Invocation

@@ -85,9 +85,9 @@ technical decisions, knowledge, Blueprints, and Git safety policy.
 
 GPT and Codex are separate sessions and do not share chat memory.
 
-They must document handoff information through DeveloperOS.
+Opted-in projects must document handoff information through DeveloperOS.
 
-Important decisions, development direction, technology choices, and workflow rules must be recorded in DeveloperOS documents.
+For opted-in projects, important decisions, development direction, technology choices, and workflow rules must be recorded in DeveloperOS documents.
 
 DeveloperOS documents are the official communication channel between GPT and Codex.
 

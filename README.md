@@ -2,9 +2,9 @@
 
 ## Purpose
 
-DeveloperOS is the developer's long-term decision engine for software development work.
+DeveloperOS is the developer's optional long-term decision engine for software development work.
 
-It is not an application project, project dashboard, or replacement for project-owned roadmaps. It is the governance, safety, planning philosophy, and AI collaboration layer for all projects in the workspace.
+It is not an application project, project dashboard, or replacement for project-owned roadmaps. It offers governance, safety, planning philosophy, and AI collaboration guidance to projects that explicitly opt in.
 
 ## Mission
 
@@ -43,9 +43,9 @@ DeveloperOS
 
 ## Core Policies
 
-- DeveloperOS is the single source of truth for global engineering policy.
-- DeveloperOS is the constitution of the workspace, not the government of each project.
-- Projects reference DeveloperOS instead of copying global policy documents.
+- DeveloperOS is the single source of truth only for its own repository and for projects that explicitly opt in.
+- DeveloperOS is an optional workspace service, not the government of each project.
+- Opted-in projects may reference DeveloperOS instead of copying policy documents; independent projects need not reference it.
 - Projects own their own README, TODO, roadmap, implementation state, and current architecture.
 - Every meaningful work unit evaluates roadmap transitions; the canonical roadmap changes only when a topic's status or other material planning state changes.
 - Routine Docker lifecycle commands reuse existing images; builds occur only at explicit build or release boundaries.

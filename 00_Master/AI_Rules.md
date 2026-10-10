@@ -2,11 +2,11 @@
 
 ## Purpose
 
-This document defines global AI operating rules for DeveloperOS-governed projects.
+This document defines optional AI operating rules for projects that opt in to DeveloperOS.
 
 ## Core Rule
 
-AI must consult DeveloperOS before starting meaningful project work.
+AI consults DeveloperOS before meaningful work only when the project explicitly opts in.
 
 ## AI Project Manager Rule
 
@@ -20,7 +20,7 @@ If the developer requests a lower-priority project while a higher-priority proje
 
 ## Project Startup Rule
 
-When working inside a project repository, Codex must start from project-local context and then consult DeveloperOS.
+When working inside an opted-in project repository, Codex starts from project-local context and then consults DeveloperOS. Independent projects use their own local workflow.
 
 Read order:
 
@@ -30,7 +30,7 @@ Read order:
 4. DeveloperOS global policies
 5. Relevant source files
 
-If project rules conflict with DeveloperOS, explicit project-specific rules take precedence. Otherwise, DeveloperOS is the default policy.
+If a project opts in and its rules conflict with DeveloperOS, explicit project-specific rules take precedence. Otherwise, DeveloperOS is the default only for that opted-in project.
 
 Do not copy DeveloperOS policy documents into projects. Reference them instead.
 
@@ -57,8 +57,7 @@ The current operating mode prioritizes active project inspection, convenience im
 
 ## Project Roadmap Continuity Rule
 
-Meaningful project work must follow `00_Master/ProjectRoadmapPolicy.md` without
-requiring a separate developer request. Codex must use the project's existing
+Meaningful work in an opted-in project follows `00_Master/ProjectRoadmapPolicy.md` without requiring a separate developer request. Codex must use the project's existing
 canonical roadmap or generator, create a root `ROADMAP.md` only when none
 exists, and update it only when a roadmap topic crosses a status, scope,
 priority, completion-signal, or material-blocker boundary.

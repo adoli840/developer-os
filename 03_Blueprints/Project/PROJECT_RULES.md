@@ -2,13 +2,15 @@
 
 This file is optional.
 
-Use it only for explicit project-specific rules or exceptions that differ from DeveloperOS global policy.
+Use it for explicit project-specific rules. DeveloperOS is optional and does not
+apply unless the project explicitly opts in.
 
 ## Rule Precedence
 
-Project-specific rules in this file take precedence over DeveloperOS only when they explicitly override a global rule.
+Project-specific rules in this file are authoritative. If the project opts in,
+they take precedence over DeveloperOS where they explicitly override a shared rule.
 
-If this file is silent, follow DeveloperOS.
+If this file is silent, follow the project's own documented conventions.
 
 ## Explicit Overrides
 

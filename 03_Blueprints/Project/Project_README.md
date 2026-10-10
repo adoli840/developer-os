@@ -2,9 +2,10 @@
 
 ## Project Governance
 
-This project is governed by the DeveloperOS workspace.
+This project is independent by default. It may opt in to DeveloperOS guidance
+by explicitly declaring that choice in its project-local rules.
 
-Before making architectural or structural changes, always consult:
+If the project opts in, consult the following before architectural or structural changes:
 
 - `../DeveloperOS/00_Master/AI_Rules.md`
 - `../DeveloperOS/00_Master/CodingStandards.md`
@@ -15,9 +16,11 @@ Before making architectural or structural changes, always consult:
 - `../DeveloperOS/02_AI/AI_Workflow_Safety_Policy.md`
 - `../DeveloperOS/00_Master/Architecture.md`, if applicable
 
-Project-specific rules in this repository take precedence over DeveloperOS only when they explicitly override a global rule.
+Project-specific rules are authoritative by default. If the project opts in,
+those rules take precedence over DeveloperOS only where they explicitly override
+a shared rule.
 
-DeveloperOS provides the default engineering policies for all projects in this workspace.
+DeveloperOS provides optional default engineering policies for opted-in projects.
 
 ## Purpose
 

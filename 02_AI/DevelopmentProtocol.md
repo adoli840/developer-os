@@ -92,7 +92,8 @@ low-cost decisions.
 
 ## Precedence And Scope
 
-This is a DeveloperOS-wide default for every repository under `X:\Projects`,
-including new projects. Explicit project rules and stricter safety policies
-take precedence. When a conflict exists, report it clearly and follow the
-stricter applicable rule.
+This is a DeveloperOS-wide default for the DeveloperOS repository and for
+projects that explicitly opt in, including new opted-in projects. Independent
+projects may use their own development protocol. Explicit project rules and
+stricter safety policies take precedence. When a conflict exists, report it
+clearly and follow the stricter applicable rule.

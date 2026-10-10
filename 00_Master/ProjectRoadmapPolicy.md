@@ -278,7 +278,7 @@ instead of creating a second manually maintained source of truth.
 
 ## Roadmap Web View
 
-Every project with a browser-accessible application must provide a read-only
+Every opted-in project with a browser-accessible application must provide a read-only
 roadmap view at its normal access address followed by `/roadmap`.
 
 The view must:

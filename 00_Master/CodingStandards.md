@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This document defines global coding standards for projects governed by DeveloperOS.
+This document defines shared coding standards for DeveloperOS and projects that
+explicitly opt into DeveloperOS governance. Independent projects remain free to
+use their own coding standards.
 
 ## General Principles
 

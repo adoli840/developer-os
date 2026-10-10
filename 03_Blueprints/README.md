@@ -10,7 +10,7 @@ A blueprint is a reusable project starting point that may include documentation,
 
 Do not copy DeveloperOS global policy documents into projects.
 
-Blueprints should reference DeveloperOS through `PROJECT_CONTEXT.md` and use `PROJECT_RULES.md` only for explicit local exceptions.
+Blueprints may reference DeveloperOS through `PROJECT_CONTEXT.md` when a project opts in. `PROJECT_RULES.md` is authoritative for independent projects.
 
 ## Available Blueprints
 

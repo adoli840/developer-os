@@ -2,17 +2,17 @@
 
 ## Purpose
 
-DeveloperOS is the global governance repository for this workspace.
+DeveloperOS is the governance repository for its own work and for projects that explicitly opt in.
 
 Project repositories should not copy DeveloperOS policy documents. They should reference DeveloperOS as the single source of truth.
 
 ## Core Principle
 
-DeveloperOS is the **Global Constitution**.
+DeveloperOS is an **optional shared constitution**.
 
 Each project may define a short **Project Constitution** through `PROJECT_CONTEXT.md`.
 
-Global rules live in one place. Project-specific exceptions live inside the project.
+Opted-in shared rules live in one place. Independent projects may define their own constitution entirely inside the project.
 
 ## Self-Application Rule
 
@@ -49,7 +49,7 @@ Do not copy these documents into individual projects.
 
 Copying global rules creates drift over time.
 
-DeveloperOS should remain the single source of truth for global engineering policy.
+DeveloperOS should remain the single source of truth for shared policy only where a project has opted in.
 
 ## Project State Ownership
 
@@ -106,11 +106,11 @@ When rules conflict:
 
 Project-specific rules take precedence only when they explicitly override a global rule.
 
-Otherwise, DeveloperOS provides the default engineering policy for all projects in the workspace.
+Otherwise, the project remains governed by its own local rules and conventions. DeveloperOS provides defaults only after explicit opt-in.
 
 ## Codex Startup Flow
 
-Before making changes in any project, Codex should read documents in this order.
+Before making changes in an opted-in project, Codex should read documents in this order. Independent projects should follow their own startup flow.
 
 ```text
 1. Current project README.md
@@ -132,7 +132,7 @@ Before making changes in any project, Codex should read documents in this order.
 
 ## Goal
 
-The goal is stable governance without duplicated rules.
+The goal is stable optional governance without duplicated rules or forced adoption.
 
-DeveloperOS defines global defaults. Projects define their own purpose, current status, roadmap, implementation state, and explicit exceptions.
+DeveloperOS defines optional defaults. Projects define their own purpose, current status, roadmap, implementation state, and rules.
 

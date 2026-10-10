@@ -18,6 +18,40 @@ Impact:
 Follow-up:
 ```
 
+## 2026-10-11 - Make DeveloperOS Governance Opt-In
+
+Status: Accepted
+
+Context:
+
+The workspace contains independent projects with their own constitutions,
+safety rules, roadmaps, and operating workflows. A mandatory workspace-wide
+policy creates unnecessary coupling and makes project ownership ambiguous.
+
+Decision:
+
+DeveloperOS governance is mandatory for the DeveloperOS repository itself and
+optional for other projects. A project is bound by DeveloperOS only when its
+project-local rules explicitly opt in. Independent projects use their own local
+rules and may retain shared technical tools without adopting DeveloperOS
+governance.
+
+Reason:
+
+Project autonomy is clearer when governance adoption is explicit rather than
+implied by workspace location.
+
+Impact:
+
+Project-local rules, source, databases, Docker namespaces, and roadmaps remain
+project-owned. DeveloperOS policies and shared tools are no longer a mandatory
+approval or reading path for non-opted-in projects.
+
+Follow-up:
+
+Keep technical shared interfaces separate from governance adoption. New
+projects are independent by default.
+
 ## 2026-06-29 - Use DeveloperOS As The Workspace Operating System
 
 Status: Accepted

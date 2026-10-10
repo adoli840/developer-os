@@ -2,27 +2,27 @@
 
 ## Purpose
 
-`BOOT.md` is the single entry point for any AI agent working inside an individual project that belongs to this workspace.
+`BOOT.md` is the entry point for projects that explicitly opt in to DeveloperOS governance. It is not a mandatory policy for independent projects.
 
 Before using DeveloperOS from a project repository, read this file first.
 
 ## Core Model
 
-DeveloperOS is the global engineering constitution for `X:\Projects`.
+DeveloperOS is an optional engineering-governance system for projects that choose to use it. Independent projects keep their own constitution and workflow.
 
 Individual projects are application repositories. They own their own README, TODO, roadmap, implementation state, architecture notes, and project-specific decisions.
 
-DeveloperOS provides shared engineering principles, AI collaboration rules, safety policy, coding standards, language policy, and reusable project blueprints.
+DeveloperOS provides reusable engineering principles, AI collaboration rules, safety policy, coding standards, language policy, and project blueprints for opted-in projects.
 
 DeveloperOS is not a project dashboard, project database, or replacement for project-owned documentation.
 
 ## Reading Rule
 
-Do not scan the entire DeveloperOS repository by default.
+For an opted-in project, do not scan the entire DeveloperOS repository by default.
 
 Read only the documents relevant to the current task. Expand the reading scope only when the task requires it or when project documents conflict with DeveloperOS policy.
 
-Use this order when working from an individual project:
+Independent projects should use their own local documentation and rules. Use the following order only when the project explicitly opts in to DeveloperOS:
 
 1. `X:\Projects\DeveloperOS\BOOT.md`
 2. Current project `README.md`
@@ -40,17 +40,17 @@ Use this order when working from an individual project:
 When rules conflict:
 
 1. Explicit project-specific rules in `PROJECT_CONTEXT.md` or `PROJECT_RULES.md`
-2. DeveloperOS global policies
-3. Existing project codebase conventions
-4. AI judgment
+2. Existing project codebase conventions
+3. AI judgment
+4. DeveloperOS policies, only when the project explicitly opts in
 
 Project-specific documents override DeveloperOS only when the override is explicit. Otherwise, DeveloperOS remains the default global policy.
 
 ## Project Roadmap Rule
 
-For meaningful project work, read and follow
-`00_Master/ProjectRoadmapPolicy.md` even when the developer does not separately
-request roadmap maintenance.
+For meaningful work in an opted-in project, read and follow
+`00_Master/ProjectRoadmapPolicy.md`. Independent projects own their roadmap
+lifecycle without a DeveloperOS requirement.
 
 Use the project's existing canonical roadmap or generator. If the project has
 none, create a root `ROADMAP.md` from the DeveloperOS project blueprint. When
@@ -104,7 +104,7 @@ reading the selected source or the project's explicit instructions.
 
 ## Output Rule
 
-When DeveloperOS affected the work, summarize which DeveloperOS documents were used and why.
+When an opted-in project uses DeveloperOS, summarize which DeveloperOS documents were used and why.
 
 For meaningful repository work, confirm that roadmap transition triggers were
 evaluated. Create or update the project-owned roadmap only when required by

@@ -1,6 +1,7 @@
 # Codex Task
 
-Read `X:\Projects\DeveloperOS\BOOT.md` before starting work.
+Read `X:\Projects\DeveloperOS\BOOT.md` before starting work only when the
+project explicitly opts into DeveloperOS governance.
 
 ## Shortcut
 
@@ -12,7 +13,7 @@ Read `X:\Projects\DeveloperOS\BOOT.md` before starting work.
 
 ## Model Routing
 
-Read `X:\Projects\DeveloperOS\02_AI\ModelRoutingPolicy.md` and begin with:
+For an opted-in project, read `X:\Projects\DeveloperOS\02_AI\ModelRoutingPolicy.md` and begin with:
 
 ```text
 Model recommendation: Luna | Luna to Sol | Sol
@@ -45,13 +46,13 @@ review result. Small, clear, reversible changes may use the abbreviated path.
 
 This file belongs to the current application project.
 
-DeveloperOS is the global engineering constitution. The project repository owns its README, TODO, roadmap, current implementation state, architecture notes, and project-specific decisions.
+DeveloperOS is an optional shared constitution. The project repository owns its README, TODO, roadmap, current implementation state, architecture notes, and project-specific decisions. Independent projects are governed by their own local rules unless they explicitly opt in.
 
-Do not scan the entire DeveloperOS repository. Use `BOOT.md` as the routing entry point and read only the DeveloperOS documents relevant to this task.
+For opted-in projects, do not scan the entire DeveloperOS repository. Use `BOOT.md` as the routing entry point and read only the DeveloperOS documents relevant to this task.
 
 ## Project Context Rule
 
-When this repository has `PROJECT_AREAS.json`, run
+When an opted-in repository has `PROJECT_AREAS.json`, run
 `make context TASK="{{TASK}}"` before broad source inspection. Begin with the
 selected entrypoints, files, and focused verification. Expand only when imports,
 shared contracts, database or authentication boundaries, deployment behavior,
@@ -59,7 +60,7 @@ safety rules, or failing evidence cross the selected area.
 
 ## Roadmap Completion Rule
 
-Follow `X:\Projects\DeveloperOS\00_Master\ProjectRoadmapPolicy.md` without
+For opted-in projects, follow `X:\Projects\DeveloperOS\00_Master\ProjectRoadmapPolicy.md` without
 waiting for a separate roadmap request. For meaningful work, read the project's
 canonical roadmap before implementation. Before finishing, evaluate whether a
 topic's status, scope, priority, completion signal, or material blocker changed,
@@ -69,7 +70,8 @@ when the project has no canonical roadmap.
 
 ## Docker Image Build Rule
 
-For Docker, Compose, image, deployment, or container lifecycle work, follow
+For Docker, Compose, image, deployment, or container lifecycle work in an
+opted-in project, follow
 `X:\Projects\DeveloperOS\00_Master\DockerImageBuildPolicy.md`. Routine starts
 and restarts must use existing images. Build only at an explicit build or
 release boundary after identifying the changed build input or missing image.

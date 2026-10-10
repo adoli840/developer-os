@@ -6,7 +6,7 @@ This document provides concise AI rules for daily work.
 
 ## Workspace-First Rule
 
-AI must check DeveloperOS before meaningful project work.
+AI must check DeveloperOS before meaningful project work only when the project opts in.
 
 ## Inspection-First Rule
 
