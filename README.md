@@ -130,7 +130,7 @@ clean Git work tree, pushes existing commits, verifies the upstream revision,
 and delegates to the project's deployment target. Commit selection and commit
 messages remain a Codex or developer decision.
 
-Verify the shared contract across DeveloperOS, OA, Gaia, and bTest:
+Verify the shared contract across DeveloperOS, OA, and bTest:
 
 ```bash
 make make-check
@@ -169,7 +169,7 @@ Fallback direct command:
 X:\Projects\DeveloperOS\04_Tools\bin\devos.cmd git-check
 ```
 
-The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, Gaia Project, bTest, OA, and Ever.
+The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, bTest, OA, and Ever.
 
 ## Project Data Synchronization
 
@@ -267,7 +267,7 @@ principal. Neither credential reaches the public console.
 The Oracle deployment also installs:
 
 - A private SQLite memo database with daily verified copies and 14-day retention.
-- Daily OA and Gaia full PostgreSQL backups with 14-day retention.
+- Daily OA full PostgreSQL backups with 14-day retention.
 - Daily bTest PostgreSQL backups with Kline rows excluded and 3-day retention.
 - Weekly isolated restore verification in temporary PostgreSQL containers.
 - Deployment revision and container image comparison.
@@ -312,7 +312,6 @@ the existing SSH key:
 make terminal-tunnel
 make terminal-developer-os
 make terminal-oa
-make terminal-gaia
 make terminal-ever
 ```
 

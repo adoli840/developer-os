@@ -6,7 +6,6 @@ $developerOSPath = Join-Path $workspaceRoot "DeveloperOS"
 
 $projects = @(
     @{ Name = "OA"; Path = (Join-Path $workspaceRoot "oa"); Compose = "docker-compose.yml"; BuildCompose = "docker-compose.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" },
-    @{ Name = "Gaia"; Path = (Join-Path $workspaceRoot "gaia"); Compose = "docker-compose.dev.yml"; BuildCompose = "docker-compose.dev.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" },
     @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest"); Compose = "docker-compose.unified.dev.yml"; BuildCompose = "docker-compose.unified.dev.yml"; DeployTarget = "project-deploy"; SyncTarget = "sync-push" }
 )
 

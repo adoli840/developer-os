@@ -11,7 +11,6 @@ for path in \
   /opt/developer-os-console/current \
   /home/opc/bTest-release \
   /home/opc/oa \
-  /home/opc/gaia \
   /opt/everNext
 do
   if [[ -e "$path" ]]; then

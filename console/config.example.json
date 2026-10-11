@@ -14,7 +14,7 @@
       "compose_project": "btest",
       "port": 8081,
       "backup_expected": true
-    },
+    }
     {
       "slug": "oa",
       "name": "OA",
@@ -23,14 +23,6 @@
       "port": 8082,
       "backup_expected": true
     },
-    {
-      "slug": "gaia",
-      "name": "Gaia",
-      "path": "{workspace}/gaia",
-      "compose_project": "gaia",
-      "port": 8083,
-      "backup_expected": true
-    }
   ],
   "workstations": [
     {

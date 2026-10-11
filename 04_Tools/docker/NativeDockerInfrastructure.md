@@ -6,8 +6,8 @@ authorize deletion of the Desktop VHD or its assets.
 
 ## Ownership
 
-DeveloperOS owns the local native Docker boundary shared by bTest, OA, and
-Gaia. Project repositories own their Compose files, service definitions,
+DeveloperOS owns the local native Docker boundary shared by bTest and OA.
+Project repositories own their Compose files, service definitions,
 project lifecycle commands, data rules, and remote deployment behavior. They
 must not install, replace, or independently restart the shared local daemon or
 change its socket, data root, credential store, CLI, or Compose plugin.
@@ -110,12 +110,10 @@ Current integration status at sealing time:
   Docker calls still require project audit.
 - OA overrides `DEVOS_DOCKER` with `scripts/docker_native.py`; it must converge
   on the shared launcher while retaining remote-only commands.
-- Gaia overrides `DEVOS_DOCKER` with `scripts/docker-native.cmd`; it must
-  converge on the shared launcher while retaining remote-only commands.
 
 ## Independent Project Runtime Policy
 
-The shared daemon is a prerequisite, not a project orchestrator. OA, Gaia,
+The shared daemon is a prerequisite, not a project orchestrator. OA,
 bTest-Elliott, and bTest-Ever may independently start and stop their own
 development runtime without a per-operation DeveloperOS approval.
 
@@ -137,7 +135,7 @@ The invariant is:
 daemon start != project runtime start
 ```
 
-Daemon startup must not implicitly start OA, Gaia, bTest-Elliott, or
+Daemon startup must not implicitly start OA, bTest-Elliott, or
 bTest-Ever containers. The operating system and project agents must audit
 systemd/project auto-start units, Compose startup hooks, `restart:` policies,
 scheduled tasks, and supervisor configurations to remove such side effects.
@@ -191,7 +189,7 @@ not run alongside the canonical `/var/lib/docker-wsl` daemon. Disabling them
 does not remove their images, containers, volumes, networks, or data.
 
 Only DeveloperOS coordinates `docker-wsl.service` restart. Before a restart it
-must record bTest, OA, and Gaia container health and prove that no migration,
+must record bTest and OA container health and prove that no migration,
 seed, reset, volume replacement, or data write is part of the operation. If all
 runtimes are healthy and no daemon configuration changed, do not restart.
 

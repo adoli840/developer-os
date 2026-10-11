@@ -84,7 +84,7 @@ Omit `DEVOS_SYNC_PUSH_TARGET` when the project owns no approved synchronized
 data. Keep `DEVOS_DEPLOY_SYNC=none` unless the project contract explicitly
 allows a verified data publish after a successful code deployment.
 
-Verify DeveloperOS, OA, Gaia, and bTest against the shared contract:
+Verify DeveloperOS, OA, and bTest against the shared contract:
 
 ```bash
 make make-check

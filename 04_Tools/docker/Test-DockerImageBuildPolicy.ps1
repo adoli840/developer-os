@@ -9,7 +9,6 @@ $failures = New-Object System.Collections.Generic.List[string]
 $repositories = @(
     @{ Name = "DeveloperOS"; Path = $developerOSRoot },
     @{ Name = "OA"; Path = (Join-Path $workspaceRoot "OA") },
-    @{ Name = "Gaia"; Path = (Join-Path $workspaceRoot "Gaia") },
     @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest") }
 )
 

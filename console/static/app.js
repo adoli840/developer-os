@@ -3,7 +3,6 @@ const MEMO_PROJECTS = [
   {slug: "developer-os", name: "OS"},
   {slug: "btest", name: "bTest"},
   {slug: "oa", name: "OA"},
-  {slug: "gaia", name: "Gaia"},
   {slug: "evernext", name: "everNext"},
 ];
 const PRIMARY_TABS = new Set(["projects", "orchestration", "resources", "roadmap", "recovery", "oracle", "memo"]);
@@ -1012,7 +1011,7 @@ function serviceStatus(status) {
 }
 
 function terminalLink(project) {
-  const terminalProjects = new Set(["developer-os", "oa", "gaia", "btest", "evernext"]);
+  const terminalProjects = new Set(["developer-os", "oa", "btest", "evernext"]);
   if (!project.available || !terminalProjects.has(project.slug)) {
     return `<span class="terminal-unavailable">Unavailable</span>`;
   }

@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet("developer-os", "oa", "gaia", "evernext")]
+  [ValidateSet("developer-os", "oa", "evernext")]
   [string]$Project = "developer-os",
   [string]$Server = "opc@168.107.18.16",
   [string]$SshKey = "X:/Settings/ssh/ssh-key-ops.key",

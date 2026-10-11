@@ -9,7 +9,6 @@ MEMO_DATABASE=/var/lib/developer-os-console/memos.sqlite3
 LOCK_FILE=/run/lock/developer-os-database-backup.lock
 declare -A CONTAINERS=(
   [oa]=oa_db
-  [gaia]=gaia_db
   [btest]=btest-elliott-db
 )
 declare -A LEGACY_CONTAINERS=(
@@ -17,12 +16,10 @@ declare -A LEGACY_CONTAINERS=(
 )
 declare -A BACKUP_POLICIES=(
   [oa]=full-cluster
-  [gaia]=full-cluster
   [btest]=multi-container-excluding-market.klines-data
 )
 declare -A RETENTION_DAYS=(
   [oa]=14
-  [gaia]=14
   [btest]=3
 )
 
@@ -251,7 +248,7 @@ backup_one() {
 
 projects=("$@")
 if [ ${#projects[@]} -eq 0 ] || [ "${projects[0]}" = "--all" ]; then
-  projects=(developer-os-memos oa gaia btest)
+  projects=(developer-os-memos oa btest)
 fi
 
 failed=0

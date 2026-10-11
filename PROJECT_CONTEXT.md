@@ -44,7 +44,7 @@ explicit structural exception is recorded in `PROJECT_RULES.md`.
 ## Verification
 
 - `make self-check`: verify DeveloperOS self-application and justified skips
-- `make make-check`: verify the shared Make contract for DeveloperOS, OA, Gaia,
+- `make make-check`: verify the shared Make contract for DeveloperOS, OA,
   and bTest
 - `make console-test`: run the DeveloperOS console test suite
 - `git diff --check`: detect whitespace errors

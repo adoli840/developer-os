@@ -36,7 +36,7 @@ The console reads:
 - Daily database backup and weekly isolated restore-verification status.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
 - A Recovery view limited to backup, restore-verification, and schedule evidence.
-- A server-database memo workspace for DeveloperOS, bTest, OA, Gaia, and everNext ideas.
+- A server-database memo workspace for DeveloperOS, bTest, OA, and everNext ideas.
 - Standard roadmap fields for configured projects, without raw files or source
   paths.
 
@@ -133,7 +133,7 @@ The deployment script:
 8. Verifies `http://127.0.0.1:8080/healthz`.
 9. Installs daily managed database backup and weekly PostgreSQL
    restore-verification timers.
-10. Runs an initial memo, OA, Gaia, and bTest backup plus the applicable
+10. Runs an initial memo, OA, and bTest backup plus the applicable
     integrity or isolated restore tests.
 11. Installs an hourly provider usage collector using the protected, Git-ignored
     `X:/Projects/DeveloperOS/.env` file and a dedicated Python environment.
@@ -146,7 +146,7 @@ addresses to reach TCP port 8080.
 ## Database Recovery Protection
 
 `developer-os-backup.timer` creates compressed full-cluster backups for the
-`oa_db` and `gaia_db` containers every day. Those backups are retained for 14
+`oa_db` container every day. Those backups are retained for 14
 days. It also creates one combined bTest backup containing a full dump of
 `btest_db` and a selective dump of `btest-elliott-db`; all Elliott schemas and
 data are included except rows in `market.klines`, which can be downloaded again
@@ -188,7 +188,7 @@ make console-backup-status
 ## Workstation Reporting
 
 The Home and Office workstation reporters refresh the configured upstreams for
-DeveloperOS, OA, Gaia, bTest, and everNext, then send separate small JSON summaries
+DeveloperOS, OA, bTest, and everNext, then send separate small JSON summaries
 through SSH to the Oracle server. Fetch updates Git metadata without changing
 the checked-out branch, index, or working tree. Send a one-time report with:
 
@@ -491,7 +491,6 @@ Open a project:
 ```powershell
 make terminal-developer-os
 make terminal-oa
-make terminal-gaia
 make terminal-evernext
 ```
 

@@ -85,7 +85,7 @@ separate project opt-in governed by `DataSynchronizationPolicy.md`.
 ## Enforcement
 
 `04_Tools/make/DeveloperOS.mk` owns the shared lifecycle behavior.
-`make docker-policy-check` statically checks DeveloperOS, OA, Gaia, and bTest
+`make docker-policy-check` statically checks DeveloperOS, OA, and bTest
 for ambiguous Compose starts, build-on-start commands, unsafe cache bypass, and
 system-wide pruning. `make make-check` runs the same policy check after the
 shared Make contract test.

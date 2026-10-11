@@ -17,15 +17,6 @@ projects:
     server_path_secret: "PROD_PATH_OA"
     deploy_command: "docker compose -f docker-compose.prod.yml up -d --no-build"
 
-  gaia:
-    repo_path: "X:/Projects/gaia"
-    github_branch: "main"
-    dockerhub_image: "adoli840/gaia"
-    dockerfile: "Dockerfile"
-    compose_file: "docker-compose.prod.yml"
-    server_path_secret: "PROD_PATH_GAIA"
-    deploy_command: "docker compose -f docker-compose.prod.yml up -d --no-build"
-
 required_secrets:
   common:
     - "DOCKERHUB_USERNAME"
@@ -37,4 +28,3 @@ required_secrets:
   project_path:
     - "PROD_PATH_BTEST"
     - "PROD_PATH_OA"
-    - "PROD_PATH_GAIA"

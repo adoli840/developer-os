@@ -13,7 +13,6 @@ case "$resolved" in
   /opt/developer-os-console|/opt/developer-os-console/*|\
   /home/opc/bTest-release|/home/opc/bTest-release/*|\
   /home/opc/oa|/home/opc/oa/*|\
-  /home/opc/gaia|/home/opc/gaia/*|\
   /opt/everNext|/opt/everNext/*)
     ;;
   *)

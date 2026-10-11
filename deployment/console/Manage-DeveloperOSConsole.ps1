@@ -219,7 +219,6 @@ try {
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current","compose_project":"developer-os-console","port":8080,"backup_expected":false},
     {"slug":"btest","name":"bTest","path":"/home/opc/bTest-release","compose_project":"btest","port":8081,"backup_expected":true},
     {"slug":"oa","name":"OA","path":"/home/opc/oa","compose_project":"oa","port":8082,"backup_expected":true},
-    {"slug":"gaia","name":"Gaia","path":"/home/opc/gaia","compose_project":"gaia","port":8083,"backup_expected":true},
     {"slug":"evernext","name":"everNext","path":"/opt/everNext","compose_project":"evernext","port":8086,"backup_expected":false,"runtime_services":["evernext.service","evernext-sp-worker.service"],"health_path":"/api/settings"}
   ],
   "workstations": [
@@ -236,7 +235,6 @@ try {
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current"},
     {"slug":"btest","name":"bTest","path":"/home/opc/bTest-release"},
     {"slug":"oa","name":"OA","path":"/home/opc/oa"},
-    {"slug":"gaia","name":"Gaia","path":"/home/opc/gaia"},
     {"slug":"evernext","name":"everNext","path":"/opt/everNext"}
   ]
 }
@@ -343,7 +341,7 @@ sudo install -d -m 0750 -o opc -g opc /var/lib/developer-os-console/workstations
 if [ ! -s /var/lib/developer-os-console/backup-status/developer-os-memos.json ]; then
   sudo /usr/local/sbin/developer-os-backup-postgres developer-os-memos
 fi
-if [ ! -s /var/lib/developer-os-console/backup-status/oa.json ] || [ ! -s /var/lib/developer-os-console/backup-status/gaia.json ] || [ ! -s /var/lib/developer-os-console/backup-status/btest.json ]; then
+if [ ! -s /var/lib/developer-os-console/backup-status/oa.json ] || [ ! -s /var/lib/developer-os-console/backup-status/btest.json ]; then
   sudo systemctl start developer-os-backup.service
   sudo systemctl start developer-os-backup-verify.service
 fi

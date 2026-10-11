@@ -93,7 +93,7 @@ Review these candidates after inspecting active projects:
 
 ## Shared Native Docker Infrastructure
 
-DeveloperOS owns one local native Docker execution boundary for OA, Gaia,
+DeveloperOS owns one local native Docker execution boundary for OA,
 bTest-Elliott, and bTest-Ever. Windows commands enter Ubuntu through an
 argument-array launcher that
 fixes `DOCKER_HOST=unix:///run/docker-wsl.sock`,

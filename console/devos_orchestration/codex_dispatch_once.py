@@ -88,7 +88,7 @@ def run_once(
 
     control = OrchestrationControlStore(
         runtime_dir / "orchestration-control.json",
-        ["developer-os", "btest", "oa", "gaia", "evernext"],
+        ["developer-os", "btest", "oa", "evernext"],
         AuditLog(runtime_dir / "audit.jsonl"),
         capability_provider=capability_provider,
     )

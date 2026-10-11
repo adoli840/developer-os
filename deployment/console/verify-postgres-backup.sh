@@ -154,7 +154,7 @@ verify_one() (
 
 projects=("$@")
 if [ ${#projects[@]} -eq 0 ] || [ "${projects[0]}" = "--all" ]; then
-  projects=(oa gaia btest)
+  projects=(oa btest)
 fi
 
 failed=0

@@ -56,7 +56,7 @@ class MemoStoreTests(unittest.TestCase):
             items = {item["project"]: item for item in second.list_all()["items"]}
 
         self.assertEqual(items["oa"]["content"], "세금 신고 아이디어")
-        self.assertEqual(list(items), ["developer-os", "btest", "oa", "gaia", "evernext"])
+        self.assertEqual(list(items), ["developer-os", "btest", "oa", "evernext"])
 
     def test_legacy_ever_memo_remains_stored_but_is_not_a_current_project(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -166,7 +166,6 @@ class ConsoleSurfaceTests(unittest.TestCase):
             'data-memo-project="developer-os"',
             'data-memo-project="btest"',
             'data-memo-project="oa"',
-            'data-memo-project="gaia"',
         ]
         self.assertEqual(memo_items, sorted(memo_items, key=html.index))
         self.assertNotIn('id="memo-login-form"', html)
@@ -518,11 +517,12 @@ class MemoApiTests(unittest.TestCase):
                     return json.load(response)
 
             try:
-                saved = call(
-                    "/api/memos/gaia",
-                    method="PUT",
-                    body={"content": "게임 AI 아이디어"},
-                )
+                with self.assertRaises(HTTPError) as retired_error:
+                    call(
+                        "/api/memos/gaia",
+                        method="PUT",
+                        body={"content": "게임 AI 아이디어"},
+                    )
                 memos = call("/api/memos")
                 with self.assertRaises(HTTPError) as error:
                     call("/api/projects/oa/logs")
@@ -533,11 +533,8 @@ class MemoApiTests(unittest.TestCase):
                 server.server_close()
                 thread.join(timeout=5)
 
-        self.assertEqual(saved["item"]["content"], "게임 AI 아이디어")
-        self.assertEqual(
-            next(item for item in memos["items"] if item["project"] == "gaia")["content"],
-            "게임 AI 아이디어",
-        )
+        self.assertEqual(retired_error.exception.code, 400)
+        self.assertNotIn("gaia", {item["project"] for item in memos["items"]})
         self.assertEqual(error.exception.code, 401)
         self.assertEqual(orchestration_error.exception.code, 401)
 

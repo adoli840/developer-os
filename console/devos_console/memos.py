@@ -12,7 +12,6 @@ MEMO_PROJECTS = (
     ("developer-os", "OS"),
     ("btest", "bTest"),
     ("oa", "OA"),
-    ("gaia", "Gaia"),
     ("evernext", "everNext"),
 )
 MAX_MEMO_BYTES = 256 * 1024
