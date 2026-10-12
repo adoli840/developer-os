@@ -154,7 +154,7 @@ verify_one() (
 
 projects=("$@")
 if [ ${#projects[@]} -eq 0 ] || [ "${projects[0]}" = "--all" ]; then
-  projects=(oa btest)
+  projects=(oa)
 fi
 
 failed=0

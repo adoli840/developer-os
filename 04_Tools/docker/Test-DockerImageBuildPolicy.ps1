@@ -8,8 +8,7 @@ $failures = New-Object System.Collections.Generic.List[string]
 
 $repositories = @(
     @{ Name = "DeveloperOS"; Path = $developerOSRoot },
-    @{ Name = "OA"; Path = (Join-Path $workspaceRoot "OA") },
-    @{ Name = "bTest"; Path = (Join-Path $workspaceRoot "bTest") }
+    @{ Name = "OA"; Path = (Join-Path $workspaceRoot "OA") }
 )
 
 function Add-Result {

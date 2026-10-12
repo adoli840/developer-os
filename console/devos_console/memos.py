@@ -10,7 +10,6 @@ from typing import Any
 
 MEMO_PROJECTS = (
     ("developer-os", "OS"),
-    ("btest", "bTest"),
     ("oa", "OA"),
     ("evernext2", "everNext2"),
 )

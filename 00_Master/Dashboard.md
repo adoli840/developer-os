@@ -64,7 +64,7 @@ The project index should stay lightweight. It may point to active project reposi
 
 ## Operational Dashboards
 
-- `GitDashboard.md`: end-of-day Git status dashboard for DeveloperOS, bTest, and OA
+- `GitDashboard.md`: end-of-day Git status dashboard for DeveloperOS and OA
 
 ## Synchronization Visibility
 

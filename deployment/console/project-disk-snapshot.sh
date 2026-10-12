@@ -9,7 +9,6 @@ install -d -m 0750 -o opc -g opc /var/lib/developer-os-console
 
 for path in \
   /opt/developer-os-console/current \
-  /home/opc/bTest-release \
   /home/opc/oa \
   /home/opc/everNext2
 do

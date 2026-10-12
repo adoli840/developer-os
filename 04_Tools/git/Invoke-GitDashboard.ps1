@@ -13,7 +13,6 @@ $failMark = [string][char]0x274C
 
 $projects = @(
     [pscustomobject]@{ Name = "DeveloperOS"; Path = $developerOsRoot.Path },
-    [pscustomobject]@{ Name = "bTest"; Path = Join-Path $workspaceRoot "bTest" },
     [pscustomobject]@{ Name = "OA"; Path = Join-Path $workspaceRoot "oa" },
     [pscustomobject]@{ Name = "everNext2"; Path = Join-Path $workspaceRoot "everNext2" }
 )

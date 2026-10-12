@@ -223,7 +223,6 @@ $scp = Resolve-OpenSshTool -Name "scp"
 $projectDefinitions = @(
   @{ slug = "developer-os"; name = "DeveloperOS"; directory = "DeveloperOS" },
   @{ slug = "oa"; name = "OA"; directory = "oa" },
-  @{ slug = "btest"; name = "bTest"; directory = "bTest" },
   @{ slug = "evernext2"; name = "everNext2"; directory = "everNext2" }
 )
 

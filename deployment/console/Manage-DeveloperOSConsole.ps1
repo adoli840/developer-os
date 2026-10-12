@@ -217,7 +217,6 @@ try {
 {
   "projects": [
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current","compose_project":"developer-os-console","port":8080,"backup_expected":false},
-    {"slug":"btest","name":"bTest","path":"/home/opc/bTest-release","compose_project":"btest","port":8081,"backup_expected":true},
     {"slug":"oa","name":"OA","path":"/home/opc/oa","compose_project":"oa","port":8082,"backup_expected":true},
     {"slug":"evernext2","name":"everNext2","path":"/home/opc/everNext2","compose_project":"evernext2","port":8085,"backup_expected":false,"runtime_services":["evernext2.service"],"health_path":"/api/settings"}
   ],
@@ -233,7 +232,6 @@ try {
   "projects": [
     {"slug":"server","name":"Server","path":"/home/opc"},
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current"},
-    {"slug":"btest","name":"bTest","path":"/home/opc/bTest-release"},
     {"slug":"oa","name":"OA","path":"/home/opc/oa"},
     {"slug":"evernext2","name":"everNext2","path":"/home/opc/everNext2"}
   ]
@@ -341,7 +339,7 @@ sudo install -d -m 0750 -o opc -g opc /var/lib/developer-os-console/workstations
 if [ ! -s /var/lib/developer-os-console/backup-status/developer-os-memos.json ]; then
   sudo /usr/local/sbin/developer-os-backup-postgres developer-os-memos
 fi
-if [ ! -s /var/lib/developer-os-console/backup-status/oa.json ] || [ ! -s /var/lib/developer-os-console/backup-status/btest.json ]; then
+if [ ! -s /var/lib/developer-os-console/backup-status/oa.json ]; then
   sudo systemctl start developer-os-backup.service
   sudo systemctl start developer-os-backup-verify.service
 fi

@@ -7,7 +7,9 @@ store project roadmaps, duplicate project documentation, or become the source
 of truth for project state. `/roadmap` derives a read-only standard view from
 project-owned root `ROADMAP.md` files.
 
-For bTest orchestration, the Initial Request form is a no-network preparation
+The retained bTest orchestration code is private historical tooling and is not
+an active registered project or operational monitoring target. For bTest
+orchestration, the Initial Request form is a no-network preparation
 boundary. It requires the managed API Mainline authority, seals the exact user
 input with current canonical state, and stops at `USER_APPROVAL_REQUIRED`.
 Changing the input creates a new candidate and stales the prior candidate; the
@@ -36,7 +38,7 @@ The console reads:
 - Daily database backup and weekly isolated restore-verification status.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
 - A Recovery view limited to backup, restore-verification, and schedule evidence.
-- A server-database memo workspace for DeveloperOS, bTest, OA, and everNext2 ideas.
+- A server-database memo workspace for DeveloperOS, OA, and everNext2 ideas.
 - Standard roadmap fields for configured projects, without raw files or source
   paths.
 
@@ -133,7 +135,7 @@ The deployment script:
 8. Verifies `http://127.0.0.1:8080/healthz`.
 9. Installs daily managed database backup and weekly PostgreSQL
    restore-verification timers.
-10. Runs an initial memo, OA, and bTest backup plus the applicable
+10. Runs an initial memo and OA backup plus the applicable
     integrity or isolated restore tests.
 11. Installs an hourly provider usage collector using the protected, Git-ignored
     `X:/Projects/DeveloperOS/.env` file and a dedicated Python environment.
@@ -146,12 +148,9 @@ addresses to reach TCP port 8080.
 ## Database Recovery Protection
 
 `developer-os-backup.timer` creates compressed full-cluster backups for the
-`oa_db` container every day. Those backups are retained for 14
-days. It also creates one combined bTest backup containing a full dump of
-`btest_db` and a selective dump of `btest-elliott-db`; all Elliott schemas and
-data are included except rows in `market.klines`, which can be downloaded again
-from the market-data source. bTest backups are retained for 3 days because of
-their larger size and the server's limited root disk.
+`oa_db` container every day. Those backups are retained for 14 days. bTest is
+not an active DeveloperOS-managed project, so its database backup and restore
+operations remain project-owned.
 Backups are stored under `/var/backups/developer-os` and are readable only by
 root.
 
@@ -173,9 +172,7 @@ file-backup policy.
 
 `developer-os-backup-verify.timer` starts temporary network-isolated
 PostgreSQL containers each week and restores the latest backups into them.
-For bTest it also verifies that the Kline table schema exists with no restored
-rows and that the legacy bTest database and schema were restored. The
-verification never connects to or writes into the production databases.
+The verification never connects to or writes into production databases.
 
 Manual checks remain available:
 
@@ -188,7 +185,7 @@ make console-backup-status
 ## Workstation Reporting
 
 The Home and Office workstation reporters refresh the configured upstreams for
-DeveloperOS, OA, bTest, and everNext2, then send separate small JSON summaries
+DeveloperOS, OA, and everNext2, then send separate small JSON summaries
 through SSH to the Oracle server. Fetch updates Git metadata without changing
 the checked-out branch, index, or working tree. Send a one-time report with:
 

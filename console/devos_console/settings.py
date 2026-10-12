@@ -48,7 +48,6 @@ class Settings:
 
 DEFAULT_PROJECTS = (
     {"slug": "developer-os", "name": "DeveloperOS", "directory": "DeveloperOS", "compose_project": "developer-os-console", "port": 8080, "backup_expected": False},
-    {"slug": "btest", "name": "bTest", "directory": "bTest", "compose_project": "btest", "port": 8081, "backup_expected": True},
     {"slug": "oa", "name": "OA", "directory": "oa", "compose_project": "oa", "port": 8082, "backup_expected": True},
     {"slug": "evernext2", "name": "everNext2", "directory": "everNext2", "compose_project": "evernext2", "port": 8085, "backup_expected": False, "runtime_services": ["evernext2.service"], "health_path": "/api/settings"},
 )

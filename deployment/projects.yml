@@ -1,13 +1,4 @@
 projects:
-  bTest:
-    repo_path: "X:/Projects/bTest"
-    github_branch: "main"
-    dockerhub_image: "adoli840/btest"
-    dockerfile: "Dockerfile"
-    compose_file: "docker-compose.prod.yml"
-    server_path_secret: "PROD_PATH_BTEST"
-    deploy_command: "docker compose -f docker-compose.prod.yml up -d --no-build"
-
   oa:
     repo_path: "X:/Projects/oa"
     github_branch: "main"
@@ -26,5 +17,4 @@ required_secrets:
     - "PROD_PORT"
     - "PROD_SSH_KEY"
   project_path:
-    - "PROD_PATH_BTEST"
     - "PROD_PATH_OA"

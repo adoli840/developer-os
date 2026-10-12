@@ -11,7 +11,6 @@ resolved=$(readlink -f -- "$requested")
 
 case "$resolved" in
   /opt/developer-os-console|/opt/developer-os-console/*|\
-  /home/opc/bTest-release|/home/opc/bTest-release/*|\
   /home/opc/oa|/home/opc/oa/*|\
   /home/opc/everNext2|/home/opc/everNext2/*)
     ;;

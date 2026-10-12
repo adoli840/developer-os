@@ -9,18 +9,13 @@ MEMO_DATABASE=/var/lib/developer-os-console/memos.sqlite3
 LOCK_FILE=/run/lock/developer-os-database-backup.lock
 declare -A CONTAINERS=(
   [oa]=oa_db
-  [btest]=btest-elliott-db
 )
-declare -A LEGACY_CONTAINERS=(
-  [btest]=btest_db
-)
+declare -A LEGACY_CONTAINERS=()
 declare -A BACKUP_POLICIES=(
   [oa]=full-cluster
-  [btest]=multi-container-excluding-market.klines-data
 )
 declare -A RETENTION_DAYS=(
   [oa]=14
-  [btest]=3
 )
 
 install -d -m 0700 -o root -g root "$BACKUP_ROOT"
@@ -248,7 +243,7 @@ backup_one() {
 
 projects=("$@")
 if [ ${#projects[@]} -eq 0 ] || [ "${projects[0]}" = "--all" ]; then
-  projects=(developer-os-memos oa btest)
+  projects=(developer-os-memos oa)
 fi
 
 failed=0

@@ -13,7 +13,7 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 - Objective: Complete context routing and shared roadmap 3.1 adoption across
   the active application projects.
 - Status: In Progress
-- Completion signal: OA, bTest, and Ever pass their project-owned context
+- Completion signal: OA and Ever pass their project-owned context
   routing checks and local roadmap dependency, card-parity, interaction, and
   presentation checks with the current shared bundle.
 
@@ -22,15 +22,15 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Topic | Status | Completion Signal | Next Transition |
 |---|---|---|---|
 | Workspace foundation | Done | Self-application and roadmap lifecycle and publication contracts are confirmed across active projects | Observe the shared contracts for regressions |
-| Project context routing | In Progress | DeveloperOS, OA, bTest, and Ever use project-owned area maps, ignored incremental indexes, and the shared task context selector | Move to Done after all active application projects pass focused routing checks |
+| Project context routing | In Progress | DeveloperOS, OA, and Ever use project-owned area maps, ignored incremental indexes, and the shared task context selector | Move to Done after all active application projects pass focused routing checks |
 | Roadmap web publication | Done | Version 3.1 publishes compact expandable topic cards, validated dependency flows, exact linked-track identity, and accessible blocker presentation at `/roadmap` | Monitor project adapters without duplicating project state |
-| Managed project roadmap adoption | In Progress | OA, bTest, and Ever use the current shared bundle, schema version 2 track linkage, exact Overall-to-track card parity, dependency flows, and current blocker semantics at their own `/roadmap` routes | Move to Done after all active local routes pass data, interaction, and visual parity checks |
-| Docker image build minimization | In Progress | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Resolve or explicitly classify bTest build-cache cleanup findings, then rerun the workspace policy check |
+| Managed project roadmap adoption | In Progress | OA and Ever use the current shared bundle, schema version 2 track linkage, exact Overall-to-track card parity, dependency flows, and current blocker semantics at their own `/roadmap` routes | Move to Done after all active local routes pass data, interaction, and visual parity checks |
+| Docker image build minimization | In Progress | Shared and project-specific starts reuse images, explicit build boundaries build once, and policy checks pass across all managed projects | Resolve any active managed-project build policy findings, then rerun the workspace policy check |
 | Shared native Docker infrastructure | Done | One Desktop-independent launcher fixes Ubuntu, native CLI/Compose, socket, config, and credential helper while preserving all native runtime and data assets | Keep daemon restart coordinated and monitor the sealed boundary for drift |
-| Managed project native Docker adoption | In Progress | bTest and OA local repository commands use the shared launcher and pass runtime/data verification without changing remote server Docker behavior | Migrate each active project-owned local wrapper and direct invocation, then reopen its deletion gate independently |
+| Managed project native Docker adoption | In Progress | OA local repository commands use the shared launcher and pass runtime/data verification without changing remote server Docker behavior | Migrate each active project-owned local wrapper and direct invocation, then reopen its deletion gate independently |
 | Docker Desktop deletion readiness | Done | Every remaining Desktop VHD asset is classified, unique persistent data is externally preserved, and active projects return explicit votes | Await a separate global removal authorization; do not perform destructive cleanup from roadmap status alone |
 | Project data synchronization governance | Done | Global policy and an optional project contract distinguish merge-safe immutable unions, authoritative directed state, and project-owned database allowlists | Pilot read-only manifest comparison in a project only after its own roadmap authorizes synchronization |
-| Managed project operational authority | Done | Green project operations, Amber user decisions, Red shared-infrastructure escalation, and absolute fail-closed boundaries are explicit | Observe bTest 2.12.3 and refine only if a real ownership ambiguity recurs |
+| Managed project operational authority | Done | Green project operations, Amber user decisions, Red shared-infrastructure escalation, and absolute fail-closed boundaries are explicit | Refine only if a real ownership ambiguity recurs |
 | Workspace release commands | Done | Shared deploy and local-to-server sync facades delegate only to explicit project-owned hooks and preserve Git revision identity | Add project hooks only after their deployment or data contracts are verified |
 | Provider usage visibility | Done | Oracle actual A1 free-tier consumption, remaining quantities, and transparent month-end projections are available through the credential-free `/oracle` view; OpenAI Costs snapshots remain internal | Monitor Oracle collector freshness and projection accuracy; reserve OpenAI Costs data for future orchestration measurement |
 | AI model routing guidance | Done | Meaningful work receives a documented Luna, Luna-to-Sol, or Sol recommendation, and multi-stage work uses explicit user-confirmed handoffs at natural boundaries | Observe recommendations and refine thresholds only when evidence shows repeated misrouting |
@@ -49,21 +49,16 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Project context routing | Context identity substrate | Done | None | Versioned non-authoritative context seals and dirty-tree scope manifests bind project, lane, canonical sources, selected content, and workspace identities with source-wins fail-closed validation while leaving selection and orchestration behavior unchanged. |
 | Project context routing | Context efficiency observability baseline | Done | None | A project-and-lane-isolated metrics sidecar measures unchanged context selection, source repetition, identity reuse, dirty scanning, build duration, and packet/output sizes without persisting source content or inferred token usage. |
 | Project context routing | OA area adoption | Blocked | Dev | Define OA plugin and automation areas in the OA repository and verify representative task routing. |
-| Project context routing | bTest area adoption | Blocked | Dev | Define Elliott, Ever, data, execution, and recovery areas in the bTest repository and verify representative task routing. |
 | Roadmap web publication | Shared parser contract | Done | None | The console validates canonical topics, details, dependency endpoints, statuses, blockers, and safe public fields. |
 | Roadmap web publication | Shared browser renderer | Done | None | Version 3.1 renders compact expandable cards, dependency flows, and accessible blocker states with common responsive behavior. |
 | Roadmap web publication | Overall and track card identity | Done | None | Schema version 2 rejects linked compact and large cards that differ in count, order, name, status, or description. |
 | Roadmap web publication | Hover and focus descriptions | Done | None | Every detail item exposes its short explanation to pointer and keyboard users. |
 | Managed project roadmap adoption | OA local route migration | Blocked | Dev | Apply the current policy and bundle, then complete dependency, desktop, mobile, hover, and keyboard parity checks in OA. |
-| Managed project roadmap adoption | bTest local route migration | Blocked | Dev | Apply the current policy, bundle, dependency flow, and schema version 2 linked-card parity in bTest. |
 | Docker image build minimization | Shared lifecycle contract | Done | None | Routine starts reuse images and explicit build or release boundaries build once. |
-| Docker image build minimization | bTest cache cleanup compliance | In Progress | None | Determine whether the scheduled build-cache cleanup is an allowed maintenance boundary or must be changed to satisfy the shared policy. |
 | Shared native Docker infrastructure | Canonical launcher and config | Done | None | The argument-array launcher fixes Ubuntu, `/run/docker-wsl.sock`, native Docker and Compose paths, and the private `pass`-backed config while rejecting endpoint overrides. |
 | Shared native Docker infrastructure | Desktop plugin isolation | Done | None | Fifteen unowned Desktop-mount Docker CLI plugin symlinks were recorded and removed without changing native packages, runtime, data, or the Docker Desktop installation. |
-| Managed project native Docker adoption | bTest repository command migration | In Progress | None | Shared Make uses the canonical launcher, but remaining direct local Docker calls require project-owned classification and migration before deletion approval. |
 | Managed project native Docker adoption | OA repository command migration | Blocked | Dev | Replace the project-local `scripts/docker_native.py` boundary with the shared launcher while preserving remote server commands and revalidate runtime/data. |
 | Docker Desktop deletion readiness | Cross-project VHD inventory | Done | None | Eighty-two Desktop assets are individually inventoried; the stopped VHD has a read-only hash-identical forensic copy and no destructive action was performed. |
-| Docker Desktop deletion readiness | bTest persistent-data vote | Done | None | All 679 user tables were compared; the 4,709 meaningful Desktop-only provenance rows are sealed in a checksum-verified, successfully restored logical archive. |
 | Docker Desktop deletion readiness | OA persistent-data vote | Done | None | No OA container, volume, or database exists in the Desktop inventory; OA Desktop unique persistent data count is zero. |
 | Project data synchronization governance | Opt-in data ownership | Done | None | Each project explicitly selects transferable data and authority direction. |
 | Managed project operational authority | Green, Amber, and Red ownership boundary | Done | None | Projects own bounded Green operations, users decide Amber policy and authority changes, and DeveloperOS coordinates Red shared infrastructure while absolute safety boundaries remain fail closed. |
@@ -148,37 +143,27 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 | Area map contract | Task selector | Task routing requires reviewed project-owned area definitions. |
 | Incremental Git index | Task selector | The selector uses the incremental index to avoid repeated broad inspection. |
 | Task selector | OA area adoption | OA adoption is verified through representative task selections. |
-| Task selector | bTest area adoption | bTest adoption is verified through representative task selections. |
 | Shared parser contract | Shared browser renderer | The renderer depends on validated and safely escaped roadmap data. |
 | Shared parser contract | Overall and track card identity | Linked-card identity is enforced while canonical roadmap data is parsed. |
 | Shared browser renderer | OA local route migration | OA needs the shared renderer before its local route can claim presentation parity. |
-| Shared browser renderer | bTest local route migration | bTest needs the shared renderer before its local route can claim presentation parity. |
 | Overall and track card identity | OA local route migration | OA migration must preserve exact Overall-to-track card identity. |
-| Overall and track card identity | bTest local route migration | bTest migration must preserve exact Overall-to-track card identity. |
 | OA local route migration | Managed project roadmap adoption | Workspace adoption completes only after OA passes its project-owned route checks. |
-| bTest local route migration | Managed project roadmap adoption | Workspace adoption completes only after bTest passes its project-owned route checks. |
-| Shared lifecycle contract | bTest cache cleanup compliance | bTest maintenance must preserve the shared rule that ordinary lifecycle operations never build images. |
 | Canonical launcher and config | Desktop plugin isolation | The fixed native path and config must exist before higher-priority Desktop-backed plugin links can be removed safely. |
-| Desktop plugin isolation | bTest repository command migration | bTest can migrate local calls only after the shared native boundary is sealed and Desktop-independent. |
 | Desktop plugin isolation | OA repository command migration | OA can migrate its local wrapper only after the shared native boundary is sealed and Desktop-independent. |
-| bTest repository command migration | Managed project native Docker adoption | Workspace adoption requires bTest runtime and data verification through the shared launcher. |
 | OA repository command migration | Managed project native Docker adoption | Workspace adoption requires OA runtime and data verification through the shared launcher. |
 
 ## Current Priority
 
 1. Adopt project-owned context areas and verify representative routing in OA
-   and bTest without copying their project state into DeveloperOS.
-2. Migrate OA and bTest local roadmap routes to shared bundle 3.1,
+   without copying project state into DeveloperOS.
+2. Migrate OA local roadmap routes to shared bundle 3.1,
    dependency flows, current blocker semantics, schema version 2 track linkage,
    and exact Overall-to-track card parity.
 3. Observe the first ordinary status-boundary update in each new project track.
 4. Keep overall roadmaps limited to cross-track priority and release state.
 5. Apply data synchronization first as read-only manifest comparison when a
    project explicitly adopts a contract.
-6. Resolve or explicitly classify bTest's build-cache cleanup policy findings.
-7. Observe bTest's newly enabled project deployment hook for regressions while
-   its database and kline synchronization remain explicitly disabled.
-8. Monitor new direct MAINLINE_CODEX_REVIEW captures and mark the first genuine
+6. Monitor new direct MAINLINE_CODEX_REVIEW captures and mark the first genuine
    USER_REQUIRED cycle as a candidate without executing it.
 9. Retain the three-file importer only for legacy/manual recovery and
    equivalence checks; never execute the completed E2E candidate bound to
@@ -189,9 +174,9 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 11. Keep orchestration development paused. Do not run another AUTO pilot,
    expand transports, or add orchestration features until the user explicitly
    resumes this track; never reuse consumed approvals or infer authority.
-12. Migrate bTest and OA repository-local Docker calls to the shared
-   native launcher, preserving remote server commands, and verify each project
-   before reopening its Docker Desktop deletion gate.
+10. Migrate OA repository-local Docker calls to the shared native launcher,
+   preserving remote server commands, and verify the project before reopening
+   its Docker Desktop deletion gate.
 
 ## Latest Status Change
 
@@ -214,13 +199,12 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 
 ## Next Status Transitions
 
-1. Move `Docker image build minimization` back to `Done` after bTest's scheduled
-   build-cache cleanup is either brought inside an allowed maintenance contract
-   or safely changed, and the workspace policy check passes.
-2. Move `Project context routing` to `Done` after OA and bTest each own a
+1. Move `Docker image build minimization` back to `Done` after active managed
+   projects satisfy the shared policy and the workspace policy check passes.
+2. Move `Project context routing` to `Done` after OA owns a
    valid area map, ignore the generated cache, and pass representative
    `make context` checks without unrelated area expansion.
-3. Move `Managed project roadmap adoption` to `Done` after OA and bTest
+3. Move `Managed project roadmap adoption` to `Done` after OA
    pass dependency validation, linked-card data parity, shared-asset parity,
    desktop, mobile, hover, expansion, and keyboard checks.
 4. Update an individual project track without changing its overall roadmap
@@ -232,8 +216,8 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
 6. Keep the consumed Gate Contract v2 calibration immutable and require a
    distinct matched holdout plus separate approval before changing
    autonomous-routing policy.
-7. Move `Managed project native Docker adoption` to `Done` only after bTest
-   and OA remove or delegate repository-local native wrappers,
+7. Move `Managed project native Docker adoption` to `Done` after OA removes
+   or delegates its repository-local native wrapper,
    distinguish remote commands, and pass launcher-bound runtime/data checks.
 
 ## Risks And Blockers
@@ -249,8 +233,6 @@ DeveloperOS should grow gradually. Each version should add a meaningful operatin
   Overall-to-track card identity until each project completes its v2 migration.
 - Dependency arrows remain absent in a project until its canonical roadmap
   explicitly records real prerequisite relationships.
-- The bTest build-cache cleanup service, timer, script, and test currently fail
-  the shared Docker policy check and require project-owned review.
 - A stale or overly broad project area map can misroute the first inspection;
   the generated index remains advisory and shared-contract or safety evidence
   must expand the search beyond the declared area.

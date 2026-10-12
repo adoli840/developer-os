@@ -130,7 +130,7 @@ clean Git work tree, pushes existing commits, verifies the upstream revision,
 and delegates to the project's deployment target. Commit selection and commit
 messages remain a Codex or developer decision.
 
-Verify the shared contract across DeveloperOS, OA, and bTest:
+Verify the shared contract across DeveloperOS and OA:
 
 ```bash
 make make-check
@@ -169,7 +169,7 @@ Fallback direct command:
 X:\Projects\DeveloperOS\04_Tools\bin\devos.cmd git-check
 ```
 
-The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, bTest, OA, and Ever.
+The dashboard reports modified files, commit need, push need, pull need, and current branch for DeveloperOS, OA, and everNext2.
 
 ## Project Data Synchronization
 
@@ -205,7 +205,7 @@ Check every configured project:
 Generate one GitHub Actions workflow:
 
 ```powershell
-.\deployment\scripts\generate-deploy-workflow.ps1 -Project bTest
+.\deployment\scripts\generate-deploy-workflow.ps1 -Project OA
 ```
 
 Generate every configured workflow:
@@ -268,7 +268,6 @@ The Oracle deployment also installs:
 
 - A private SQLite memo database with daily verified copies and 14-day retention.
 - Daily OA full PostgreSQL backups with 14-day retention.
-- Daily bTest PostgreSQL backups with Kline rows excluded and 3-day retention.
 - Weekly isolated restore verification in temporary PostgreSQL containers.
 - Deployment revision and container image comparison.
 - Git end-of-work checks and local operational alerts.

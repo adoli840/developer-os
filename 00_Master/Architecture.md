@@ -93,8 +93,8 @@ Review these candidates after inspecting active projects:
 
 ## Shared Native Docker Infrastructure
 
-DeveloperOS owns one local native Docker execution boundary for OA,
-bTest-Elliott, and bTest-Ever. Windows commands enter Ubuntu through an
+DeveloperOS owns one local native Docker execution boundary for OA. Windows
+commands enter Ubuntu through an
 argument-array launcher that
 fixes `DOCKER_HOST=unix:///run/docker-wsl.sock`,
 `DOCKER_CONFIG=/home/devops/.docker-native`, `/usr/bin/docker`, and the native
@@ -148,7 +148,8 @@ ChatGPT reads are degraded, Codex and Responses writes remain locked, and only
 the local mock adapter is fully ready in Phase 2A. Mode selection and graph
 editing do not start background capture, review, handoff, or dispatch.
 
-For bTest, the control plane separates Mainline policy authority from provider
+The retained bTest control-plane implementation is historical/private and is
+not an active registered project. For bTest, that control plane separates Mainline policy authority from provider
 conversation continuity. When orchestration is OFF, `NATIVE_MAINLINE` is the
 canonical native authority. When orchestration is enabled,
 `BTEST_MAINLINE_API` is the sole canonical authority; native Mainline output

@@ -56,7 +56,7 @@ class MemoStoreTests(unittest.TestCase):
             items = {item["project"]: item for item in second.list_all()["items"]}
 
         self.assertEqual(items["oa"]["content"], "세금 신고 아이디어")
-        self.assertEqual(list(items), ["developer-os", "btest", "oa", "evernext2"])
+        self.assertEqual(list(items), ["developer-os", "oa", "evernext2"])
 
     def test_legacy_ever_memo_remains_stored_but_is_not_a_current_project(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -164,7 +164,6 @@ class ConsoleSurfaceTests(unittest.TestCase):
         self.assertIn('id="tab-memo"', html)
         memo_items = [
             'data-memo-project="developer-os"',
-            'data-memo-project="btest"',
             'data-memo-project="oa"',
         ]
         self.assertEqual(memo_items, sorted(memo_items, key=html.index))
@@ -393,7 +392,7 @@ class SettingsTests(unittest.TestCase):
         self.assertEqual(settings.port, 8080)
         self.assertEqual(settings.memo_database, Path(directory) / "memos.sqlite3")
 
-    def test_btest_backup_is_enabled_by_default(self) -> None:
+    def test_btest_is_not_registered_by_default(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             values = {
                 "DEVOS_CONSOLE_TOKEN": "test-token",
@@ -402,9 +401,7 @@ class SettingsTests(unittest.TestCase):
             }
             with patch.dict(os.environ, values, clear=True):
                 settings = load_settings()
-        btest = next(project for project in settings.projects if project.slug == "btest")
-        self.assertTrue(btest.backup_expected)
-        self.assertEqual(btest.port, 8081)
+        self.assertNotIn("btest", {project.slug for project in settings.projects})
 
     def test_evernext2_is_a_systemd_project_without_inventing_backup_authority(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -679,47 +676,11 @@ class OrchestrationApiTests(unittest.TestCase):
                     },
                 )
                 preview_list = call("/api/orchestration/developer-os/dispatch-previews")
-                api_mainline_return = call(
-                    "/api/orchestration/btest/api-mainline-return",
-                    method="POST",
-                    csrf=csrf,
-                    body={"return_id": "return-1"},
-                )
-                api_mainline_return_approval = call(
-                    "/api/orchestration/btest/api-mainline-returns/return-1/approve",
-                    method="POST",
-                    csrf=csrf,
-                    body={
-                        "candidate_sha256": "c" * 64,
-                        "approval_manifest_sha256": "m" * 64,
-                    },
-                )
                 approval = call(
                     "/api/orchestration/developer-os/dispatch-previews/handoff-1/approve",
                     method="POST",
                     csrf=csrf,
                     body={"envelope_sha256": preview["preview"]["envelope_sha256"]},
-                )
-                explicit_send = call(
-                    "/api/orchestration/btest/dispatch-previews/approved-handoff/approve-send",
-                    method="POST",
-                    csrf=csrf,
-                    body={"envelope_sha256": "e" * 64},
-                )
-                call(
-                    "/api/orchestration/btest/mode",
-                    method="POST",
-                    csrf=csrf,
-                    body={"mode": "SHADOW_REVIEW"},
-                )
-                api_mainline_start = call(
-                    "/api/orchestration/btest/api-mainline-start",
-                    method="POST",
-                    csrf=csrf,
-                    body={"initial_request": "User-provided first bTest request"},
-                )
-                api_mainline_start_status = call(
-                    "/api/orchestration/btest/api-mainline-start",
                 )
                 with self.assertRaises(HTTPError) as error:
                     call(
@@ -736,9 +697,7 @@ class OrchestrationApiTests(unittest.TestCase):
         self.assertFalse(initial["dispatch_enabled"])
         self.assertTrue(any(item["project"] == "evernext2" for item in initial["projects"]))
         self.assertFalse(any(item["project"] == "ever" for item in initial["projects"]))
-        btest = next(item for item in initial["projects"] if item["project"] == "btest")
-        self.assertEqual(btest["mainline_state"]["authority"], "NATIVE_MAINLINE")
-        self.assertTrue(any(node["node_id"] == "BTEST_MAINLINE_API" for node in btest["nodes"]))
+        self.assertFalse(any(item["project"] == "btest" for item in initial["projects"]))
         self.assertFalse(initial["api_mainline_network_enabled"])
         self.assertEqual(created["project"]["nodes"][0]["capabilities"]["health"], "DEGRADED")
         self.assertNotIn("transport_ref", created["project"]["nodes"][0])
@@ -746,19 +705,9 @@ class OrchestrationApiTests(unittest.TestCase):
         self.assertEqual(preview_list["previews"][0]["state"], "PREPARED")
         self.assertEqual(preview_list["returns"], [])
         self.assertEqual(preview_list["deliveries"], [])
-        self.assertEqual(preview_list["mainline_returns"][0]["state"], "PREPARED")
-        self.assertEqual(api_mainline_return["mainline_return"]["state"], "PREPARED")
-        self.assertEqual(return_calls, [("btest", "return-1")])
-        self.assertEqual(api_mainline_return_approval["mainline_return"]["parsed_action"], "USER_REQUIRED")
-        self.assertEqual(return_approval_calls, [("btest", "return-1", "c" * 64, "m" * 64)])
+        self.assertEqual([item["project"] for item in preview_list["mainline_returns"]], ["developer-os"])
         self.assertEqual(approval["preview"]["state"], "DISPATCHABLE")
         self.assertEqual(approval["preview"]["actual_send_count"], 0)
-        self.assertEqual(explicit_send["preview"]["state"], "COMPLETED")
-        self.assertEqual(dispatch_calls, [("btest", "approved-handoff", "e" * 64)])
-        self.assertEqual(api_mainline_start["start"]["status"], "READY")
-        self.assertEqual(api_mainline_start["start"]["approval_state"], "USER_APPROVAL_REQUIRED")
-        self.assertEqual(api_mainline_start["start"]["network_calls"], 0)
-        self.assertEqual(api_mainline_start_status["start"], api_mainline_start["start"])
         self.assertEqual(error.exception.code, 400)
 
 
@@ -1537,7 +1486,6 @@ class WorkstationStatusTests(unittest.TestCase):
                     {"slug": "evernext2", "name": "everNext2", "repository": None},
                     {"slug": "unknown", "name": "Unknown", "repository": None},
                     {"slug": "developer-os", "name": "DeveloperOS", "repository": None},
-                    {"slug": "btest", "name": "bTest", "repository": None},
                     {"slug": "oa", "name": "OA", "repository": None},
                 ],
                 "summary": {},
@@ -1546,7 +1494,6 @@ class WorkstationStatusTests(unittest.TestCase):
         server_projects = [
             {"slug": "oa", "available": True, "port": 8082},
             {"slug": "developer-os", "available": True, "port": 8080},
-            {"slug": "btest", "available": True, "port": 8081},
             {"slug": "evernext2", "available": True, "port": 8085},
         ]
 
@@ -1554,7 +1501,7 @@ class WorkstationStatusTests(unittest.TestCase):
 
         self.assertEqual(
             [project["slug"] for project in workstations[0]["projects"]],
-            ["developer-os", "btest", "oa", "evernext2", "unknown"],
+            ["developer-os", "oa", "evernext2", "unknown"],
         )
 
 

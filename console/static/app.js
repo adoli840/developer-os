@@ -1,7 +1,6 @@
 const UI_STATE_KEY = "developer-os-console-ui-state-v1";
 const MEMO_PROJECTS = [
   {slug: "developer-os", name: "OS"},
-  {slug: "btest", name: "bTest"},
   {slug: "oa", name: "OA"},
   {slug: "evernext2", name: "everNext2"},
 ];
@@ -1011,7 +1010,7 @@ function serviceStatus(status) {
 }
 
 function terminalLink(project) {
-  const terminalProjects = new Set(["developer-os", "oa", "btest", "evernext"]);
+  const terminalProjects = new Set(["developer-os", "oa", "evernext2"]);
   if (!project.available || !terminalProjects.has(project.slug)) {
     return `<span class="terminal-unavailable">Unavailable</span>`;
   }
