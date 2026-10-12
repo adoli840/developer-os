@@ -13,7 +13,7 @@ case "$resolved" in
   /opt/developer-os-console|/opt/developer-os-console/*|\
   /home/opc/bTest-release|/home/opc/bTest-release/*|\
   /home/opc/oa|/home/opc/oa/*|\
-  /opt/everNext|/opt/everNext/*)
+  /home/opc/everNext2|/home/opc/everNext2/*)
     ;;
   *)
     echo "path is outside the managed project allowlist" >&2

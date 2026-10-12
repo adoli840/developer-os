@@ -36,7 +36,7 @@ The console reads:
 - Daily database backup and weekly isolated restore-verification status.
 - Optional local OpenAI and Oracle Cloud usage snapshots.
 - A Recovery view limited to backup, restore-verification, and schedule evidence.
-- A server-database memo workspace for DeveloperOS, bTest, OA, and everNext ideas.
+- A server-database memo workspace for DeveloperOS, bTest, OA, and everNext2 ideas.
 - Standard roadmap fields for configured projects, without raw files or source
   paths.
 
@@ -188,7 +188,7 @@ make console-backup-status
 ## Workstation Reporting
 
 The Home and Office workstation reporters refresh the configured upstreams for
-DeveloperOS, OA, bTest, and everNext, then send separate small JSON summaries
+DeveloperOS, OA, bTest, and everNext2, then send separate small JSON summaries
 through SSH to the Oracle server. Fetch updates Git metadata without changing
 the checked-out branch, index, or working tree. Send a one-time report with:
 
@@ -491,7 +491,7 @@ Open a project:
 ```powershell
 make terminal-developer-os
 make terminal-oa
-make terminal-evernext
+make terminal-evernext2
 ```
 
 The tunnel maps Home `127.0.0.1:8092` to server `127.0.0.1:8022`. The public

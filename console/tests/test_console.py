@@ -56,7 +56,7 @@ class MemoStoreTests(unittest.TestCase):
             items = {item["project"]: item for item in second.list_all()["items"]}
 
         self.assertEqual(items["oa"]["content"], "세금 신고 아이디어")
-        self.assertEqual(list(items), ["developer-os", "btest", "oa", "evernext"])
+        self.assertEqual(list(items), ["developer-os", "btest", "oa", "evernext2"])
 
     def test_legacy_ever_memo_remains_stored_but_is_not_a_current_project(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -86,9 +86,9 @@ class ConsoleSurfaceTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         html = (repository / "console" / "static" / "index.html").read_text(encoding="utf-8")
         javascript = (repository / "console" / "static" / "app.js").read_text(encoding="utf-8")
-        self.assertIn('data-memo-project="evernext"', html)
+        self.assertIn('data-memo-project="evernext2"', html)
         self.assertNotIn('data-memo-project="ever"', html)
-        self.assertIn('{slug: "evernext", name: "everNext"}', javascript)
+        self.assertIn('{slug: "evernext2", name: "everNext2"}', javascript)
         self.assertNotIn('{slug: "ever", name: "Ever"}', javascript)
 
     def test_recovery_replaces_operations_and_browser_commands(self) -> None:
@@ -406,7 +406,7 @@ class SettingsTests(unittest.TestCase):
         self.assertTrue(btest.backup_expected)
         self.assertEqual(btest.port, 8081)
 
-    def test_evernext_is_a_systemd_project_without_inventing_backup_authority(self) -> None:
+    def test_evernext2_is_a_systemd_project_without_inventing_backup_authority(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             values = {
                 "DEVOS_CONSOLE_TOKEN": "test-token",
@@ -415,12 +415,12 @@ class SettingsTests(unittest.TestCase):
             }
             with patch.dict(os.environ, values, clear=True):
                 settings = load_settings()
-        evernext = next(project for project in settings.projects if project.slug == "evernext")
-        self.assertEqual(evernext.name, "everNext")
-        self.assertEqual(evernext.path, Path(directory) / "everNext")
-        self.assertEqual(evernext.port, 8086)
-        self.assertEqual(evernext.runtime_services, ("evernext.service", "evernext-sp-worker.service"))
-        self.assertFalse(evernext.backup_expected)
+        evernext2 = next(project for project in settings.projects if project.slug == "evernext2")
+        self.assertEqual(evernext2.name, "everNext2")
+        self.assertEqual(evernext2.path, Path(directory) / "everNext2")
+        self.assertEqual(evernext2.port, 8085)
+        self.assertEqual(evernext2.runtime_services, ("evernext2.service",))
+        self.assertFalse(evernext2.backup_expected)
         self.assertNotIn("ever", {project.slug for project in settings.projects})
 
     def test_loopback_development_mode_enables_trusted_local_session(self) -> None:
@@ -734,7 +734,7 @@ class OrchestrationApiTests(unittest.TestCase):
                 thread.join(timeout=5)
 
         self.assertFalse(initial["dispatch_enabled"])
-        self.assertTrue(any(item["project"] == "evernext" for item in initial["projects"]))
+        self.assertTrue(any(item["project"] == "evernext2" for item in initial["projects"]))
         self.assertFalse(any(item["project"] == "ever" for item in initial["projects"]))
         btest = next(item for item in initial["projects"] if item["project"] == "btest")
         self.assertEqual(btest["mainline_state"]["authority"], "NATIVE_MAINLINE")
@@ -763,10 +763,10 @@ class OrchestrationApiTests(unittest.TestCase):
 
 
 class ProjectStatusTests(unittest.TestCase):
-    def test_evernext_systemd_runtime_is_collected_without_docker(self) -> None:
+    def test_evernext2_systemd_runtime_is_collected_without_docker(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            project = ProjectSpec("evernext", "everNext", Path(directory), "evernext", 8086, False,
-                                  ("evernext.service", "evernext-sp-worker.service"), "/api/settings")
+            project = ProjectSpec("evernext2", "everNext2", Path(directory), "evernext2", 8085, False,
+                                  ("evernext2.service",), "/api/settings")
             active = CommandResult(("systemctl",), 0, "active\n", "")
             with (
                 patch("console.devos_console.projects.run_command", return_value=active) as command,
@@ -780,14 +780,13 @@ class ProjectStatusTests(unittest.TestCase):
             self.assertEqual(result["deployment"]["mode"], "systemd")
             self.assertEqual(
                 [call.args[0] for call in command.call_args_list if call.args[0][0] == "systemctl"],
-                [("systemctl", "is-active", "evernext.service"),
-                 ("systemctl", "is-active", "evernext-sp-worker.service")],
+                [("systemctl", "is-active", "evernext2.service")],
             )
-            health.assert_called_once_with("http://127.0.0.1:8086/api/settings", timeout=4)
+            health.assert_called_once_with("http://127.0.0.1:8085/api/settings", timeout=4)
 
-    def test_evernext_stopped_service_does_not_probe_http(self) -> None:
-        project = ProjectSpec("evernext", "everNext", Path("/missing"), "evernext", 8086, False,
-                              ("evernext.service",), "/api/settings")
+    def test_evernext2_stopped_service_does_not_probe_http(self) -> None:
+        project = ProjectSpec("evernext2", "everNext2", Path("/missing"), "evernext2", 8085, False,
+                              ("evernext2.service",), "/api/settings")
         inactive = CommandResult(("systemctl",), 3, "inactive\n", "")
         with (
             patch("console.devos_console.projects.run_command", return_value=inactive),
@@ -825,12 +824,12 @@ class ResourceBreakdownTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temporary:
             snapshot = Path(temporary) / "sizes.tsv"
-            snapshot.write_text(f"{Path('/opt/everNext')}\t260000000\n", encoding="utf-8")
+            snapshot.write_text(f"{Path('/home/opc/everNext2')}\t260000000\n", encoding="utf-8")
             with (
                 patch.object(resources, "PROJECT_DISK_SNAPSHOT", snapshot),
                 patch("console.devos_console.resources.run_command") as command,
             ):
-                self.assertEqual(resources._directory_size(Path("/opt/everNext")), 260000000)
+                self.assertEqual(resources._directory_size(Path("/home/opc/everNext2")), 260000000)
         command.assert_not_called()
 
     def test_project_size_prefers_allowlisted_read_only_helper(self) -> None:
@@ -839,17 +838,17 @@ class ResourceBreakdownTests(unittest.TestCase):
         measured = CommandResult(
             ("sudo", "developer-os-project-disk-usage"),
             0,
-            "123456 /opt/everNext\n",
+            "123456 /home/opc/everNext2\n",
             "",
         )
         with patch("console.devos_console.resources.run_command", return_value=measured) as command:
-            self.assertEqual(_directory_size(Path("/opt/everNext")), 123456)
+            self.assertEqual(_directory_size(Path("/home/opc/everNext2")), 123456)
 
         self.assertEqual(command.call_count, 1)
         helper_command = command.call_args.args[0]
         self.assertEqual(helper_command[:2], ("sudo", "-n"))
         self.assertTrue(helper_command[-2].endswith("developer-os-project-disk-usage"))
-        self.assertEqual(helper_command[-1], str(Path("/opt/everNext")))
+        self.assertEqual(helper_command[-1], str(Path("/home/opc/everNext2")))
 
     def test_project_size_falls_back_to_direct_du_without_server_helper(self) -> None:
         from console.devos_console.resources import _directory_size
@@ -1535,8 +1534,7 @@ class WorkstationStatusTests(unittest.TestCase):
             {
                 "online": True,
                 "projects": [
-                    {"slug": "gaia", "name": "Gaia", "repository": None},
-                    {"slug": "evernext", "name": "everNext", "repository": None},
+                    {"slug": "evernext2", "name": "everNext2", "repository": None},
                     {"slug": "unknown", "name": "Unknown", "repository": None},
                     {"slug": "developer-os", "name": "DeveloperOS", "repository": None},
                     {"slug": "btest", "name": "bTest", "repository": None},
@@ -1547,17 +1545,16 @@ class WorkstationStatusTests(unittest.TestCase):
         ]
         server_projects = [
             {"slug": "oa", "available": True, "port": 8082},
-            {"slug": "gaia", "available": True, "port": 8083},
             {"slug": "developer-os", "available": True, "port": 8080},
             {"slug": "btest", "available": True, "port": 8081},
-            {"slug": "evernext", "available": True, "port": 8086},
+            {"slug": "evernext2", "available": True, "port": 8085},
         ]
 
         attach_server_comparisons(workstations, server_projects)
 
         self.assertEqual(
             [project["slug"] for project in workstations[0]["projects"]],
-            ["developer-os", "btest", "oa", "gaia", "evernext", "unknown"],
+            ["developer-os", "btest", "oa", "evernext2", "unknown"],
         )
 
 

@@ -11,7 +11,7 @@ for path in \
   /opt/developer-os-console/current \
   /home/opc/bTest-release \
   /home/opc/oa \
-  /opt/everNext
+  /home/opc/everNext2
 do
   if [[ -e "$path" ]]; then
     resolved="$(readlink -f -- "$path")"

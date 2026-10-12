@@ -3,7 +3,7 @@ const MEMO_PROJECTS = [
   {slug: "developer-os", name: "OS"},
   {slug: "btest", name: "bTest"},
   {slug: "oa", name: "OA"},
-  {slug: "evernext", name: "everNext"},
+  {slug: "evernext2", name: "everNext2"},
 ];
 const PRIMARY_TABS = new Set(["projects", "orchestration", "resources", "roadmap", "recovery", "oracle", "memo"]);
 

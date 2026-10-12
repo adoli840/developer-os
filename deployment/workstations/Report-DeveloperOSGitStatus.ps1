@@ -224,7 +224,7 @@ $projectDefinitions = @(
   @{ slug = "developer-os"; name = "DeveloperOS"; directory = "DeveloperOS" },
   @{ slug = "oa"; name = "OA"; directory = "oa" },
   @{ slug = "btest"; name = "bTest"; directory = "bTest" },
-  @{ slug = "evernext"; name = "everNext"; directory = "everNext" }
+  @{ slug = "evernext2"; name = "everNext2"; directory = "everNext2" }
 )
 
 try {

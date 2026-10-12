@@ -74,16 +74,16 @@ class ControlPlaneStoreTests(unittest.TestCase):
         original = json.loads(self.store.path.read_text(encoding="utf-8"))["projects"]["ever"]
         current = OrchestrationControlStore(
             self.store.path,
-            ["developer-os", "btest", "evernext"],
+            ["developer-os", "btest", "evernext2"],
             AuditLog(self.audit_path),
         )
         self.assertEqual(
             [project["project"] for project in current.list_projects()["projects"]],
-            ["developer-os", "btest", "evernext"],
+            ["developer-os", "btest", "evernext2"],
         )
         with self.assertRaisesRegex(ControlPlaneError, "UNKNOWN_PROJECT"):
             current.set_mode("ever", "OFF")
-        current.set_mode("evernext", "OFF")
+        current.set_mode("evernext2", "OFF")
         self.assertEqual(
             json.loads(self.store.path.read_text(encoding="utf-8"))["projects"]["ever"],
             original,

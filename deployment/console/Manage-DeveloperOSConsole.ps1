@@ -219,7 +219,7 @@ try {
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current","compose_project":"developer-os-console","port":8080,"backup_expected":false},
     {"slug":"btest","name":"bTest","path":"/home/opc/bTest-release","compose_project":"btest","port":8081,"backup_expected":true},
     {"slug":"oa","name":"OA","path":"/home/opc/oa","compose_project":"oa","port":8082,"backup_expected":true},
-    {"slug":"evernext","name":"everNext","path":"/opt/everNext","compose_project":"evernext","port":8086,"backup_expected":false,"runtime_services":["evernext.service","evernext-sp-worker.service"],"health_path":"/api/settings"}
+    {"slug":"evernext2","name":"everNext2","path":"/home/opc/everNext2","compose_project":"evernext2","port":8085,"backup_expected":false,"runtime_services":["evernext2.service"],"health_path":"/api/settings"}
   ],
   "workstations": [
     {"id":"home","name":"Home","offline_after_seconds":900},
@@ -235,7 +235,7 @@ try {
     {"slug":"developer-os","name":"DeveloperOS","path":"/opt/developer-os-console/current"},
     {"slug":"btest","name":"bTest","path":"/home/opc/bTest-release"},
     {"slug":"oa","name":"OA","path":"/home/opc/oa"},
-    {"slug":"evernext","name":"everNext","path":"/opt/everNext"}
+    {"slug":"evernext2","name":"everNext2","path":"/home/opc/everNext2"}
   ]
 }
 "@
